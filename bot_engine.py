@@ -1,9 +1,34 @@
 import json
+import math
 import os
 import time
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 from curl_cffi import requests as curl_requests
 
-STATE_FILE = "state.json"
+# --- RENDER DUMMY PORT SERVER (PORT KANDIRMACA) ---
+class DummyPortHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-type", "text/html")
+        self.end_headers()
+        self.wfile.write(b"Futures Bot Engine is Running 24/7!")
+
+    def log_message(self, format, *args):
+        # Console'u sahte HTTP loglarıyla doldurmamak için logları bastırıyoruz
+        return
+
+def run_dummy_server():
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(('0.0.0.0', port), DummyPortHandler)
+    print(f"🌐 [PORT OK] Render Port Dinleyici {port} Portunda Baslatildi.")
+    server.serve_forever()
+
+# Port dinleyiciyi arka planda (Daemon Thread) çalıştır
+threading.Thread(target=run_dummy_server, daemon=True).start()
+
+# --- FUTURES BOT ENGINE ---
+STATE_FILE = "durum.json"
 MAX_POSITIONS = 10
 LEVERAGE = 10
 DEFAULT_BALANCE = 100.0
@@ -106,7 +131,8 @@ class HeadlessFuturesEngine:
                         }
                 return result_map
             return {}
-        except Exception:
+        except Exception as e:
+            print(f"[HATA] TV Veri Hatasi: {e}")
             return {}
 
     def run_cycle(self):
@@ -171,8 +197,9 @@ class HeadlessFuturesEngine:
                 del self.state["active_positions"][symbol]
                 self.cooldown_tracker[symbol] = 6
                 self.save_state()
+                print(f"🎯 [KAPANDI] {symbol} | PnL: ${pnl:+.2f} | Neden: {close_reason}")
 
-        # Skorlama & Aday Havuzu
+        # Skorlama & Aday Havuzu Engine
         candidate_pool = []
         for symbol, coin in tv_data_map.items():
             close, rsi, bb_upper, bb_lower = coin["close"], coin["rsi"], coin["bb_upper"], coin["bb_lower"]
@@ -255,12 +282,16 @@ class HeadlessFuturesEngine:
                     "peak_price": close, "trailing_active": False
                 }
                 self.live_prices[sym] = close
+                print(f"🚀 [ISLEM ACILDI] {sym} | Skor: {score} | Yön: {side}")
 
             self.save_state()
 
 if __name__ == "__main__":
     engine = HeadlessFuturesEngine()
+    print("🤖 Futures Bot Engine 7/24 Kesintisiz Modda Baslatildi...")
     while True:
-        try: engine.run_cycle()
-        except Exception: pass
+        try:
+            engine.run_cycle()
+        except Exception as e:
+            print(f"Döngü Hatasi: {e}")
         time.sleep(10)
