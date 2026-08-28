@@ -167,12 +167,16 @@ class HeadlessFuturesEngine:
             self.cooldown_tracker[sym] -= 1
             if self.cooldown_tracker[sym] <= 0: del self.cooldown_tracker[sym]
 
-        # Pozisyon Kapanış & Trailing Stop
+        # Pozisyon Kapanış & Trailing Stop & CANLI FİYAT GÜNCELLEME
         active_syms = list(self.state["active_positions"].keys())
         for symbol in active_syms:
             pos = self.state["active_positions"].get(symbol)
             if not pos: continue
             current_price = self.live_prices.get(symbol, pos["entry_price"])
+            
+            # CANLI FİYATI STATE DOSYASINA YAZIYORUZ (Mobil Arayüz İçin)
+            pos["current_price"] = current_price
+            
             entry, side, margin = pos["entry_price"], pos["side"], pos["margin"]
             ratio = (current_price - entry) / entry if side == "BUY" else (entry - current_price) / entry
             current_roe = ratio * LEVERAGE * 100
@@ -218,8 +222,10 @@ class HeadlessFuturesEngine:
                 })
                 del self.state["active_positions"][symbol]
                 self.cooldown_tracker[symbol] = 6
-                self.save_state()
                 add_log(f"🎯 [KAPANDI] {symbol} | PnL: ${pnl:+.2f} | Neden: {close_reason}")
+
+        # Her döngü sonunda canlı fiyatları durum.json'a kaydet
+        self.save_state()
 
         # Skorlama & Aday Havuzu Engine
         candidate_pool = []
@@ -298,7 +304,7 @@ class HeadlessFuturesEngine:
 
                 self.state["balance"] -= margin_per_trade
                 self.state["active_positions"][sym] = {
-                    "side": side, "entry_price": close, "tp_price": est_tp_price, "sl_price": est_sl_price,
+                    "side": side, "entry_price": close, "current_price": close, "tp_price": est_tp_price, "sl_price": est_sl_price,
                     "margin": margin_per_trade, "amount": (margin_per_trade * LEVERAGE) / close,
                     "entry_score": score, "strategies": strat_str, "entry_time": now_str, "target_roe": roe_pct,
                     "peak_price": close, "trailing_active": False
