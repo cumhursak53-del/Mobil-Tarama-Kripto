@@ -21,7 +21,7 @@ GITHUB_FILE_PATH = "durum.json"
 GITHUB_BRANCH = "main"
 
 # DİKKAT: Aşağıdaki alana kendi ghp_ ile başlayan token'ınızı yazın!
-GITHUB_TOKEN = "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"
+GITHUB_TOKEN = "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"
 
 EXCLUDED_SYMBOLS = [
     "USDCUSDT", "FDUSDUSDT", "USDPUSDT", "BTCDOMUSDT",
