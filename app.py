@@ -5,6 +5,10 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 
+# --- CANLI OTOMATİK YENİLEME (HER 10 SANİYEDE BİR) ---
+from streamlit_autorefresh import st_autorefresh
+st_autorefresh(interval=10000, key="datarefresh")
+
 RENDER_API_URL = "https://mobil-tarama-kripto.onrender.com"
 
 st.set_page_config(page_title="Futures Mobil Engine", page_icon="📈", layout="wide")
@@ -39,9 +43,6 @@ col1, col2, col3 = st.columns(3)
 col1.metric("Kümülatif Kasa", f"${total_equity:.2f}")
 col2.metric("Açık Pozisyon", f"{len(active_pos)} / 10")
 col3.metric("Tamamlanan İşlem", f"{len(history)}")
-
-if st.button("🔄 Verileri Şimdi Yenile"):
-    st.rerun()
 
 st.divider()
 
