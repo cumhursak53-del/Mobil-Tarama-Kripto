@@ -1,25 +1,37 @@
 import json
 import os
+import requests
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 
-STATE_FILE = "state.json"
+# Render API Canlı URL Adresi
+RENDER_API_URL = "https://mobil-tarama-kripto.onrender.com"
 
 st.set_page_config(page_title="Futures Mobil Engine", page_icon="📈", layout="wide")
 
 def load_data():
-    if os.path.exists(STATE_FILE):
+    """Render üzerindeki canlı API'den durum verisini ve logları çeker."""
+    try:
+        res = requests.get(RENDER_API_URL, timeout=6)
+        if res.status_code == 200:
+            return res.json()
+    except Exception as e:
+        pass
+    
+    # Sunucu henüz aktifleşmediyse yerel yedek dosyayı okur
+    if os.path.exists("durum.json"):
         try:
-            with open(STATE_FILE, "r") as f:
+            with open("durum.json", "r") as f:
                 return json.load(f)
         except Exception:
             pass
-    return {"balance": 100.0, "active_positions": {}, "history": [], "signal_log": {}}
+            
+    return {"balance": 100.0, "active_positions": {}, "history": [], "signal_log": {}, "engine_logs": []}
 
 data = load_data()
 
-# Üst Bilgi Kartları
+# Mobil Üst Panel (Header)
 st.title("📈 Futures Kar Öngörülü Engine")
 
 active_pos = data.get("active_positions", {})
@@ -32,13 +44,22 @@ col1.metric("Kümülatif Kasa", f"${total_equity:.2f}")
 col2.metric("Açık Pozisyon", f"{len(active_pos)} / 10")
 col3.metric("Tamamlanan İşlem", f"{len(history)}")
 
+# Manuel Yenile Butonu
+if st.button("🔄 Verileri Şimdi Yenile"):
+    st.rerun()
+
 st.divider()
 
 # Sekme Yapısı
-tab1, tab2, tab3 = st.tabs(["📊 Açık Pozisyonlar", "📜 İşlem Geçmişi", "🎯 Sinyal Günlüğü"])
+tab1, tab2, tab3, tab4 = st.tabs([
+    "📊 Açık Pozisyonlar", 
+    "📜 İşlem Geçmişi", 
+    "🎯 Sinyal Günlüğü", 
+    "🖥️ Canlı Bot Logları"
+])
 
 with tab1:
-    st.subheader("Canlı Pozisyonlar")
+    st.subheader("Canlı Pozisyonlar & PnL")
     if active_pos:
         pos_list = []
         for sym, p in active_pos.items():
@@ -48,14 +69,13 @@ with tab1:
                 "Giriş Fiyatı": f"${p['entry_price']:.4f}",
                 "Pik Fiyat": f"${p.get('peak_price', p['entry_price']):.4f}",
                 "Hedef ROE": f"%{p.get('target_roe', 0):.1f}",
-                "Durum": "🏹 Trailing" if p.get("trailing_active") else "⏳ Bekliyor",
+                "Durum": "🏹 Trailing Stop" if p.get("trailing_active") else "⏳ Takipte",
                 "Stratejiler": p.get("strategies", "-")
             })
         st.dataframe(pd.DataFrame(pos_list), use_container_width=True)
     else:
-        st.info("Şu anda açık pozisyon bulunmuyor.")
+        st.info("Şu anda açık pozisyon bulunmuyor. Engine 15m tarama yapıyor...")
 
-    # Kasa Büyüme Grafiği
     st.subheader("Kasa Büyüme Grafiği")
     if history:
         df_hist = pd.DataFrame(history)
@@ -67,7 +87,7 @@ with tab1:
         plt.xticks(rotation=45)
         st.pyplot(fig)
     else:
-        st.write("Henüz kapanan işlem grafiği yok.")
+        st.write("Henüz kapanan işlem grafiği oluşmadı.")
 
 with tab2:
     st.subheader("Detaylı İşlem Geçmişi")
@@ -78,7 +98,7 @@ with tab2:
         st.info("İşlem geçmişi boş.")
 
 with tab3:
-    st.subheader("İşlem Eşiğini Geçen Sinyaller")
+    st.subheader("İşlem Eşiğini Geçen Elit Sinyaller (≥ 85 / ≤ -85)")
     sig_log = data.get("signal_log", {})
     if sig_log:
         sig_list = []
@@ -95,4 +115,13 @@ with tab3:
         df_sig = pd.DataFrame(sig_list).sort_values(by="Sinyal Sayısı", ascending=False)
         st.dataframe(df_sig, use_container_width=True)
     else:
-        st.info("Henüz sinyal günlüğü oluşmadı.")
+        st.info("Henüz eşik üstü sinyal günlüğü kayıt altına alınmadı.")
+
+with tab4:
+    st.subheader("🖥️ Render Sunucu Canlı Tarama Logları")
+    logs = data.get("engine_logs", [])
+    if logs:
+        log_text = "\n".join(reversed(logs[-50:]))  # Son 50 log mesajını gösterir
+        st.code(log_text, language="text")
+    else:
+        st.warning("Sunucudan henüz log akışı alınamadı veya bot ilk turunu tamamlıyor...")
