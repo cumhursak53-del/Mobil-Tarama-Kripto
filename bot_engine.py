@@ -18,8 +18,10 @@ TRAILING_CALLBACK_PCT = 1.2
 # --- GITHUB OTOMATİK KALICILIK AYARLARI ---
 GITHUB_REPO = "cumhursak53-del/Mobil-Tarama-Krypto"
 GITHUB_FILE_PATH = "durum.json"
-# Buraya GitHub'dan aldığınız ghp_ ile başlayan Personal Access Token'ı yazın:
-GITHUB_TOKEN = "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN"
+GITHUB_BRANCH = "main"
+
+# DİKKAT: Aşağıdaki alana kendi ghp_ ile başlayan token'ınızı yazın!
+GITHUB_TOKEN = "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"
 
 EXCLUDED_SYMBOLS = [
     "USDCUSDT", "FDUSDUSDT", "USDPUSDT", "BTCDOMUSDT",
@@ -37,8 +39,8 @@ def add_log(msg: str):
         ENGINE_LOGS.pop(0)
 
 def push_state_to_github(data_dict):
-    """durum.json içeriğini anında GitHub deponuza commit eder (Kalıcılık Sağlar)."""
     if not GITHUB_TOKEN or GITHUB_TOKEN == "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN":
+        add_log("⚠️ [UYARI] GITHUB_TOKEN girilmediği için buluta kayıt yapılamıyor!")
         return
 
     url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{GITHUB_FILE_PATH}"
@@ -48,7 +50,7 @@ def push_state_to_github(data_dict):
     }
 
     try:
-        res = curl_requests.get(url, headers=headers, timeout=8)
+        res = curl_requests.get(url + f"?ref={GITHUB_BRANCH}", headers=headers, timeout=8)
         sha = res.json().get("sha", "") if res.status_code == 200 else ""
 
         content_str = json.dumps(data_dict, indent=4)
@@ -57,18 +59,19 @@ def push_state_to_github(data_dict):
         payload = {
             "message": "Auto update state [Bot Engine]",
             "content": content_b64,
-            "branch": "ana"
+            "branch": GITHUB_BRANCH
         }
         if sha:
             payload["sha"] = sha
 
         r = curl_requests.put(url, headers=headers, json=payload, timeout=10)
         if r.status_code in [200, 201]:
-            add_log("💾 [KALICI KAYIT] Kasa ve Pozisyonlar GitHub'a Kaydedildi.")
+            add_log("💾 [KALICI KAYIT] Kasa ve Pozisyonlar GitHub'a Başarıyla Kaydedildi.")
+        else:
+            add_log(f"[HATA] GitHub API Reddi: {r.status_code} - {r.text}")
     except Exception as e:
-        add_log(f"[HATA] GitHub Kayıt Hatası: {e}")
+        add_log(f"[HATA] GitHub Kayıt Başarısız: {e}")
 
-# --- RENDER CANLI API SUNUCUSU ---
 class APIHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -98,7 +101,6 @@ def run_dummy_server():
 
 threading.Thread(target=run_dummy_server, daemon=True).start()
 
-# --- FUTURES BOT ENGINE ---
 class HeadlessFuturesEngine:
     def __init__(self):
         self.state = self.load_state()
@@ -106,15 +108,14 @@ class HeadlessFuturesEngine:
         self.cooldown_tracker = {}
 
     def load_state(self):
-        # GitHub'daki en son canlı durum.json verisini çek
         if GITHUB_TOKEN and GITHUB_TOKEN != "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN":
-            url = f"https://raw.githubusercontent.com/{GITHUB_REPO}/ana/{GITHUB_FILE_PATH}"
+            url = f"https://raw.githubusercontent.com/{GITHUB_REPO}/{GITHUB_BRANCH}/{GITHUB_FILE_PATH}"
             try:
                 res = curl_requests.get(url, timeout=8)
                 if res.status_code == 200:
                     data = res.json()
                     if "signal_log" not in data: data["signal_log"] = {}
-                    add_log(f"📥 Hafıza Yüklendi: {len(data.get('active_positions', {}))} Açık Pozisyon | Bakiye: ${data.get('balance', 100.0):.2f}")
+                    add_log(f"📥 Hafıza GitHub'dan Yüklendi: {len(data.get('active_positions', {}))} Pozisyon | Bakiye: ${data.get('balance', 100.0):.2f}")
                     return data
             except Exception as e:
                 add_log(f"[HATA] Hafıza Yükleme Hatası: {e}")
@@ -132,7 +133,6 @@ class HeadlessFuturesEngine:
     def save_state(self, sync_github=True):
         with open(STATE_FILE, "w") as f:
             json.dump(self.state, f, indent=4)
-
         if sync_github:
             push_state_to_github(self.state)
 
@@ -222,7 +222,6 @@ class HeadlessFuturesEngine:
             self.cooldown_tracker[sym] -= 1
             if self.cooldown_tracker[sym] <= 0: del self.cooldown_tracker[sym]
 
-        # Pozisyon Kapanış & Trailing Stop
         state_changed = False
         active_syms = list(self.state["active_positions"].keys())
         for symbol in active_syms:
@@ -279,7 +278,6 @@ class HeadlessFuturesEngine:
                 state_changed = True
                 add_log(f"🎯 [KAPANDI] {symbol} | PnL: ${pnl:+.2f} | Neden: {close_reason}")
 
-        # Skorlama & Aday Havuzu Engine
         candidate_pool = []
         for symbol, coin in tv_data_map.items():
             close, rsi, bb_upper, bb_lower = coin["close"], coin["rsi"], coin["bb_upper"], coin["bb_lower"]
@@ -344,7 +342,6 @@ class HeadlessFuturesEngine:
                         "tp_price": est_tp_price, "sl_price": est_sl_price, "strategies": strat_str
                     })
 
-        # Öncelikli Pozisyon Açılışı
         available_slots = MAX_POSITIONS - len(self.state["active_positions"])
         if candidate_pool and available_slots > 0:
             candidate_pool.sort(key=lambda x: (abs(x["score"]), x["roe_pct"]), reverse=True)
@@ -366,7 +363,6 @@ class HeadlessFuturesEngine:
                 state_changed = True
                 add_log(f"🚀 [ISLEM ACILDI] {sym} | Skor: {score} | Yön: {side}")
 
-        # Her döngüde durumu kaydet (Değişiklik varsa GitHub'a bas)
         self.save_state(sync_github=state_changed)
         add_log(f"✅ Tarama Bitti. Aktif Pozisyon: {len(self.state['active_positions'])} | Kasa: ${self.get_total_equity():.2f}")
 
