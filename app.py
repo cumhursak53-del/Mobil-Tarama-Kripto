@@ -5,21 +5,18 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# Render API Canlı URL Adresi
 RENDER_API_URL = "https://mobil-tarama-kripto.onrender.com"
 
 st.set_page_config(page_title="Futures Mobil Engine", page_icon="📈", layout="wide")
 
 def load_data():
-    """Render üzerindeki canlı API'den durum verisini ve logları çeker."""
     try:
         res = requests.get(RENDER_API_URL, timeout=6)
         if res.status_code == 200:
             return res.json()
-    except Exception as e:
+    except Exception:
         pass
     
-    # Sunucu henüz aktifleşmediyse yerel yedek dosyayı okur
     if os.path.exists("durum.json"):
         try:
             with open("durum.json", "r") as f:
@@ -31,7 +28,6 @@ def load_data():
 
 data = load_data()
 
-# Mobil Üst Panel (Header)
 st.title("📈 Futures Kar Öngörülü Engine")
 
 active_pos = data.get("active_positions", {})
@@ -44,35 +40,54 @@ col1.metric("Kümülatif Kasa", f"${total_equity:.2f}")
 col2.metric("Açık Pozisyon", f"{len(active_pos)} / 10")
 col3.metric("Tamamlanan İşlem", f"{len(history)}")
 
-# Manuel Yenile Butonu
 if st.button("🔄 Verileri Şimdi Yenile"):
     st.rerun()
 
 st.divider()
 
-# Sekme Yapısı
 tab1, tab2, tab3, tab4 = st.tabs([
-    "📊 Açık Pozisyonlar", 
+    "📊 Açık Pozisyonlar & Canlı PnL", 
     "📜 İşlem Geçmişi", 
     "🎯 Sinyal Günlüğü", 
     "🖥️ Canlı Bot Logları"
 ])
 
 with tab1:
-    st.subheader("Canlı Pozisyonlar & PnL")
+    st.subheader("Canlı Pozisyonlar & Anlık Kâr/Zarar (PnL)")
     if active_pos:
         pos_list = []
+        total_unrealized = 0.0
+        
         for sym, p in active_pos.items():
+            entry = p["entry_price"]
+            current = p.get("current_price", entry)
+            side = p["side"]
+            margin = p["margin"]
+            leverage = 10
+            
+            # Anlık Kâr / Zarar Hesaplaması
+            ratio = (current - entry) / entry if side == "BUY" else (entry - current) / entry
+            pnl = margin * leverage * ratio
+            roe = ratio * leverage * 100
+            total_unrealized += pnl
+
             pos_list.append({
                 "Sembol": sym,
-                "Yön": p["side"],
-                "Giriş Fiyatı": f"${p['entry_price']:.4f}",
-                "Pik Fiyat": f"${p.get('peak_price', p['entry_price']):.4f}",
-                "Hedef ROE": f"%{p.get('target_roe', 0):.1f}",
+                "Yön": side,
+                "Giriş Fiyatı": f"${entry:,.4f}",
+                "Canlı Fiyat": f"${current:,.4f}",
+                "Anlık PnL ($)": f"${pnl:+.2f}",
+                "Anlık ROE (%)": f"%{roe:+.2f}",
+                "Pik Fiyat": f"${p.get('peak_price', entry):,.4f}",
                 "Durum": "🏹 Trailing Stop" if p.get("trailing_active") else "⏳ Takipte",
                 "Stratejiler": p.get("strategies", "-")
             })
+            
         st.dataframe(pd.DataFrame(pos_list), use_container_width=True)
+        
+        # Anlık Toplam Kâr/Zarar Göstergesi
+        color = "green" if total_unrealized >= 0 else "red"
+        st.markdown(f"### Toplam Anlık Unrealized PnL: :{color}[${total_unrealized:+.2f}]")
     else:
         st.info("Şu anda açık pozisyon bulunmuyor. Engine 15m tarama yapıyor...")
 
@@ -121,7 +136,7 @@ with tab4:
     st.subheader("🖥️ Render Sunucu Canlı Tarama Logları")
     logs = data.get("engine_logs", [])
     if logs:
-        log_text = "\n".join(reversed(logs[-50:]))  # Son 50 log mesajını gösterir
+        log_text = "\n".join(reversed(logs[-50:]))
         st.code(log_text, language="text")
     else:
-        st.warning("Sunucudan henüz log akışı alınamadı veya bot ilk turunu tamamlıyor...")
+        st.warning("Sunucudan henüz log akışı alınamadı...")
