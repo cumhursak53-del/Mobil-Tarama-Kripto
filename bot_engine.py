@@ -18,8 +18,8 @@ TRAILING_CALLBACK_PCT = 1.2
 # --- GITHUB OTOMATİK KALICILIK AYARLARI ---
 GITHUB_REPO = "cumhursak53-del/Mobil-Tarama-Krypto"
 GITHUB_FILE_PATH = "durum.json"
-# Buraya GitHub'dan aldığınız ghp_ ile başlayan Token'ı yazın:
-GITHUB_TOKEN = "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"
+# Buraya GitHub'dan aldığınız ghp_ ile başlayan Personal Access Token'ı yazın:
+GITHUB_TOKEN = "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN"
 
 EXCLUDED_SYMBOLS = [
     "USDCUSDT", "FDUSDUSDT", "USDPUSDT", "BTCDOMUSDT",
@@ -37,8 +37,8 @@ def add_log(msg: str):
         ENGINE_LOGS.pop(0)
 
 def push_state_to_github(data_dict):
-    """durum.json içeriğini doğrudan GitHub deponuza commit eder (Kalıcılık Sağlar)."""
-    if GITHUB_TOKEN == "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN":
+    """durum.json içeriğini anında GitHub deponuza commit eder (Kalıcılık Sağlar)."""
+    if not GITHUB_TOKEN or GITHUB_TOKEN == "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN":
         return
 
     url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{GITHUB_FILE_PATH}"
@@ -48,7 +48,6 @@ def push_state_to_github(data_dict):
     }
 
     try:
-        # Mevcut dosya sha değerini al
         res = curl_requests.get(url, headers=headers, timeout=8)
         sha = res.json().get("sha", "") if res.status_code == 200 else ""
 
@@ -63,7 +62,9 @@ def push_state_to_github(data_dict):
         if sha:
             payload["sha"] = sha
 
-        curl_requests.put(url, headers=headers, json=payload, timeout=10)
+        r = curl_requests.put(url, headers=headers, json=payload, timeout=10)
+        if r.status_code in [200, 201]:
+            add_log("💾 [KALICI KAYIT] Kasa ve Pozisyonlar GitHub'a Kaydedildi.")
     except Exception as e:
         add_log(f"[HATA] GitHub Kayıt Hatası: {e}")
 
@@ -105,20 +106,19 @@ class HeadlessFuturesEngine:
         self.cooldown_tracker = {}
 
     def load_state(self):
-        # 1. Önce GitHub'daki en güncel durum.json dosyasını çekmeyi dene
-        if GITHUB_TOKEN != "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN":
+        # GitHub'daki en son canlı durum.json verisini çek
+        if GITHUB_TOKEN and GITHUB_TOKEN != "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN":
             url = f"https://raw.githubusercontent.com/{GITHUB_REPO}/ana/{GITHUB_FILE_PATH}"
             try:
                 res = curl_requests.get(url, timeout=8)
                 if res.status_code == 200:
                     data = res.json()
                     if "signal_log" not in data: data["signal_log"] = {}
-                    add_log("📥 Güncel Kasa ve Pozisyonlar GitHub Deposundan Yüklendi.")
+                    add_log(f"📥 Hafıza Yüklendi: {len(data.get('active_positions', {}))} Açık Pozisyon | Bakiye: ${data.get('balance', 100.0):.2f}")
                     return data
-            except Exception:
-                pass
+            except Exception as e:
+                add_log(f"[HATA] Hafıza Yükleme Hatası: {e}")
 
-        # 2. Yerel dosyadan yükle
         if os.path.exists(STATE_FILE):
             try:
                 with open(STATE_FILE, "r") as f:
@@ -129,13 +129,12 @@ class HeadlessFuturesEngine:
                 pass
         return {"balance": DEFAULT_BALANCE, "active_positions": {}, "history": [], "signal_log": {}}
 
-    def save_state(self):
-        # 1. Yerel dosyaya kaydet
+    def save_state(self, sync_github=True):
         with open(STATE_FILE, "w") as f:
             json.dump(self.state, f, indent=4)
 
-        # 2. GitHub deponuza kaydet (Bulutta kalıcılık sağlar)
-        threading.Thread(target=push_state_to_github, args=(self.state,), daemon=True).start()
+        if sync_github:
+            push_state_to_github(self.state)
 
     def get_total_equity(self):
         allocated_margin = sum(pos["margin"] for pos in self.state["active_positions"].values())
@@ -223,7 +222,8 @@ class HeadlessFuturesEngine:
             self.cooldown_tracker[sym] -= 1
             if self.cooldown_tracker[sym] <= 0: del self.cooldown_tracker[sym]
 
-        # Pozisyon Kapanış & Trailing Stop & Canlı Fiyat Güncelleme
+        # Pozisyon Kapanış & Trailing Stop
+        state_changed = False
         active_syms = list(self.state["active_positions"].keys())
         for symbol in active_syms:
             pos = self.state["active_positions"].get(symbol)
@@ -276,9 +276,8 @@ class HeadlessFuturesEngine:
                 })
                 del self.state["active_positions"][symbol]
                 self.cooldown_tracker[symbol] = 6
+                state_changed = True
                 add_log(f"🎯 [KAPANDI] {symbol} | PnL: ${pnl:+.2f} | Neden: {close_reason}")
-
-        self.save_state()
 
         # Skorlama & Aday Havuzu Engine
         candidate_pool = []
@@ -337,6 +336,7 @@ class HeadlessFuturesEngine:
                 self.state["signal_log"][symbol]["last_score"] = score
                 self.state["signal_log"][symbol]["last_roe"] = roe_pct
                 self.state["signal_log"][symbol]["strategies"] = strat_str
+                state_changed = True
 
                 if symbol not in self.state["active_positions"] and symbol not in self.cooldown_tracker:
                     candidate_pool.append({
@@ -363,10 +363,11 @@ class HeadlessFuturesEngine:
                     "peak_price": close, "trailing_active": False
                 }
                 self.live_prices[sym] = close
+                state_changed = True
                 add_log(f"🚀 [ISLEM ACILDI] {sym} | Skor: {score} | Yön: {side}")
 
-            self.save_state()
-        
+        # Her döngüde durumu kaydet (Değişiklik varsa GitHub'a bas)
+        self.save_state(sync_github=state_changed)
         add_log(f"✅ Tarama Bitti. Aktif Pozisyon: {len(self.state['active_positions'])} | Kasa: ${self.get_total_equity():.2f}")
 
 if __name__ == "__main__":
