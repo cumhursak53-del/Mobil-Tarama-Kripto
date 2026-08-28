@@ -334,7 +334,6 @@ class HeadlessFuturesEngine:
                 self.state["signal_log"][symbol]["last_score"] = score
                 self.state["signal_log"][symbol]["last_roe"] = roe_pct
                 self.state["signal_log"][symbol]["strategies"] = strat_str
-                state_changed = True
 
                 if symbol not in self.state["active_positions"] and symbol not in self.cooldown_tracker:
                     candidate_pool.append({
