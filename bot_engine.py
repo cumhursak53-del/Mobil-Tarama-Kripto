@@ -19,19 +19,34 @@ EXCLUDED_SYMBOLS = [
     "DEFIUSDT", "UBERUSDT", "STXXUSDT", "BIRBUSDT"
 ]
 
+ENGINE_LOGS = []
+
+def add_log(msg: str):
+    timestamp = time.strftime("%H:%M:%S")
+    formatted = f"[{timestamp}] {msg}"
+    print(formatted, flush=True)
+    ENGINE_LOGS.append(formatted)
+    if len(ENGINE_LOGS) > 100:
+        ENGINE_LOGS.pop(0)
+
 # --- RENDER CANLI API SUNUCUSU ---
 class APIHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.send_header("Content-type", "application/json")
+        self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         
+        state_data = {"balance": DEFAULT_BALANCE, "active_positions": {}, "history": [], "signal_log": {}}
         if os.path.exists(STATE_FILE):
-            with open(STATE_FILE, "r") as f:
-                self.wfile.write(f.read().encode('utf-8'))
-        else:
-            dummy = json.dumps({"balance": DEFAULT_BALANCE, "active_positions": {}, "history": [], "signal_log": {}})
-            self.wfile.write(dummy.encode('utf-8'))
+            try:
+                with open(STATE_FILE, "r") as f:
+                    state_data = json.load(f)
+            except Exception:
+                pass
+
+        state_data["engine_logs"] = ENGINE_LOGS
+        self.wfile.write(json.dumps(state_data).encode('utf-8'))
 
     def log_message(self, format, *args):
         return
@@ -39,7 +54,7 @@ class APIHandler(BaseHTTPRequestHandler):
 def run_dummy_server():
     port = int(os.environ.get("PORT", 10000))
     server = HTTPServer(('0.0.0.0', port), APIHandler)
-    print(f"🌐 [API AKIŞI AKTİF] Port: {port}", flush=True)
+    add_log(f"🌐 Render API Canlı Sunucusu {port} Portunda Baslatildi.")
     server.serve_forever()
 
 threading.Thread(target=run_dummy_server, daemon=True).start()
@@ -136,11 +151,11 @@ class HeadlessFuturesEngine:
                 return result_map
             return {}
         except Exception as e:
-            print(f"[HATA] TV Veri Hatasi: {e}", flush=True)
+            add_log(f"[HATA] TV Veri Hatasi: {e}")
             return {}
 
     def run_cycle(self):
-        print(f"🔍 [{time.strftime('%H:%M:%S')}] 15m Piyasa Taramasi Baslatildi...", flush=True)
+        add_log("🔍 15m Piyasa Taraması Başlatıldı...")
         binance_symbols = self.get_binance_futures_symbols()
         tv_data_map = self.fetch_tv_15m_technical_data(binance_symbols)
         if not tv_data_map: return
@@ -172,6 +187,7 @@ class HeadlessFuturesEngine:
                     peak_price = current_price
                 if not is_trailing and current_roe >= TRAILING_ACTIVATION_ROE:
                     pos["trailing_active"] = True; is_trailing = True
+                    add_log(f"🔥 [TRAILING STOPE GİRDİ] {symbol} | ROE: %{current_roe:.1f}")
                 if is_trailing:
                     if current_price <= peak_price * (1 - (TRAILING_CALLBACK_PCT / 100)):
                         should_close, close_reason = True, f"🏹 Trailing Stop (%{current_roe:.1f})"
@@ -184,6 +200,7 @@ class HeadlessFuturesEngine:
                     peak_price = current_price
                 if not is_trailing and current_roe >= TRAILING_ACTIVATION_ROE:
                     pos["trailing_active"] = True; is_trailing = True
+                    add_log(f"🔥 [TRAILING STOPE GİRDİ] {symbol} | ROE: %{current_roe:.1f}")
                 if is_trailing:
                     if current_price >= peak_price * (1 + (TRAILING_CALLBACK_PCT / 100)):
                         should_close, close_reason = True, f"🏹 Trailing Stop (%{current_roe:.1f})"
@@ -202,7 +219,7 @@ class HeadlessFuturesEngine:
                 del self.state["active_positions"][symbol]
                 self.cooldown_tracker[symbol] = 6
                 self.save_state()
-                print(f"🎯 [KAPANDI] {symbol} | PnL: ${pnl:+.2f} | Neden: {close_reason}", flush=True)
+                add_log(f"🎯 [KAPANDI] {symbol} | PnL: ${pnl:+.2f} | Neden: {close_reason}")
 
         # Skorlama & Aday Havuzu Engine
         candidate_pool = []
@@ -287,18 +304,18 @@ class HeadlessFuturesEngine:
                     "peak_price": close, "trailing_active": False
                 }
                 self.live_prices[sym] = close
-                print(f"🚀 [ISLEM ACILDI] {sym} | Skor: {score} | Yön: {side}", flush=True)
+                add_log(f"🚀 [ISLEM ACILDI] {sym} | Skor: {score} | Yön: {side}")
 
             self.save_state()
         
-        print(f"✅ [{time.strftime('%H:%M:%S')}] Tarama Bitti. Aktif Pozisyon: {len(self.state['active_positions'])} | Kasa: ${self.get_total_equity():.2f}\n", flush=True)
+        add_log(f"✅ Tarama Bitti. Aktif Pozisyon: {len(self.state['active_positions'])} | Kasa: ${self.get_total_equity():.2f}")
 
 if __name__ == "__main__":
     engine = HeadlessFuturesEngine()
-    print("🤖 Futures Bot Engine 7/24 Kesintisiz Modda Baslatildi...", flush=True)
+    add_log("🤖 Futures Bot Engine 7/24 Kesintisiz Modda Baslatildi...")
     while True:
         try:
             engine.run_cycle()
         except Exception as e:
-            print(f"Döngü Hatasi: {e}", flush=True)
+            add_log(f"Döngü Hatasi: {e}")
         time.sleep(10)
