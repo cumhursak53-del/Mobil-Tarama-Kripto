@@ -3,6 +3,7 @@ import math
 import os
 import time
 import threading
+import base64
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from curl_cffi import requests as curl_requests
 
@@ -13,6 +14,12 @@ DEFAULT_BALANCE = 100.0
 
 TRAILING_ACTIVATION_ROE = 10.0
 TRAILING_CALLBACK_PCT = 1.2
+
+# --- GITHUB OTOMATİK KALICILIK AYARLARI ---
+GITHUB_REPO = "cumhursak53-del/Mobil-Tarama-Krypto"
+GITHUB_FILE_PATH = "durum.json"
+# Buraya GitHub'dan aldığınız ghp_ ile başlayan Token'ı yazın:
+GITHUB_TOKEN = "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"
 
 EXCLUDED_SYMBOLS = [
     "USDCUSDT", "FDUSDUSDT", "USDPUSDT", "BTCDOMUSDT",
@@ -28,6 +35,37 @@ def add_log(msg: str):
     ENGINE_LOGS.append(formatted)
     if len(ENGINE_LOGS) > 100:
         ENGINE_LOGS.pop(0)
+
+def push_state_to_github(data_dict):
+    """durum.json içeriğini doğrudan GitHub deponuza commit eder (Kalıcılık Sağlar)."""
+    if GITHUB_TOKEN == "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN":
+        return
+
+    url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{GITHUB_FILE_PATH}"
+    headers = {
+        "Authorization": f"token {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+
+    try:
+        # Mevcut dosya sha değerini al
+        res = curl_requests.get(url, headers=headers, timeout=8)
+        sha = res.json().get("sha", "") if res.status_code == 200 else ""
+
+        content_str = json.dumps(data_dict, indent=4)
+        content_b64 = base64.b64encode(content_str.encode('utf-8')).decode('utf-8')
+
+        payload = {
+            "message": "Auto update state [Bot Engine]",
+            "content": content_b64,
+            "branch": "ana"
+        }
+        if sha:
+            payload["sha"] = sha
+
+        curl_requests.put(url, headers=headers, json=payload, timeout=10)
+    except Exception as e:
+        add_log(f"[HATA] GitHub Kayıt Hatası: {e}")
 
 # --- RENDER CANLI API SUNUCUSU ---
 class APIHandler(BaseHTTPRequestHandler):
@@ -67,6 +105,20 @@ class HeadlessFuturesEngine:
         self.cooldown_tracker = {}
 
     def load_state(self):
+        # 1. Önce GitHub'daki en güncel durum.json dosyasını çekmeyi dene
+        if GITHUB_TOKEN != "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN":
+            url = f"https://raw.githubusercontent.com/{GITHUB_REPO}/ana/{GITHUB_FILE_PATH}"
+            try:
+                res = curl_requests.get(url, timeout=8)
+                if res.status_code == 200:
+                    data = res.json()
+                    if "signal_log" not in data: data["signal_log"] = {}
+                    add_log("📥 Güncel Kasa ve Pozisyonlar GitHub Deposundan Yüklendi.")
+                    return data
+            except Exception:
+                pass
+
+        # 2. Yerel dosyadan yükle
         if os.path.exists(STATE_FILE):
             try:
                 with open(STATE_FILE, "r") as f:
@@ -78,8 +130,12 @@ class HeadlessFuturesEngine:
         return {"balance": DEFAULT_BALANCE, "active_positions": {}, "history": [], "signal_log": {}}
 
     def save_state(self):
+        # 1. Yerel dosyaya kaydet
         with open(STATE_FILE, "w") as f:
             json.dump(self.state, f, indent=4)
+
+        # 2. GitHub deponuza kaydet (Bulutta kalıcılık sağlar)
+        threading.Thread(target=push_state_to_github, args=(self.state,), daemon=True).start()
 
     def get_total_equity(self):
         allocated_margin = sum(pos["margin"] for pos in self.state["active_positions"].values())
@@ -167,14 +223,12 @@ class HeadlessFuturesEngine:
             self.cooldown_tracker[sym] -= 1
             if self.cooldown_tracker[sym] <= 0: del self.cooldown_tracker[sym]
 
-        # Pozisyon Kapanış & Trailing Stop & CANLI FİYAT GÜNCELLEME
+        # Pozisyon Kapanış & Trailing Stop & Canlı Fiyat Güncelleme
         active_syms = list(self.state["active_positions"].keys())
         for symbol in active_syms:
             pos = self.state["active_positions"].get(symbol)
             if not pos: continue
             current_price = self.live_prices.get(symbol, pos["entry_price"])
-            
-            # CANLI FİYATI STATE DOSYASINA YAZIYORUZ (Mobil Arayüz İçin)
             pos["current_price"] = current_price
             
             entry, side, margin = pos["entry_price"], pos["side"], pos["margin"]
@@ -224,7 +278,6 @@ class HeadlessFuturesEngine:
                 self.cooldown_tracker[symbol] = 6
                 add_log(f"🎯 [KAPANDI] {symbol} | PnL: ${pnl:+.2f} | Neden: {close_reason}")
 
-        # Her döngü sonunda canlı fiyatları durum.json'a kaydet
         self.save_state()
 
         # Skorlama & Aday Havuzu Engine
