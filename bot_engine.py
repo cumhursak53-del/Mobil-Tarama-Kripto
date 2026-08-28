@@ -46,7 +46,8 @@ def push_state_to_github(data_dict):
     url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{GITHUB_FILE_PATH}"
     headers = {
         "Authorization": f"token {GITHUB_TOKEN}",
-        "Accept": "application/vnd.github.v3+json"
+        "Accept": "application/vnd.github.v3+json",
+        "User-Agent": "FuturesBot-Engine"
     }
 
     try:
@@ -109,14 +110,22 @@ class HeadlessFuturesEngine:
 
     def load_state(self):
         if GITHUB_TOKEN and GITHUB_TOKEN != "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN":
-            url = f"https://raw.githubusercontent.com/{GITHUB_REPO}/{GITHUB_BRANCH}/{GITHUB_FILE_PATH}"
+            url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{GITHUB_FILE_PATH}?ref={GITHUB_BRANCH}"
+            headers = {
+                "Authorization": f"token {GITHUB_TOKEN}",
+                "Accept": "application/vnd.github.v3+json",
+                "User-Agent": "FuturesBot-Engine"
+            }
             try:
-                res = curl_requests.get(url, timeout=8)
+                res = curl_requests.get(url, headers=headers, timeout=8)
                 if res.status_code == 200:
-                    data = res.json()
-                    if "signal_log" not in data: data["signal_log"] = {}
-                    add_log(f"📥 Hafıza GitHub'dan Yüklendi: {len(data.get('active_positions', {}))} Pozisyon | Bakiye: ${data.get('balance', 100.0):.2f}")
-                    return data
+                    content_b64 = res.json().get("content", "")
+                    if content_b64:
+                        content_str = base64.b64decode(content_b64).decode('utf-8')
+                        data = json.loads(content_str)
+                        if "signal_log" not in data: data["signal_log"] = {}
+                        add_log(f"📥 Hafıza GitHub'dan Yüklendi: {len(data.get('active_positions', {}))} Pozisyon | Bakiye: ${data.get('balance', 100.0):.2f}")
+                        return data
             except Exception as e:
                 add_log(f"[HATA] Hafıza Yükleme Hatası: {e}")
 
