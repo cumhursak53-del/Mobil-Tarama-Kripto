@@ -6,28 +6,6 @@ import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from curl_cffi import requests as curl_requests
 
-# --- RENDER DUMMY PORT SERVER (PORT KANDIRMACA) ---
-class DummyPortHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header("Content-type", "text/html")
-        self.end_headers()
-        self.wfile.write(b"Futures Bot Engine is Running 24/7!")
-
-    def log_message(self, format, *args):
-        # Console'u sahte HTTP loglarıyla doldurmamak için logları bastırıyoruz
-        return
-
-def run_dummy_server():
-    port = int(os.environ.get("PORT", 10000))
-    server = HTTPServer(('0.0.0.0', port), DummyPortHandler)
-    print(f"🌐 [PORT OK] Render Port Dinleyici {port} Portunda Baslatildi.")
-    server.serve_forever()
-
-# Port dinleyiciyi arka planda (Daemon Thread) çalıştır
-threading.Thread(target=run_dummy_server, daemon=True).start()
-
-# --- FUTURES BOT ENGINE ---
 STATE_FILE = "durum.json"
 MAX_POSITIONS = 10
 LEVERAGE = 10
@@ -41,6 +19,32 @@ EXCLUDED_SYMBOLS = [
     "DEFIUSDT", "UBERUSDT", "STXXUSDT", "BIRBUSDT"
 ]
 
+# --- RENDER CANLI API SUNUCUSU ---
+class APIHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-type", "application/json")
+        self.end_headers()
+        
+        if os.path.exists(STATE_FILE):
+            with open(STATE_FILE, "r") as f:
+                self.wfile.write(f.read().encode('utf-8'))
+        else:
+            dummy = json.dumps({"balance": DEFAULT_BALANCE, "active_positions": {}, "history": [], "signal_log": {}})
+            self.wfile.write(dummy.encode('utf-8'))
+
+    def log_message(self, format, *args):
+        return
+
+def run_dummy_server():
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(('0.0.0.0', port), APIHandler)
+    print(f"🌐 [API AKIŞI AKTİF] Port: {port}", flush=True)
+    server.serve_forever()
+
+threading.Thread(target=run_dummy_server, daemon=True).start()
+
+# --- FUTURES BOT ENGINE ---
 class HeadlessFuturesEngine:
     def __init__(self):
         self.state = self.load_state()
@@ -132,10 +136,11 @@ class HeadlessFuturesEngine:
                 return result_map
             return {}
         except Exception as e:
-            print(f"[HATA] TV Veri Hatasi: {e}")
+            print(f"[HATA] TV Veri Hatasi: {e}", flush=True)
             return {}
 
     def run_cycle(self):
+        print(f"🔍 [{time.strftime('%H:%M:%S')}] 15m Piyasa Taramasi Baslatildi...", flush=True)
         binance_symbols = self.get_binance_futures_symbols()
         tv_data_map = self.fetch_tv_15m_technical_data(binance_symbols)
         if not tv_data_map: return
@@ -197,7 +202,7 @@ class HeadlessFuturesEngine:
                 del self.state["active_positions"][symbol]
                 self.cooldown_tracker[symbol] = 6
                 self.save_state()
-                print(f"🎯 [KAPANDI] {symbol} | PnL: ${pnl:+.2f} | Neden: {close_reason}")
+                print(f"🎯 [KAPANDI] {symbol} | PnL: ${pnl:+.2f} | Neden: {close_reason}", flush=True)
 
         # Skorlama & Aday Havuzu Engine
         candidate_pool = []
@@ -282,16 +287,18 @@ class HeadlessFuturesEngine:
                     "peak_price": close, "trailing_active": False
                 }
                 self.live_prices[sym] = close
-                print(f"🚀 [ISLEM ACILDI] {sym} | Skor: {score} | Yön: {side}")
+                print(f"🚀 [ISLEM ACILDI] {sym} | Skor: {score} | Yön: {side}", flush=True)
 
             self.save_state()
+        
+        print(f"✅ [{time.strftime('%H:%M:%S')}] Tarama Bitti. Aktif Pozisyon: {len(self.state['active_positions'])} | Kasa: ${self.get_total_equity():.2f}\n", flush=True)
 
 if __name__ == "__main__":
     engine = HeadlessFuturesEngine()
-    print("🤖 Futures Bot Engine 7/24 Kesintisiz Modda Baslatildi...")
+    print("🤖 Futures Bot Engine 7/24 Kesintisiz Modda Baslatildi...", flush=True)
     while True:
         try:
             engine.run_cycle()
         except Exception as e:
-            print(f"Döngü Hatasi: {e}")
+            print(f"Döngü Hatasi: {e}", flush=True)
         time.sleep(10)
