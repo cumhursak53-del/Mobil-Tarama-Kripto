@@ -9,9 +9,7 @@ from curl_cffi import requests as curl_requests
 STATE_FILE = "durum.json"
 MAX_POSITIONS_PER_LEDGER = 2
 LEVERAGE = 10
-
 TRAILING_ACTIVATION_ROE = 10.0
-TRAILING_CALLBACK_PCT = 1.5
 
 GITHUB_REPO = "cumhursak53-del/Mobil-Tarama-Krypto"
 GITHUB_FILE_PATH = "durum.json"
@@ -125,7 +123,6 @@ class HeadlessFuturesEngine:
             self.state["signal_date"] = today_str
             add_log("📅 Yeni Gün: Sinyal Geçmişi Sıfırlandı.")
 
-        # Otomatik Kasa Onarımı (Hata Önleyici)
         if "ledgers" not in self.state: self.state["ledgers"] = {}
         for k in DEFAULT_LEDGERS:
             if k not in self.state["ledgers"]: self.state["ledgers"][k] = 100.0
@@ -140,7 +137,6 @@ class HeadlessFuturesEngine:
 
         state_changed = False
         
-        # --- POZİSYON YÖNETİMİ & MFE/MAE TAKİBİ ---
         for symbol in list(self.state.get("active_positions", {}).keys()):
             pos = self.state["active_positions"][symbol]
             curr_price = self.live_prices.get(symbol, pos["entry_price"])
@@ -157,19 +153,24 @@ class HeadlessFuturesEngine:
             peak = pos.get("peak_price", entry)
             is_trailing = pos.get("trailing_active", False)
 
+            # Dinamik Geri Çekilme (ATR Tabanlı) - %0.8 ile %4.0 arasında sınırlandırılmış
+            pos_atr = pos.get("atr", curr_price * 0.01)
+            dynamic_callback_pct = (pos_atr / curr_price) * 100 * 1.5
+            dynamic_callback_pct = max(0.8, min(dynamic_callback_pct, 4.0))
+
             if side == "BUY":
                 if curr_price > peak: pos["peak_price"] = curr_price; peak = curr_price
                 if not is_trailing and curr_roe >= TRAILING_ACTIVATION_ROE:
                     pos["trailing_active"] = True; is_trailing = True
-                if is_trailing and curr_price <= peak * (1 - (TRAILING_CALLBACK_PCT / 100)):
-                    should_close, close_reason = True, f"🏹 Trailing Stop (%{curr_roe:.1f})"
+                if is_trailing and curr_price <= peak * (1 - (dynamic_callback_pct / 100)):
+                    should_close, close_reason = True, f"🏹 Dinamik Trailing (%{curr_roe:.1f})"
                 elif curr_price <= pos["sl_price"]: should_close, close_reason = True, "🛑 Stop Loss"
             else:
                 if peak == entry or curr_price < peak: pos["peak_price"] = curr_price; peak = curr_price
                 if not is_trailing and curr_roe >= TRAILING_ACTIVATION_ROE:
                     pos["trailing_active"] = True; is_trailing = True
-                if is_trailing and curr_price >= peak * (1 + (TRAILING_CALLBACK_PCT / 100)):
-                    should_close, close_reason = True, f"🏹 Trailing Stop (%{curr_roe:.1f})"
+                if is_trailing and curr_price >= peak * (1 + (dynamic_callback_pct / 100)):
+                    should_close, close_reason = True, f"🏹 Dinamik Trailing (%{curr_roe:.1f})"
                 elif curr_price >= pos["sl_price"]: should_close, close_reason = True, "🛑 Stop Loss"
 
             if should_close:
@@ -189,7 +190,6 @@ class HeadlessFuturesEngine:
                 state_changed = True
                 add_log(f"🎯 [KAPANDI] {symbol} | Kasa: {ledger_name} | Net PnL: ${net_pnl:+.2f}")
 
-        # --- 8 STRATEJİ MOTORU ---
         candidate_pool = []
         ledger_counts = {k: 0 for k in DEFAULT_LEDGERS}
         for pos in self.state.get("active_positions", {}).values():
@@ -244,7 +244,7 @@ class HeadlessFuturesEngine:
             self.state["active_positions"][sym] = {
                 "side": side, "entry_price": c["close"], "current_price": c["close"], "sl_price": sl_price,
                 "max_reached_price": c["close"], "min_reached_price": c["close"],
-                "margin": margin_per_trade, "strategy": strat, "ledger_name": ledger,
+                "margin": margin_per_trade, "strategy": strat, "ledger_name": ledger, "atr": atr,
                 "entry_time": time.strftime("%Y-%m-%d %H:%M:%S"), "peak_price": c["close"], "trailing_active": False
             }
             ledger_counts[ledger] += 1
