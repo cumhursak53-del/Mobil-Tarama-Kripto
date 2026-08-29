@@ -8,7 +8,6 @@ st.set_page_config(page_title="Kurumsal MTF Bot", page_icon="🤖", layout="wide
 
 @st.cache_data(ttl=5)
 def fetch_data():
-    # 1. Öncelik: Doğrudan Canlı Render Sunucusundan Çek
     try:
         res = requests.get("https://mobil-tarama-kripto.onrender.com", timeout=3)
         if res.status_code == 200:
@@ -16,7 +15,6 @@ def fetch_data():
     except:
         pass
         
-    # 2. Öncelik: Aynı sunucu içindeyse yerel API'den çek
     try:
         res = requests.get("http://127.0.0.1:10000", timeout=2)
         if res.status_code == 200:
@@ -24,7 +22,6 @@ def fetch_data():
     except:
         pass
     
-    # 3. Öncelik: GitHub Kalıcı Hafızasından (Raw API) Çek
     try:
         headers = {
             "Authorization": "token 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", 
@@ -36,7 +33,6 @@ def fetch_data():
     except:
         pass
 
-    # 4. Son Çare: Klasördeki eski dosyayı oku
     if os.path.exists("durum.json"):
         try:
             with open("durum.json", "r", encoding="utf-8") as f:
@@ -60,7 +56,6 @@ logs = data.get("engine_logs", [])
 
 st.title("🤖 Kurumsal Kripto Fon Yönetimi")
 
-# Sekmeler
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "💰 Kasa Özeti", 
     f"🟢 Aktif İşlemler ({len(active_pos)})", 
@@ -90,22 +85,52 @@ with tab1:
         st.info("Kasa verisi henüz oluşmadı.")
 
 with tab2:
-    st.subheader("Açık Pozisyonlar ve Derinlik (MFE/MAE) Takibi")
+    st.subheader("Açık Pozisyonlar ve Anlık Kâr/Zarar Takibi")
     if active_pos:
         df_active = []
         for sym, pos in active_pos.items():
+            entry = pos['entry_price']
+            curr = pos.get('current_price', entry)
+            side = pos['side']
+            margin = pos['margin']
+            leverage = 10
+            
+            ratio = (curr - entry) / entry if side == "BUY" else (entry - curr) / entry
+            roe_pct = ratio * leverage * 100
+            pnl_usd = margin * leverage * ratio
+            
+            target_roe = 10.0
+            if side == "BUY":
+                target_price = entry * (1 + (target_roe / (100 * leverage)))
+            else:
+                target_price = entry * (1 - (target_roe / (100 * leverage)))
+
             df_active.append({
                 "Coin": sym,
-                "Yön": "🟩 LONG" if pos["side"] == "BUY" else "🟥 SHORT",
+                "Yön": "🟩 LONG" if side == "BUY" else "🟥 SHORT",
                 "Kasa": pos.get("ledger_name", "-").replace("Kasa_", "").replace("_", " "),
                 "Strateji": pos.get("strategy", "-").replace("[STRAT: ", "").replace("]", ""),
-                "Giriş Fiyatı": f"${pos['entry_price']:.4f}",
-                "Anlık Fiyat": f"${pos.get('current_price', pos['entry_price']):.4f}",
-                "MFE (Zirve Kâr)": f"${pos.get('max_reached_price', pos['entry_price']):.4f}",
-                "MAE (Dip Zarar)": f"${pos.get('min_reached_price', pos['entry_price']):.4f}",
-                "Marjin": f"${pos['margin']:.2f}",
+                "Marjin": f"${margin:.2f}",
+                "Giriş Fiyatı": f"${entry:.4f}",
+                "Hedef (Trailing Başlangıcı)": f"${target_price:.4f}",
+                "Anlık Fiyat": f"${curr:.4f}",
+                "Anlık ROE (%)": f"%{roe_pct:.2f}",
+                "Anlık PnL ($)": f"${pnl_usd:.2f}",
+                "MFE (Zirve Kâr)": f"${pos.get('max_reached_price', entry):.4f}",
+                "MAE (Dip Zarar)": f"${pos.get('min_reached_price', entry):.4f}"
             })
-        st.dataframe(pd.DataFrame(df_active), use_container_width=True)
+            
+        df = pd.DataFrame(df_active)
+        
+        def color_active_pnl(val):
+            try:
+                val_float = float(val.replace('$', '').replace('%', ''))
+                color = '#00FF00' if val_float > 0 else ('#FF0000' if val_float < 0 else 'white')
+            except:
+                color = 'white'
+            return f'color: {color}'
+            
+        st.dataframe(df.style.map(color_active_pnl, subset=['Anlık ROE (%)', 'Anlık PnL ($)']), use_container_width=True)
     else:
         st.success("Şu an açık pozisyon bulunmuyor. Sistem pusu modunda.")
 
