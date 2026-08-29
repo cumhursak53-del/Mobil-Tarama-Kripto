@@ -20,6 +20,7 @@ GITHUB_TOKEN = "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"
 
 EXCLUDED_SYMBOLS = ["USDCUSDT", "FDUSDUSDT", "USDPUSDT", "BTCDOMUSDT", "DEFIUSDT", "UBERUSDT"]
 ENGINE_LOGS = []
+DEFAULT_LEDGERS = ["Kasa_1_Momentum", "Kasa_2_SMC_PA", "Kasa_3_MTF_Swing", "Kasa_4_MTF_Scalp", "Kasa_5_Squeeze", "Kasa_6_VWAP", "Kasa_7_GoreceliGuc", "Kasa_8_Oturum"]
 
 def add_log(msg: str):
     timestamp = time.strftime("%H:%M:%S")
@@ -82,7 +83,7 @@ class HeadlessFuturesEngine:
             try:
                 with open(STATE_FILE, "r") as f: return json.load(f)
             except: pass
-        return {"ledgers": {}, "active_positions": {}, "history": [], "signal_log": {}, "signal_date": ""}
+        return {"ledgers": {k: 100.0 for k in DEFAULT_LEDGERS}, "active_positions": {}, "history": [], "signal_log": {}, "signal_date": ""}
 
     def save_state(self, sync_github=True):
         with open(STATE_FILE, "w") as f: json.dump(self.state, f, indent=4)
@@ -124,6 +125,11 @@ class HeadlessFuturesEngine:
             self.state["signal_date"] = today_str
             add_log("📅 Yeni Gün: Sinyal Geçmişi Sıfırlandı.")
 
+        # Otomatik Kasa Onarımı (Hata Önleyici)
+        if "ledgers" not in self.state: self.state["ledgers"] = {}
+        for k in DEFAULT_LEDGERS:
+            if k not in self.state["ledgers"]: self.state["ledgers"][k] = 100.0
+
         tv_data = self.fetch_tv_multi_timeframe()
         if not tv_data: return
 
@@ -135,12 +141,11 @@ class HeadlessFuturesEngine:
         state_changed = False
         
         # --- POZİSYON YÖNETİMİ & MFE/MAE TAKİBİ ---
-        for symbol in list(self.state["active_positions"].keys()):
+        for symbol in list(self.state.get("active_positions", {}).keys()):
             pos = self.state["active_positions"][symbol]
             curr_price = self.live_prices.get(symbol, pos["entry_price"])
             pos["current_price"] = curr_price
             
-            # MFE ve MAE Güncellemesi
             pos["max_reached_price"] = max(pos.get("max_reached_price", curr_price), curr_price)
             pos["min_reached_price"] = min(pos.get("min_reached_price", curr_price), curr_price)
 
@@ -169,7 +174,7 @@ class HeadlessFuturesEngine:
 
             if should_close:
                 pnl = margin * LEVERAGE * ratio
-                net_pnl = pnl - (margin * LEVERAGE * 0.001) # Komisyon simülasyonu
+                net_pnl = pnl - (margin * LEVERAGE * 0.001)
                 ledger_name = pos.get("ledger_name", "Kasa_1_Momentum")
                 self.state["ledgers"][ledger_name] += max(margin + net_pnl, 0)
                 
@@ -186,49 +191,34 @@ class HeadlessFuturesEngine:
 
         # --- 8 STRATEJİ MOTORU ---
         candidate_pool = []
-        ledger_counts = {k: 0 for k in self.state["ledgers"].keys()}
-        for pos in self.state["active_positions"].values():
-            ledger_counts[pos.get("ledger_name")] += 1
+        ledger_counts = {k: 0 for k in DEFAULT_LEDGERS}
+        for pos in self.state.get("active_positions", {}).values():
+            ln = pos.get("ledger_name")
+            if ln in ledger_counts: ledger_counts[ln] += 1
 
         for sym, c in tv_data.items():
             if c["close"] == 0 or c["sma20"] == 0: continue
             vol_ratio = c["vol_curr"] / c["vol_prev"] if c["vol_prev"] > 0 else 1.0
             bb_width = (c["bb_upper"] - c["bb_lower"]) / c["sma20"]
             
-            # 1. Kasa: Momentum
             if bb_width < 0.02 and c["close"] > c["bb_upper"] and vol_ratio > 2.0:
                 candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_1_Momentum", "strat": "[STRAT: Squeeze_Breakout]", "c": c})
-            
-            # 2. Kasa: SMC (Likidite Avı Proxy - Pinbar)
             if c["low15"] < (c["close"] * 0.99) and c["close"] > c["vwap"] and c["rsi"] < 40:
                 candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_2_SMC_PA", "strat": "[STRAT: Liquidity_Sweep_Long]", "c": c})
-                
-            # 3. Kasa: MTF Swing (1D/4h/15m Uyumlu)
             if c["close240"] > c["sma50_240"] and c["close60"] > c["sma50_60"] and c["close"] > c["sma20"] and c["adx"] > 25:
                 candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_3_MTF_Swing", "strat": "[STRAT: MTF_Macro_Trend]", "c": c})
-                
-            # 4. Kasa: MTF Scalp (Zıt Yönlü)
             if c["close240"] > c["sma50_240"] and c["close"] < c["sma20"] and c["rsi"] > 70:
                 candidate_pool.append({"sym": sym, "side": "SELL", "ledger": "Kasa_4_MTF_Scalp", "strat": "[STRAT: Pullback_Scalp_Short]", "c": c})
-                
-            # 5. Kasa: Fonlama / Squeeze
             if c["funding"] <= -0.05 and vol_ratio > 1.5 and c["close"] > c["vwap"]:
                 candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_5_Squeeze", "strat": "[STRAT: Short_Squeeze_Hunter]", "c": c})
-                
-            # 6. Kasa: VWAP Reversion
             if c["close"] < c["vwap"] * 0.97 and c["rsi"] < 30:
                 candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_6_VWAP", "strat": "[STRAT: VWAP_Mean_Reversion]", "c": c})
-                
-            # 7. Kasa: Göreceli Güç (Hacimli ADX)
             if c["adx"] > 35 and vol_ratio > 2.5 and c["rsi"] > 60:
                 candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_7_GoreceliGuc", "strat": "[STRAT: Strong_Divergence]", "c": c})
-
-            # 8. Kasa: Oturum Kırılımı
             if c["atr"] < (c["close"] * 0.005) and vol_ratio > 3.0:
                 side = "BUY" if c["close"] > c["sma20"] else "SELL"
                 candidate_pool.append({"sym": sym, "side": side, "ledger": "Kasa_8_Oturum", "strat": "[STRAT: Session_Volatility_Breakout]", "c": c})
 
-        # Sinyal Günlüğü Kaydı (Günde 1 sıfırlanır)
         for cand in candidate_pool:
             sym = cand["sym"]
             if sym not in self.state["signal_log"]:
@@ -238,14 +228,13 @@ class HeadlessFuturesEngine:
                 self.state["signal_log"][sym]["strategies"].append(cand["strat"])
             state_changed = True
 
-        # İşlem Açılış Onayı
         for cand in candidate_pool:
             sym, ledger, side, strat, c = cand["sym"], cand["ledger"], cand["side"], cand["strat"], cand["c"]
-            if sym in self.state["active_positions"] or sym in self.cooldown_tracker: continue
-            if ledger_counts[ledger] >= MAX_POSITIONS_PER_LEDGER: continue
+            if sym in self.state.get("active_positions", {}) or sym in self.cooldown_tracker: continue
+            if ledger_counts.get(ledger, 0) >= MAX_POSITIONS_PER_LEDGER: continue
             
-            ledger_balance = self.state["ledgers"][ledger]
-            if ledger_balance < 10: continue # Kasa iflas koruması
+            ledger_balance = self.state["ledgers"].get(ledger, 0)
+            if ledger_balance < 10: continue
 
             margin_per_trade = ledger_balance / MAX_POSITIONS_PER_LEDGER
             atr = c["atr"] if c["atr"] > 0 else c["close"] * 0.01
@@ -264,8 +253,8 @@ class HeadlessFuturesEngine:
             add_log(f"🚀 [YENİ İŞLEM] {sym} | {strat} | Kasa: {ledger}")
 
         self.save_state(sync_github=state_changed)
-        total_funds = sum(self.state["ledgers"].values()) + sum(p["margin"] for p in self.state["active_positions"].values())
-        add_log(f"✅ Tarama Bitti. Aktif: {len(self.state['active_positions'])} | Toplam Fon: ${total_funds:.2f}")
+        total_funds = sum(self.state["ledgers"].values()) + sum(p["margin"] for p in self.state.get("active_positions", {}).values())
+        add_log(f"✅ Tarama Bitti. Aktif: {len(self.state.get('active_positions', {}))} | Toplam Fon: ${total_funds:.2f}")
 
 if __name__ == "__main__":
     engine = HeadlessFuturesEngine()
