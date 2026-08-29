@@ -6,29 +6,50 @@ import requests
 
 st.set_page_config(page_title="Kurumsal MTF Bot", page_icon="🤖", layout="wide")
 
-API_URL = "http://127.0.0.1:10000"
-
 @st.cache_data(ttl=5)
 def fetch_data():
+    # 1. Öncelik: Doğrudan Canlı Render Sunucusundan Çek
     try:
-        res = requests.get(API_URL, timeout=3)
+        res = requests.get("https://mobil-tarama-kripto.onrender.com", timeout=3)
+        if res.status_code == 200:
+            return res.json()
+    except:
+        pass
+        
+    # 2. Öncelik: Aynı sunucu içindeyse yerel API'den çek
+    try:
+        res = requests.get("http://127.0.0.1:10000", timeout=2)
         if res.status_code == 200:
             return res.json()
     except:
         pass
     
+    # 3. Öncelik: GitHub Kalıcı Hafızasından (Raw API) Çek
+    try:
+        headers = {
+            "Authorization": "token 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", 
+            "Accept": "application/vnd.github.v3.raw"
+        }
+        res = requests.get("https://api.github.com/repos/cumhursak53-del/Mobil-Tarama-Krypto/contents/durum.json?ref=main", headers=headers, timeout=5)
+        if res.status_code == 200:
+            return json.loads(res.text)
+    except:
+        pass
+
+    # 4. Son Çare: Klasördeki eski dosyayı oku
     if os.path.exists("durum.json"):
         try:
             with open("durum.json", "r", encoding="utf-8") as f:
                 return json.load(f)
         except:
             pass
+            
     return {}
 
 data = fetch_data()
 
 if not data:
-    st.warning("📡 Veri bekleniyor veya durum.json bulunamadı...")
+    st.warning("📡 Canlı sunucuya veya GitHub'a bağlanılıyor, lütfen 10 saniye sonra sayfayı yenileyin...")
     st.stop()
 
 ledgers = data.get("ledgers", {})
@@ -51,7 +72,6 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 with tab1:
     st.subheader("Bölünmüş Kasa (Sub-Ledger) Performansı")
     if ledgers:
-        # Aktif marjinleri kasalara geri ekleyerek toplam fonu bulalım
         total_funds = sum(ledgers.values())
         for pos in active_pos.values():
             total_funds += pos.get("margin", 0)
@@ -93,7 +113,7 @@ with tab3:
     st.subheader("Kapanmış İşlemler (Kâr/Zarar ve Fiyat Sınırları Analizi)")
     if history:
         df_hist = []
-        for h in reversed(history[-50:]): # Son 50 işlem
+        for h in reversed(history[-50:]): 
             df_hist.append({
                 "Tarih": h.get("exit_time", "-"),
                 "Coin": h["symbol"],
@@ -108,7 +128,6 @@ with tab3:
             })
         df = pd.DataFrame(df_hist)
         
-        # PnL'e göre yeşil/kırmızı renklendirme
         def color_pnl(val):
             try:
                 color = '#00FF00' if float(val.replace('$', '')) > 0 else '#FF0000'
