@@ -1,5 +1,4 @@
 import json
-import math
 import os
 import time
 import threading
@@ -8,26 +7,18 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from curl_cffi import requests as curl_requests
 
 STATE_FILE = "durum.json"
-MAX_POSITIONS = 10
+MAX_POSITIONS_PER_LEDGER = 2
 LEVERAGE = 10
-DEFAULT_BALANCE = 100.0
 
 TRAILING_ACTIVATION_ROE = 10.0
-TRAILING_CALLBACK_PCT = 1.2
+TRAILING_CALLBACK_PCT = 1.5
 
-# --- GITHUB OTOMATİK KALICILIK AYARLARI ---
 GITHUB_REPO = "cumhursak53-del/Mobil-Tarama-Krypto"
 GITHUB_FILE_PATH = "durum.json"
 GITHUB_BRANCH = "main"
-
-# DİKKAT: Aşağıdaki alana kendi ghp_ ile başlayan token'ınızı yazın!
 GITHUB_TOKEN = "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"
 
-EXCLUDED_SYMBOLS = [
-    "USDCUSDT", "FDUSDUSDT", "USDPUSDT", "BTCDOMUSDT",
-    "DEFIUSDT", "UBERUSDT", "STXXUSDT", "BIRBUSDT"
-]
-
+EXCLUDED_SYMBOLS = ["USDCUSDT", "FDUSDUSDT", "USDPUSDT", "BTCDOMUSDT", "DEFIUSDT", "UBERUSDT"]
 ENGINE_LOGS = []
 
 def add_log(msg: str):
@@ -35,43 +26,20 @@ def add_log(msg: str):
     formatted = f"[{timestamp}] {msg}"
     print(formatted, flush=True)
     ENGINE_LOGS.append(formatted)
-    if len(ENGINE_LOGS) > 100:
-        ENGINE_LOGS.pop(0)
+    if len(ENGINE_LOGS) > 100: ENGINE_LOGS.pop(0)
 
 def push_state_to_github(data_dict):
-    if not GITHUB_TOKEN or GITHUB_TOKEN == "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN":
-        add_log("⚠️ [UYARI] GITHUB_TOKEN girilmediği için buluta kayıt yapılamıyor!")
-        return
-
     url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{GITHUB_FILE_PATH}"
-    headers = {
-        "Authorization": f"token {GITHUB_TOKEN}",
-        "Accept": "application/vnd.github.v3+json",
-        "User-Agent": "FuturesBot-Engine"
-    }
-
+    headers = {"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json", "User-Agent": "FuturesBot-Engine"}
     try:
         res = curl_requests.get(url + f"?ref={GITHUB_BRANCH}", headers=headers, timeout=8)
         sha = res.json().get("sha", "") if res.status_code == 200 else ""
-
-        content_str = json.dumps(data_dict, indent=4)
-        content_b64 = base64.b64encode(content_str.encode('utf-8')).decode('utf-8')
-
-        payload = {
-            "message": "Auto update state [Bot Engine]",
-            "content": content_b64,
-            "branch": GITHUB_BRANCH
-        }
-        if sha:
-            payload["sha"] = sha
-
-        r = curl_requests.put(url, headers=headers, json=payload, timeout=10)
-        if r.status_code in [200, 201]:
-            add_log("💾 [KALICI KAYIT] Kasa ve Pozisyonlar GitHub'a Başarıyla Kaydedildi.")
-        else:
-            add_log(f"[HATA] GitHub API Reddi: {r.status_code} - {r.text}")
-    except Exception as e:
-        add_log(f"[HATA] GitHub Kayıt Başarısız: {e}")
+        content_b64 = base64.b64encode(json.dumps(data_dict, indent=4).encode('utf-8')).decode('utf-8')
+        payload = {"message": "Auto update state [Bot Engine]", "content": content_b64, "branch": GITHUB_BRANCH}
+        if sha: payload["sha"] = sha
+        curl_requests.put(url, headers=headers, json=payload, timeout=10)
+    except:
+        pass
 
 class APIHandler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -79,25 +47,18 @@ class APIHandler(BaseHTTPRequestHandler):
         self.send_header("Content-type", "application/json")
         self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
-        
-        state_data = {"balance": DEFAULT_BALANCE, "active_positions": {}, "history": [], "signal_log": {}}
+        state_data = {}
         if os.path.exists(STATE_FILE):
             try:
-                with open(STATE_FILE, "r") as f:
-                    state_data = json.load(f)
-            except Exception:
-                pass
-
+                with open(STATE_FILE, "r") as f: state_data = json.load(f)
+            except: pass
         state_data["engine_logs"] = ENGINE_LOGS
         self.wfile.write(json.dumps(state_data).encode('utf-8'))
-
-    def log_message(self, format, *args):
-        return
+    def log_message(self, format, *args): return
 
 def run_dummy_server():
     port = int(os.environ.get("PORT", 10000))
     server = HTTPServer(('0.0.0.0', port), APIHandler)
-    add_log(f"🌐 Render API Canlı Sunucusu {port} Portunda Baslatildi.")
     server.serve_forever()
 
 threading.Thread(target=run_dummy_server, daemon=True).start()
@@ -109,277 +70,207 @@ class HeadlessFuturesEngine:
         self.cooldown_tracker = {}
 
     def load_state(self):
-        if GITHUB_TOKEN and GITHUB_TOKEN != "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN":
-            url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{GITHUB_FILE_PATH}?ref={GITHUB_BRANCH}"
-            headers = {
-                "Authorization": f"token {GITHUB_TOKEN}",
-                "Accept": "application/vnd.github.v3+json",
-                "User-Agent": "FuturesBot-Engine"
-            }
-            try:
-                res = curl_requests.get(url, headers=headers, timeout=8)
-                if res.status_code == 200:
-                    content_b64 = res.json().get("content", "")
-                    if content_b64:
-                        content_str = base64.b64decode(content_b64).decode('utf-8')
-                        data = json.loads(content_str)
-                        if "signal_log" not in data: data["signal_log"] = {}
-                        add_log(f"📥 Hafıza GitHub'dan Yüklendi: {len(data.get('active_positions', {}))} Pozisyon | Bakiye: ${data.get('balance', 100.0):.2f}")
-                        return data
-            except Exception as e:
-                add_log(f"[HATA] Hafıza Yükleme Hatası: {e}")
-
+        url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{GITHUB_FILE_PATH}?ref={GITHUB_BRANCH}"
+        headers = {"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json", "User-Agent": "FuturesBot"}
+        try:
+            res = curl_requests.get(url, headers=headers, timeout=8)
+            if res.status_code == 200:
+                content_b64 = res.json().get("content", "")
+                if content_b64: return json.loads(base64.b64decode(content_b64).decode('utf-8'))
+        except: pass
         if os.path.exists(STATE_FILE):
             try:
-                with open(STATE_FILE, "r") as f:
-                    data = json.load(f)
-                    if "signal_log" not in data: data["signal_log"] = {}
-                    return data
-            except Exception:
-                pass
-        return {"balance": DEFAULT_BALANCE, "active_positions": {}, "history": [], "signal_log": {}}
+                with open(STATE_FILE, "r") as f: return json.load(f)
+            except: pass
+        return {"ledgers": {}, "active_positions": {}, "history": [], "signal_log": {}, "signal_date": ""}
 
     def save_state(self, sync_github=True):
-        with open(STATE_FILE, "w") as f:
-            json.dump(self.state, f, indent=4)
-        if sync_github:
-            push_state_to_github(self.state)
+        with open(STATE_FILE, "w") as f: json.dump(self.state, f, indent=4)
+        if sync_github: push_state_to_github(self.state)
 
-    def get_total_equity(self):
-        allocated_margin = sum(pos["margin"] for pos in self.state["active_positions"].values())
-        return self.state["balance"] + allocated_margin
-
-    def get_binance_futures_symbols(self) -> list:
-        url = "https://fapi.binance.com/fapi/v1/exchangeInfo"
-        try:
-            res = curl_requests.get(url, impersonate="chrome120", timeout=8)
-            if res.status_code == 200:
-                data = res.json()
-                return [
-                    s["symbol"] for s in data["symbols"]
-                    if s.get("quoteAsset") == "USDT"
-                    and s.get("contractType") == "PERPETUAL"
-                    and s.get("status") == "TRADING"
-                    and s["symbol"] not in EXCLUDED_SYMBOLS
-                ]
-            return []
-        except Exception:
-            return []
-
-    def fetch_tv_15m_technical_data(self, valid_symbols: list) -> dict:
+    def fetch_tv_multi_timeframe(self) -> dict:
         url = "https://scanner.tradingview.com/crypto/scan"
         payload = {
-            "filter": [
-                {"left": "exchange", "operation": "equal", "right": "BINANCE"},
-                {"left": "name", "operation": "match", "right": "USDT.P$"}
-            ],
+            "filter": [{"left": "exchange", "operation": "equal", "right": "BINANCE"}, {"left": "name", "operation": "match", "right": "USDT.P$"}],
             "options": {"active_symbols_only": True},
-            "columns": [
-                "name", "close|15", "RSI|15", "BB.upper|15", "BB.lower|15",
-                "SMA20|15", "High.20|15", "Low.20|15", "funding_rate|15",
-                "EMA9|15", "EMA21|15", "SMA50|15", "volume|15", "volume|15[1]"
-            ],
+            "columns": ["name", "close|15", "RSI|15", "BB.upper|15", "BB.lower|15", "SMA20|15", "funding_rate|15", "volume|15", "volume|15[1]", "VWAP|15", "ADX|15", "ATR|15", "close|60", "SMA50|60", "close|240", "SMA50|240", "high|15", "low|15"],
             "sort": {"sortBy": "volume|15", "sortOrder": "desc"},
-            "range": [0, 600]
+            "range": [0, 500]
         }
         try:
             res = curl_requests.post(url, json=payload, impersonate="chrome120", timeout=15)
             result_map = {}
             if res.status_code == 200:
-                results = res.json().get("data", [])
-                for item in results:
+                for item in res.json().get("data", []):
                     d = item.get("d", [])
-                    if len(d) >= 14:
-                        symbol = d[0].replace(".P", "")
-                        if valid_symbols and symbol not in valid_symbols: continue
-                        close = d[1] or 0.0
-                        rsi = d[2] or 50.0
-                        bb_upper = d[3] or close
-                        bb_lower = d[4] or close
-                        sma20 = d[5] or close
-                        high20 = d[6] or close
-                        low20 = d[7] or close
-                        funding_rate = (d[8] or 0.0) * 100
-                        ema9 = d[9] or close
-                        ema21 = d[10] or close
-                        sma50 = d[11] or close
-                        vol_curr = d[12] or 1.0
-                        vol_prev = d[13] or 1.0
-                        vol_ratio = vol_curr / vol_prev if vol_prev > 0 else 1.0
-                        result_map[symbol] = {
-                            "symbol": symbol, "close": close, "rsi": rsi,
-                            "bb_upper": bb_upper, "bb_lower": bb_lower, "sma20": sma20,
-                            "high20": high20, "low20": low20, "funding_rate": funding_rate,
-                            "ema9": ema9, "ema21": ema21, "sma50": sma50, "vol_ratio": vol_ratio
+                    if len(d) >= 18:
+                        sym = d[0].replace(".P", "")
+                        if sym in EXCLUDED_SYMBOLS: continue
+                        result_map[sym] = {
+                            "close": d[1] or 0.0, "rsi": d[2] or 50.0, "bb_upper": d[3] or 0.0, "bb_lower": d[4] or 0.0,
+                            "sma20": d[5] or 0.0, "funding": (d[6] or 0.0) * 100, "vol_curr": d[7] or 1.0, "vol_prev": d[8] or 1.0,
+                            "vwap": d[9] or 0.0, "adx": d[10] or 0.0, "atr": d[11] or 0.0, "close60": d[12] or 0.0,
+                            "sma50_60": d[13] or 0.0, "close240": d[14] or 0.0, "sma50_240": d[15] or 0.0, "high15": d[16] or 0.0, "low15": d[17] or 0.0
                         }
                 return result_map
             return {}
-        except Exception as e:
-            add_log(f"[HATA] TV Veri Hatasi: {e}")
-            return {}
+        except: return {}
 
     def run_cycle(self):
-        add_log("🔍 15m Piyasa Taraması Başlatıldı...")
-        binance_symbols = self.get_binance_futures_symbols()
-        tv_data_map = self.fetch_tv_15m_technical_data(binance_symbols)
-        if not tv_data_map: return
+        add_log("🔍 MTF Piyasa Taraması Başlatıldı...")
+        today_str = time.strftime("%Y-%m-%d")
+        if self.state.get("signal_date") != today_str:
+            self.state["signal_log"] = {}
+            self.state["signal_date"] = today_str
+            add_log("📅 Yeni Gün: Sinyal Geçmişi Sıfırlandı.")
 
-        for sym, coin in tv_data_map.items():
-            self.live_prices[sym] = coin["close"]
+        tv_data = self.fetch_tv_multi_timeframe()
+        if not tv_data: return
 
+        for sym, c in tv_data.items(): self.live_prices[sym] = c["close"]
         for sym in list(self.cooldown_tracker.keys()):
             self.cooldown_tracker[sym] -= 1
             if self.cooldown_tracker[sym] <= 0: del self.cooldown_tracker[sym]
 
         state_changed = False
-        active_syms = list(self.state["active_positions"].keys())
-        for symbol in active_syms:
-            pos = self.state["active_positions"].get(symbol)
-            if not pos: continue
-            current_price = self.live_prices.get(symbol, pos["entry_price"])
-            pos["current_price"] = current_price
+        
+        # --- POZİSYON YÖNETİMİ & MFE/MAE TAKİBİ ---
+        for symbol in list(self.state["active_positions"].keys()):
+            pos = self.state["active_positions"][symbol]
+            curr_price = self.live_prices.get(symbol, pos["entry_price"])
+            pos["current_price"] = curr_price
             
+            # MFE ve MAE Güncellemesi
+            pos["max_reached_price"] = max(pos.get("max_reached_price", curr_price), curr_price)
+            pos["min_reached_price"] = min(pos.get("min_reached_price", curr_price), curr_price)
+
             entry, side, margin = pos["entry_price"], pos["side"], pos["margin"]
-            ratio = (current_price - entry) / entry if side == "BUY" else (entry - current_price) / entry
-            current_roe = ratio * LEVERAGE * 100
+            ratio = (curr_price - entry) / entry if side == "BUY" else (entry - curr_price) / entry
+            curr_roe = ratio * LEVERAGE * 100
 
             should_close, close_reason = False, ""
-            peak_price = pos.get("peak_price", entry)
+            peak = pos.get("peak_price", entry)
             is_trailing = pos.get("trailing_active", False)
 
             if side == "BUY":
-                if current_price > peak_price:
-                    pos["peak_price"] = current_price
-                    peak_price = current_price
-                if not is_trailing and current_roe >= TRAILING_ACTIVATION_ROE:
+                if curr_price > peak: pos["peak_price"] = curr_price; peak = curr_price
+                if not is_trailing and curr_roe >= TRAILING_ACTIVATION_ROE:
                     pos["trailing_active"] = True; is_trailing = True
-                    add_log(f"🔥 [TRAILING STOPE GİRDİ] {symbol} | ROE: %{current_roe:.1f}")
-                if is_trailing:
-                    if current_price <= peak_price * (1 - (TRAILING_CALLBACK_PCT / 100)):
-                        should_close, close_reason = True, f"🏹 Trailing Stop (%{current_roe:.1f})"
-                else:
-                    if current_price <= pos["sl_price"]: should_close, close_reason = True, "🛑 Stop Loss"
-
-            elif side == "SELL":
-                if peak_price == entry or current_price < peak_price:
-                    pos["peak_price"] = current_price
-                    peak_price = current_price
-                if not is_trailing and current_roe >= TRAILING_ACTIVATION_ROE:
+                if is_trailing and curr_price <= peak * (1 - (TRAILING_CALLBACK_PCT / 100)):
+                    should_close, close_reason = True, f"🏹 Trailing Stop (%{curr_roe:.1f})"
+                elif curr_price <= pos["sl_price"]: should_close, close_reason = True, "🛑 Stop Loss"
+            else:
+                if peak == entry or curr_price < peak: pos["peak_price"] = curr_price; peak = curr_price
+                if not is_trailing and curr_roe >= TRAILING_ACTIVATION_ROE:
                     pos["trailing_active"] = True; is_trailing = True
-                    add_log(f"🔥 [TRAILING STOPE GİRDİ] {symbol} | ROE: %{current_roe:.1f}")
-                if is_trailing:
-                    if current_price >= peak_price * (1 + (TRAILING_CALLBACK_PCT / 100)):
-                        should_close, close_reason = True, f"🏹 Trailing Stop (%{current_roe:.1f})"
-                else:
-                    if current_price >= pos["sl_price"]: should_close, close_reason = True, "🛑 Stop Loss"
+                if is_trailing and curr_price >= peak * (1 + (TRAILING_CALLBACK_PCT / 100)):
+                    should_close, close_reason = True, f"🏹 Trailing Stop (%{curr_roe:.1f})"
+                elif curr_price >= pos["sl_price"]: should_close, close_reason = True, "🛑 Stop Loss"
 
             if should_close:
                 pnl = margin * LEVERAGE * ratio
-                self.state["balance"] += max(margin + pnl, 0)
+                net_pnl = pnl - (margin * LEVERAGE * 0.001) # Komisyon simülasyonu
+                ledger_name = pos.get("ledger_name", "Kasa_1_Momentum")
+                self.state["ledgers"][ledger_name] += max(margin + net_pnl, 0)
+                
                 self.state["history"].append({
-                    "symbol": symbol, "side": side, "entry_score": pos.get("entry_score", 0),
-                    "strategies": pos.get("strategies", "-"), "entry": entry, "exit": current_price,
-                    "pnl": pnl, "close_reason": close_reason, "new_balance": self.get_total_equity(),
-                    "entry_time": pos.get("entry_time", "-"), "exit_time": time.strftime("%Y-%m-%d %H:%M:%S")
+                    "symbol": symbol, "side": side, "strategy": pos.get("strategy", "-"),
+                    "entry": entry, "exit": curr_price, "pnl": net_pnl, "close_reason": close_reason,
+                    "mfe_price": pos["max_reached_price"], "mae_price": pos["min_reached_price"],
+                    "ledger": ledger_name, "exit_time": time.strftime("%Y-%m-%d %H:%M:%S")
                 })
                 del self.state["active_positions"][symbol]
                 self.cooldown_tracker[symbol] = 6
                 state_changed = True
-                add_log(f"🎯 [KAPANDI] {symbol} | PnL: ${pnl:+.2f} | Neden: {close_reason}")
+                add_log(f"🎯 [KAPANDI] {symbol} | Kasa: {ledger_name} | Net PnL: ${net_pnl:+.2f}")
 
+        # --- 8 STRATEJİ MOTORU ---
         candidate_pool = []
-        for symbol, coin in tv_data_map.items():
-            close, rsi, bb_upper, bb_lower = coin["close"], coin["rsi"], coin["bb_upper"], coin["bb_lower"]
-            sma20, high20, low20, funding_rate = coin["sma20"], coin["high20"], coin["low20"], coin["funding_rate"]
-            ema9, ema21, sma50, vol_ratio = coin["ema9"], coin["ema21"], coin["sma50"], coin["vol_ratio"]
+        ledger_counts = {k: 0 for k in self.state["ledgers"].keys()}
+        for pos in self.state["active_positions"].values():
+            ledger_counts[pos.get("ledger_name")] += 1
 
-            if close == 0 or sma20 == 0: continue
-            bb_width = (bb_upper - bb_lower) / sma20
-            atr_est = abs(bb_upper - bb_lower) / 2
-            score, trig_strategies = 0, []
+        for sym, c in tv_data.items():
+            if c["close"] == 0 or c["sma20"] == 0: continue
+            vol_ratio = c["vol_curr"] / c["vol_prev"] if c["vol_prev"] > 0 else 1.0
+            bb_width = (c["bb_upper"] - c["bb_lower"]) / c["sma20"]
+            
+            # 1. Kasa: Momentum
+            if bb_width < 0.02 and c["close"] > c["bb_upper"] and vol_ratio > 2.0:
+                candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_1_Momentum", "strat": "[STRAT: Squeeze_Breakout]", "c": c})
+            
+            # 2. Kasa: SMC (Likidite Avı Proxy - Pinbar)
+            if c["low15"] < (c["close"] * 0.99) and c["close"] > c["vwap"] and c["rsi"] < 40:
+                candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_2_SMC_PA", "strat": "[STRAT: Liquidity_Sweep_Long]", "c": c})
+                
+            # 3. Kasa: MTF Swing (1D/4h/15m Uyumlu)
+            if c["close240"] > c["sma50_240"] and c["close60"] > c["sma50_60"] and c["close"] > c["sma20"] and c["adx"] > 25:
+                candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_3_MTF_Swing", "strat": "[STRAT: MTF_Macro_Trend]", "c": c})
+                
+            # 4. Kasa: MTF Scalp (Zıt Yönlü)
+            if c["close240"] > c["sma50_240"] and c["close"] < c["sma20"] and c["rsi"] > 70:
+                candidate_pool.append({"sym": sym, "side": "SELL", "ledger": "Kasa_4_MTF_Scalp", "strat": "[STRAT: Pullback_Scalp_Short]", "c": c})
+                
+            # 5. Kasa: Fonlama / Squeeze
+            if c["funding"] <= -0.05 and vol_ratio > 1.5 and c["close"] > c["vwap"]:
+                candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_5_Squeeze", "strat": "[STRAT: Short_Squeeze_Hunter]", "c": c})
+                
+            # 6. Kasa: VWAP Reversion
+            if c["close"] < c["vwap"] * 0.97 and c["rsi"] < 30:
+                candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_6_VWAP", "strat": "[STRAT: VWAP_Mean_Reversion]", "c": c})
+                
+            # 7. Kasa: Göreceli Güç (Hacimli ADX)
+            if c["adx"] > 35 and vol_ratio > 2.5 and c["rsi"] > 60:
+                candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_7_GoreceliGuc", "strat": "[STRAT: Strong_Divergence]", "c": c})
 
-            if close >= high20 and rsi > 62 and vol_ratio > 2.2: score += 40; trig_strategies.append("Parabolik Breakout (LONG)")
-            if bb_width < 0.020 and close > bb_upper and vol_ratio > 1.8: score += 35; trig_strategies.append("Bollinger Squeeze (LONG)")
-            if ema9 > ema21 and close > sma50 and vol_ratio > 1.5 and rsi > 58: score += 30; trig_strategies.append("EMA Golden Cross (LONG)")
+            # 8. Kasa: Oturum Kırılımı
+            if c["atr"] < (c["close"] * 0.005) and vol_ratio > 3.0:
+                side = "BUY" if c["close"] > c["sma20"] else "SELL"
+                candidate_pool.append({"sym": sym, "side": side, "ledger": "Kasa_8_Oturum", "strat": "[STRAT: Session_Volatility_Breakout]", "c": c})
 
-            if close <= low20 and rsi < 38 and vol_ratio > 2.2: score -= 40; trig_strategies.append("Parabolik Breakdown (SHORT)")
-            if bb_width < 0.020 and close < bb_lower and vol_ratio > 1.8: score -= 35; trig_strategies.append("Bollinger Squeeze (SHORT)")
-            if ema9 < ema21 and close < sma50 and vol_ratio > 1.5 and rsi < 42: score -= 30; trig_strategies.append("EMA Death Cross (SHORT)")
+        # Sinyal Günlüğü Kaydı (Günde 1 sıfırlanır)
+        for cand in candidate_pool:
+            sym = cand["sym"]
+            if sym not in self.state["signal_log"]:
+                self.state["signal_log"][sym] = {"count": 0, "strategies": []}
+            self.state["signal_log"][sym]["count"] += 1
+            if cand["strat"] not in self.state["signal_log"][sym]["strategies"]:
+                self.state["signal_log"][sym]["strategies"].append(cand["strat"])
+            state_changed = True
 
-            if funding_rate <= -0.03: score += 20
-            elif funding_rate >= 0.03: score -= 20
+        # İşlem Açılış Onayı
+        for cand in candidate_pool:
+            sym, ledger, side, strat, c = cand["sym"], cand["ledger"], cand["side"], cand["strat"], cand["c"]
+            if sym in self.state["active_positions"] or sym in self.cooldown_tracker: continue
+            if ledger_counts[ledger] >= MAX_POSITIONS_PER_LEDGER: continue
+            
+            ledger_balance = self.state["ledgers"][ledger]
+            if ledger_balance < 10: continue # Kasa iflas koruması
 
-            if rsi >= 75:
-                if vol_ratio > 1.8 and close >= high20: score += 20; trig_strategies.append("Güçlü RSI Momentum (LONG)")
-                else: score -= 25; trig_strategies.append("Aşırı Alım Düzeltme (SHORT)")
-            elif rsi <= 25:
-                if vol_ratio > 1.8 and close <= low20: score -= 20; trig_strategies.append("Güçlü Düşüş Momentum (SHORT)")
-                else: score += 25; trig_strategies.append("Aşırı Satım Tepkisi (LONG)")
-
-            if score >= 0:
-                base_tp = max(bb_upper, high20)
-                est_tp_price = close + max(atr_est, close * 0.015) if base_tp <= close else base_tp
-                roe_pct = min(max(((est_tp_price - close) / close) * 100 * LEVERAGE, 8.0), 35.0)
-                est_tp_price = close * (1 + (roe_pct / (100 * LEVERAGE)))
-                est_sl_price = min(bb_lower, close * 0.985)
-            else:
-                base_tp = min(bb_lower, low20)
-                est_tp_price = close - max(atr_est, close * 0.015) if base_tp >= close else base_tp
-                roe_pct = min(max(((close - est_tp_price) / close) * 100 * LEVERAGE, 8.0), 35.0)
-                est_tp_price = close * (1 - (roe_pct / (100 * LEVERAGE)))
-                est_sl_price = max(bb_upper, close * 1.015)
-
-            strat_str = ", ".join(trig_strategies) if trig_strategies else "Teknik Sinyal"
-            is_valid_long = (score >= 85 and roe_pct >= 8.0)
-            is_valid_short = (score <= -85 and roe_pct >= 8.0)
-
-            if is_valid_long or is_valid_short:
-                now_str = time.strftime("%Y-%m-%d %H:%M:%S")
-                if symbol not in self.state["signal_log"]:
-                    self.state["signal_log"][symbol] = {"count": 0, "last_time": "", "last_side": "", "last_score": 0, "last_roe": 0.0, "strategies": ""}
-                self.state["signal_log"][symbol]["count"] += 1
-                self.state["signal_log"][symbol]["last_time"] = now_str
-                self.state["signal_log"][symbol]["last_side"] = "LONG" if is_valid_long else "SHORT"
-                self.state["signal_log"][symbol]["last_score"] = score
-                self.state["signal_log"][symbol]["last_roe"] = roe_pct
-                self.state["signal_log"][symbol]["strategies"] = strat_str
-
-                if symbol not in self.state["active_positions"] and symbol not in self.cooldown_tracker:
-                    candidate_pool.append({
-                        "symbol": symbol, "score": score, "close": close, "roe_pct": roe_pct,
-                        "tp_price": est_tp_price, "sl_price": est_sl_price, "strategies": strat_str
-                    })
-
-        available_slots = MAX_POSITIONS - len(self.state["active_positions"])
-        if candidate_pool and available_slots > 0:
-            candidate_pool.sort(key=lambda x: (abs(x["score"]), x["roe_pct"]), reverse=True)
-            for cand in candidate_pool[:available_slots]:
-                sym, close, score = cand["symbol"], cand["close"], cand["score"]
-                roe_pct, est_tp_price, est_sl_price = cand["roe_pct"], cand["tp_price"], cand["sl_price"]
-                strat_str, now_str = cand["strategies"], time.strftime("%Y-%m-%d %H:%M:%S")
-                margin_per_trade = self.get_total_equity() / MAX_POSITIONS
-                side = "BUY" if score >= 85 else "SELL"
-
-                self.state["balance"] -= margin_per_trade
-                self.state["active_positions"][sym] = {
-                    "side": side, "entry_price": close, "current_price": close, "tp_price": est_tp_price, "sl_price": est_sl_price,
-                    "margin": margin_per_trade, "amount": (margin_per_trade * LEVERAGE) / close,
-                    "entry_score": score, "strategies": strat_str, "entry_time": now_str, "target_roe": roe_pct,
-                    "peak_price": close, "trailing_active": False
-                }
-                self.live_prices[sym] = close
-                state_changed = True
-                add_log(f"🚀 [ISLEM ACILDI] {sym} | Skor: {score} | Yön: {side}")
+            margin_per_trade = ledger_balance / MAX_POSITIONS_PER_LEDGER
+            atr = c["atr"] if c["atr"] > 0 else c["close"] * 0.01
+            sl_price = c["close"] - (atr * 1.5) if side == "BUY" else c["close"] + (atr * 1.5)
+            
+            self.state["ledgers"][ledger] -= margin_per_trade
+            self.state["active_positions"][sym] = {
+                "side": side, "entry_price": c["close"], "current_price": c["close"], "sl_price": sl_price,
+                "max_reached_price": c["close"], "min_reached_price": c["close"],
+                "margin": margin_per_trade, "strategy": strat, "ledger_name": ledger,
+                "entry_time": time.strftime("%Y-%m-%d %H:%M:%S"), "peak_price": c["close"], "trailing_active": False
+            }
+            ledger_counts[ledger] += 1
+            self.live_prices[sym] = c["close"]
+            state_changed = True
+            add_log(f"🚀 [YENİ İŞLEM] {sym} | {strat} | Kasa: {ledger}")
 
         self.save_state(sync_github=state_changed)
-        add_log(f"✅ Tarama Bitti. Aktif Pozisyon: {len(self.state['active_positions'])} | Kasa: ${self.get_total_equity():.2f}")
+        total_funds = sum(self.state["ledgers"].values()) + sum(p["margin"] for p in self.state["active_positions"].values())
+        add_log(f"✅ Tarama Bitti. Aktif: {len(self.state['active_positions'])} | Toplam Fon: ${total_funds:.2f}")
 
 if __name__ == "__main__":
     engine = HeadlessFuturesEngine()
-    add_log("🤖 Futures Bot Engine 7/24 Kesintisiz Modda Baslatildi...")
+    add_log("🤖 Kurumsal MTF Engine 8 Kasalı Modda Başlatıldı...")
     while True:
-        try:
-            engine.run_cycle()
-        except Exception as e:
-            add_log(f"Döngü Hatasi: {e}")
+        try: engine.run_cycle()
+        except Exception as e: add_log(f"Döngü Hatası: {e}")
         time.sleep(10)
