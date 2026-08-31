@@ -6,13 +6,13 @@ import base64
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from curl_cffi import requests as curl_requests
 
-STATE_FILE = "durum.json"
+STATE_FILE = "state.json"
 MAX_POSITIONS_PER_LEDGER = 2
 LEVERAGE = 10
 TRAILING_ACTIVATION_ROE = 10.0
 
 GITHUB_REPO = "cumhursak53-del/Mobil-Tarama-Krypto"
-GITHUB_FILE_PATH = "durum.json"
+GITHUB_FILE_PATH = "state.json"
 GITHUB_BRANCH = "main"
 GITHUB_TOKEN = "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"
 
@@ -37,8 +37,8 @@ def push_state_to_github(data_dict):
         payload = {"message": "Auto update state [Bot Engine]", "content": content_b64, "branch": GITHUB_BRANCH}
         if sha: payload["sha"] = sha
         curl_requests.put(url, headers=headers, json=payload, timeout=10)
-    except:
-        pass
+    except Exception as e:
+        add_log(f"GitHub Sync Hatası: {e}")
 
 class APIHandler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -153,7 +153,6 @@ class HeadlessFuturesEngine:
             peak = pos.get("peak_price", entry)
             is_trailing = pos.get("trailing_active", False)
 
-            # Dinamik Geri Çekilme (ATR Tabanlı) - %0.8 ile %4.0 arasında sınırlandırılmış
             pos_atr = pos.get("atr", curr_price * 0.01)
             dynamic_callback_pct = (pos_atr / curr_price) * 100 * 1.5
             dynamic_callback_pct = max(0.8, min(dynamic_callback_pct, 4.0))
