@@ -257,9 +257,9 @@ class HeadlessFuturesEngine:
             body_len = abs(c["close"] - c["open15"])
             is_solid_body = (body_len >= (total_len * 0.60)) if total_len > 0 else False
 
-            # --- KASA 10: BORSA EDİTÖRÜ AVCI MODÜLLERİ ---
-            # Dict key hatasını engellemek için get() güvenliği
+            # Dict key hatasını engellemek için get() güvenliği (Tüm kasalar kullanabilir)
             ema50 = c.get("ema50", 0.0)
+            ema200 = c.get("ema200", 0.0)
             sma20 = c.get("sma20", 0.0)
             macd = c.get("macd", 0.0)
             macd_signal = c.get("macd_signal", 0.0)
@@ -271,7 +271,47 @@ class HeadlessFuturesEngine:
             ichi_spanB = c.get("ichi_spanB", 0.0)
             low_2 = c.get("low_2", c.get("low15", 0.0))
             high_2 = c.get("high_2", c.get("high15", 0.0))
+            vwap = c.get("vwap", 0.0)
+            adx = c.get("adx", 0.0)
 
+            # --- DİĞER KASALAR İÇİN TEMEL STRATEJİLER (Kasa 1 - 9) ---
+            # Kasa 1 Momentum
+            if c["rsi"] > 65 and vol_ratio > 1.5 and c["close"] > sma20:
+                candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_1_Momentum", "strat": "[STRAT: Momentum_Long]", "c": c})
+            
+            # Kasa 2 SMC PA
+            if c["close"] > ema200 and is_solid_body and c["close"] > c["prev_high15"]:
+                candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_2_SMC_PA", "strat": "[STRAT: SMC_Trend_Devami]", "c": c})
+                
+            # Kasa 3 MTF Swing
+            if c["close60"] > c["sma50_60"] and c["close240"] > c["sma50_240"] and c["close"] > ema50:
+                candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_3_MTF_Swing", "strat": "[STRAT: MTF_Swing_Onay]", "c": c})
+                
+            # Kasa 4 MTF Scalp
+            if c["close"] > sma20 and c["rsi"] > 55 and vol_ratio > 1.2:
+                candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_4_MTF_Scalp", "strat": "[STRAT: Scalp_Long]", "c": c})
+                
+            # Kasa 5 Squeeze
+            if bb_width < 0.04 and c["close"] > c["bb_upper"]:
+                candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_5_Squeeze", "strat": "[STRAT: BB_Patlamasi]", "c": c})
+                
+            # Kasa 6 VWAP
+            if c["close"] > vwap and c["prev_close15"] <= vwap:
+                candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_6_VWAP", "strat": "[STRAT: VWAP_Kesisim]", "c": c})
+                
+            # Kasa 7 Göreceli Güç
+            if adx > 25 and c["rsi"] > 60 and c["close"] > sma20:
+                candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_7_GoreceliGuc", "strat": "[STRAT: Trend_Gucu_ADX]", "c": c})
+                
+            # Kasa 8 Oturum
+            if vol_ratio > 2.0 and c["close"] > c["open15"] and c["close"] > ema50:
+                candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_8_Oturum", "strat": "[STRAT: Hacim_Artisi]", "c": c})
+                
+            # Kasa 9 Price Action
+            if c["close"] > c["prev_high15"] and c["low15"] > c["prev_low15"] and c["close"] > sma20:
+                candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_9_PriceAction", "strat": "[STRAT: PA_Yukselen_DipTepe]", "c": c})
+
+            # --- KASA 10: BORSA EDİTÖRÜ AVCI MODÜLLERİ ---
             # Modül 1: Hacimli DÜK (Düşen Kırılımı + Yüksek Hacim)
             if c["close"] > c["prev_high15"] and c["close"] > ema50 and vol_ratio > 2.0 and is_solid_body:
                 candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_10_BorsaEditoru", "strat": "[STRAT: BorsaEd_Hacimli_DUK]", "c": c})
