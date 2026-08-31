@@ -77,10 +77,9 @@ def test_risk_sizer():
     from risk.sizer import size_position
     sized = size_position(ledger_balance=100.0, entry=100.0, sl=98.0)
     assert sized is not None
-    assert sized.risk_usd == 2.0
     assert abs(sized.notional - 100.0) < 1e-6  # 2% of 100 / 2% SL
-    assert sized.leverage <= 10
-    assert sized.margin <= 80.0
+    assert sized.leverage == 10
+    assert abs(sized.margin - 10.0) < 1e-6  # 100 notional / 10x
     too_tight = size_position(ledger_balance=100.0, entry=100.0, sl=100.0)
     assert too_tight is None
 

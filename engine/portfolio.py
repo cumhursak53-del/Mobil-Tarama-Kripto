@@ -138,7 +138,10 @@ class Portfolio:
             peak_price=price,
             current_price=price,
         )
-        self.log(f"YENI {sig.side.value} {symbol} | {sig.strategy} | {sig.ledger} | marjin ${sized.margin:.2f}")
+        self.log(
+            f"YENI {sig.side.value} {symbol} | {sig.strategy} | {sig.ledger} "
+            f"| {sized.leverage:.0f}x | marjin ${sized.margin:.2f} | notional ${sized.notional:.2f}"
+        )
         return True
 
     def mark(self, symbol: str, price: float) -> None:
