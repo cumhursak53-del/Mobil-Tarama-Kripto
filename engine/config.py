@@ -31,7 +31,7 @@ VOLUME_SMA = 20
 ATR_PERIOD = 14
 SCAN_SYMBOLS = int(os.environ.get("SCAN_SYMBOLS", "0"))  # 0 = tum USDT perpetual
 PRICE_POLL_SEC = int(os.environ.get("PRICE_POLL_SEC", "20"))
-GITHUB_REPO = os.environ.get("GITHUB_REPO", "cumhursak53-del/Mobil-Tarama-Krypto")
+GITHUB_REPO = os.environ.get("GITHUB_REPO", "cumhursak53-del/Mobil-Tarama-Kripto")
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 GITHUB_BRANCH = os.environ.get("GITHUB_BRANCH", "main")
 GITHUB_STATE_PATH = os.environ.get("GITHUB_STATE_PATH", "state.json")

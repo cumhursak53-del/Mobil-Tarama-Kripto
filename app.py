@@ -14,8 +14,8 @@ except Exception:
 
 st.set_page_config(page_title="Krpito MTF Canlı Simülasyon", page_icon="📈", layout="wide")
 
-ENGINE_URL = os.environ.get("ENGINE_URL", "").rstrip("/")
-GITHUB_REPO = os.environ.get("GITHUB_REPO", "cumhursak53-del/Mobil-Tarama-Krypto")
+ENGINE_URL = os.environ.get("ENGINE_URL", "https://mobil-tarama-kripto.onrender.com").rstrip("/")
+GITHUB_REPO = os.environ.get("GITHUB_REPO", "cumhursak53-del/Mobil-Tarama-Kripto")
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 GITHUB_BRANCH = os.environ.get("GITHUB_BRANCH", "main")
 STATE_FILE = os.environ.get("STATE_FILE", "state.json")
@@ -40,6 +40,10 @@ def load_data() -> dict:
         if data:
             data["_source"] = f"Render {ENGINE_URL}"
             return data
+    local_api = _get_json("http://127.0.0.1:10000", timeout=2)
+    if local_api:
+        local_api["_source"] = "localhost:10000"
+        return local_api
     if GITHUB_TOKEN and requests is not None:
         url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/state.json?ref={GITHUB_BRANCH}"
         headers = {"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json", "User-Agent": "KrpitoMTF-UI"}
