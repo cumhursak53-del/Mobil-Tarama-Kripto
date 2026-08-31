@@ -3,6 +3,7 @@ import os
 import time
 import threading
 import base64
+from datetime import datetime, timezone, timedelta
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from curl_cffi import requests as curl_requests
 
@@ -24,8 +25,14 @@ DEFAULT_LEDGERS = [
     "Kasa_9_PriceAction", "Kasa_10_BorsaEditoru"
 ]
 
+# Türkiye Saati (UTC+3) Ayarı
+TR_TZ = timezone(timedelta(hours=3))
+
+def get_tr_time(fmt="%Y-%m-%d %H:%M:%S"):
+    return datetime.now(TR_TZ).strftime(fmt)
+
 def add_log(msg: str):
-    timestamp = time.strftime("%H:%M:%S")
+    timestamp = get_tr_time("%H:%M:%S")
     formatted = f"[{timestamp}] {msg}"
     print(formatted, flush=True)
     ENGINE_LOGS.append(formatted)
@@ -138,7 +145,7 @@ class HeadlessFuturesEngine:
 
     def run_cycle(self):
         add_log("🔍 MTF & Borsa Editörü Taraması Başlatıldı...")
-        today_str = time.strftime("%Y-%m-%d")
+        today_str = get_tr_time("%Y-%m-%d")
         if self.state.get("signal_date") != today_str:
             self.state["signal_log"] = {}
             self.state["signal_date"] = today_str
@@ -159,7 +166,7 @@ class HeadlessFuturesEngine:
 
         state_changed = False
         
-        # --- POZİSYON YÖNETİMİ (Değişmedi, Trailing Stop ve TP mantığı aynı) ---
+        # --- POZİSYON YÖNETİMİ ---
         for symbol in list(self.state.get("active_positions", {}).keys()):
             pos = self.state["active_positions"][symbol]
             curr_price = self.live_prices.get(symbol, pos["entry_price"])
@@ -223,8 +230,13 @@ class HeadlessFuturesEngine:
                 self.state["history"].append({
                     "symbol": symbol, "side": side, "strategy": pos.get("strategy", "-"),
                     "entry": entry, "exit": curr_price, "pnl": net_pnl, "close_reason": close_reason,
-                    "ledger": ledger_name, "exit_time": time.strftime("%Y-%m-%d %H:%M:%S")
+                    "ledger": ledger_name, "exit_time": get_tr_time("%Y-%m-%d %H:%M:%S")
                 })
+                
+                # Geçmişi 100 adet işlemle sınırla
+                if len(self.state["history"]) > 100:
+                    self.state["history"] = self.state["history"][-100:]
+                    
                 del self.state["active_positions"][symbol]
                 self.cooldown_tracker[symbol] = 90
                 state_changed = True
@@ -246,16 +258,30 @@ class HeadlessFuturesEngine:
             is_solid_body = (body_len >= (total_len * 0.60)) if total_len > 0 else False
 
             # --- KASA 10: BORSA EDİTÖRÜ AVCI MODÜLLERİ ---
+            # Dict key hatasını engellemek için get() güvenliği
+            ema50 = c.get("ema50", 0.0)
+            sma20 = c.get("sma20", 0.0)
+            macd = c.get("macd", 0.0)
+            macd_signal = c.get("macd_signal", 0.0)
+            stoch_k = c.get("stoch_k", 50.0)
+            stoch_d = c.get("stoch_d", 50.0)
+            ichi_tenkan = c.get("ichi_tenkan", 0.0)
+            ichi_kijun = c.get("ichi_kijun", 0.0)
+            ichi_spanA = c.get("ichi_spanA", 0.0)
+            ichi_spanB = c.get("ichi_spanB", 0.0)
+            low_2 = c.get("low_2", c.get("low15", 0.0))
+            high_2 = c.get("high_2", c.get("high15", 0.0))
+
             # Modül 1: Hacimli DÜK (Düşen Kırılımı + Yüksek Hacim)
-            if c["close"] > c["prev_high15"] and c["close"] > c["ema50"] and vol_ratio > 2.0 and is_solid_body:
+            if c["close"] > c["prev_high15"] and c["close"] > ema50 and vol_ratio > 2.0 and is_solid_body:
                 candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_10_BorsaEditoru", "strat": "[STRAT: BorsaEd_Hacimli_DUK]", "c": c})
 
             # Modül 2: İkili Dip (W Formasyonu - Fiyat dipleri yakın, boyun kırılıyor)
-            if c["low15"] > 0 and c["low_2"] > 0 and abs(c["low15"] - c["low_2"]) / c["low_2"] < 0.005 and c["close"] > c["prev_high15"] and c["rsi"] > 40:
+            if c["low15"] > 0 and low_2 > 0 and abs(c["low15"] - low_2) / low_2 < 0.005 and c["close"] > c["prev_high15"] and c["rsi"] > 40:
                 candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_10_BorsaEditoru", "strat": "[STRAT: BorsaEd_IkiliDip_Long]", "c": c})
 
             # Modül 3: İkili Tepe (M Formasyonu - Fiyat tepeleri yakın, boyun aşağı kırılıyor)
-            if c["high15"] > 0 and c["high_2"] > 0 and abs(c["high15"] - c["high_2"]) / c["high_2"] < 0.005 and c["close"] < c["prev_low15"] and c["rsi"] < 60:
+            if c["high15"] > 0 and high_2 > 0 and abs(c["high15"] - high_2) / high_2 < 0.005 and c["close"] < c["prev_low15"] and c["rsi"] < 60:
                 candidate_pool.append({"sym": sym, "side": "SELL", "ledger": "Kasa_10_BorsaEditoru", "strat": "[STRAT: BorsaEd_CiftTepe_Short]", "c": c})
 
             # Modül 4: RSI Pozitif Uyumsuzluk (Fiyat daha düşük dip yapıyor, RSI yükseliyor)
@@ -267,12 +293,12 @@ class HeadlessFuturesEngine:
                 candidate_pool.append({"sym": sym, "side": "SELL", "ledger": "Kasa_10_BorsaEditoru", "strat": "[STRAT: BorsaEd_RSINegatifUyumsuzluk]", "c": c})
 
             # Modül 6: MACD Al Sinyali (Sıfır hattı altında momentum kesişimi)
-            if c["macd"] > c["macd_signal"] and c["macd"] < 0 and vol_ratio > 1.2 and c["close"] > c["sma20"]:
+            if macd > macd_signal and macd < 0 and vol_ratio > 1.2 and c["close"] > sma20:
                 candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_10_BorsaEditoru", "strat": "[STRAT: BorsaEd_MACD_Kesisim_Long]", "c": c})
 
             # Modül 7: Ichimoku Bulutu Üstü Tenkan & Kijun Golden Cross
-            if c["close"] > c["ichi_spanA"] and c["close"] > c["ichi_spanB"] and c["ichi_spanA"] > c["ichi_spanB"]:
-                if c["ichi_tenkan"] > c["ichi_kijun"] and c["close"] > c["ichi_tenkan"]:
+            if c["close"] > ichi_spanA and c["close"] > ichi_spanB and ichi_spanA > ichi_spanB:
+                if ichi_tenkan > ichi_kijun and c["close"] > ichi_tenkan:
                     candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_10_BorsaEditoru", "strat": "[STRAT: BorsaEd_Ichimoku_GoldenCross]", "c": c})
 
             # Modül 8: Bollinger Bantları Daralması ve Hacimli Kırılım (Squeeze)
@@ -280,11 +306,11 @@ class HeadlessFuturesEngine:
                 candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_10_BorsaEditoru", "strat": "[STRAT: BorsaEd_Bollinger_Daralma_Breakout]", "c": c})
 
             # Modül 9: Stokastik Aşırı Satım Bölgesinden Dönüş (< 20)
-            if c["stoch_k"] > c["stoch_d"] and c["stoch_k"] < 25 and c["close"] > c["sma20"]:
+            if stoch_k > stoch_d and stoch_k < 25 and c["close"] > sma20:
                 candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_10_BorsaEditoru", "strat": "[STRAT: BorsaEd_Stoch_Oversold_Cross]", "c": c})
 
             # Modül 10: Bayrak / Fincan Kulp Onayı (Geri çekilme sonrası hareketli ortalama retesti)
-            if c["low15"] <= c["ema20"] and c["close"] > c["ema20"] and c["close"] > c["prev_high15"] and c["ema20"] > c["ema50"]:
+            if c["low15"] <= sma20 and c["close"] > sma20 and c["close"] > c["prev_high15"] and sma20 > ema50:
                 candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_10_BorsaEditoru", "strat": "[STRAT: BorsaEd_Bayrak_FincanKulp_Retest]", "c": c})
 
         for cand in candidate_pool:
@@ -317,7 +343,7 @@ class HeadlessFuturesEngine:
                 "side": side, "entry_price": c["close"], "current_price": c["close"], "sl_price": sl_price,
                 "max_reached_price": c["close"], "min_reached_price": c["close"],
                 "margin": margin_per_trade, "strategy": strat, "ledger_name": ledger, "atr": atr,
-                "entry_time": time.strftime("%Y-%m-%d %H:%M:%S"), "peak_price": c["close"], 
+                "entry_time": get_tr_time("%Y-%m-%d %H:%M:%S"), "peak_price": c["close"], 
                 "trailing_active": False, "partial_tp_taken": False
             }
             ledger_counts[ledger] += 1
