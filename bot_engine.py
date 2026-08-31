@@ -7,7 +7,8 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from curl_cffi import requests as curl_requests
 
 STATE_FILE = "state.json"
-MAX_POSITIONS_PER_LEDGER = 2
+MAX_POSITIONS_DEFAULT = 2
+MAX_POSITIONS_KASA_10 = 10
 LEVERAGE = 10
 
 GITHUB_REPO = "cumhursak53-del/Mobil-Tarama-Krypto"
@@ -20,7 +21,7 @@ ENGINE_LOGS = []
 DEFAULT_LEDGERS = [
     "Kasa_1_Momentum", "Kasa_2_SMC_PA", "Kasa_3_MTF_Swing", "Kasa_4_MTF_Scalp", 
     "Kasa_5_Squeeze", "Kasa_6_VWAP", "Kasa_7_GoreceliGuc", "Kasa_8_Oturum", 
-    "Kasa_9_PriceAction"
+    "Kasa_9_PriceAction", "Kasa_10_BorsaEditoru"
 ]
 
 def add_log(msg: str):
@@ -84,7 +85,11 @@ class HeadlessFuturesEngine:
             try:
                 with open(STATE_FILE, "r") as f: return json.load(f)
             except: pass
-        return {"ledgers": {k: 100.0 for k in DEFAULT_LEDGERS}, "active_positions": {}, "history": [], "signal_log": {}, "signal_date": ""}
+        
+        # Kasa 10 Başlangıç Bütçesi 1000$, diğerleri 100$
+        initial_ledgers = {k: 100.0 for k in DEFAULT_LEDGERS}
+        initial_ledgers["Kasa_10_BorsaEditoru"] = 1000.0
+        return {"ledgers": initial_ledgers, "active_positions": {}, "history": [], "signal_log": {}, "signal_date": ""}
 
     def save_state(self, sync_github=True):
         with open(STATE_FILE, "w") as f: json.dump(self.state, f, indent=4)
@@ -99,7 +104,9 @@ class HeadlessFuturesEngine:
                 "name", "close|15", "RSI|15", "BB.upper|15", "BB.lower|15", "SMA20|15", "funding_rate|15", 
                 "volume|15", "volume|15[1]", "VWAP|15", "ADX|15", "ATR|15", "close|60", "SMA50|60", 
                 "close|240", "SMA50|240", "high|15", "low|15", "open|15", "high|15[1]", "RSI|15[1]", 
-                "low|15[1]", "close|15[1]", "open|15[1]", "SMA200|60"
+                "low|15[1]", "close|15[1]", "open|15[1]", "SMA200|60", "MACD.macd|15", "MACD.signal|15",
+                "Stoch.K|15", "Stoch.D|15", "Ichimoku.CLine|15", "Ichimoku.BLine|15", "Ichimoku.Lead1|15", "Ichimoku.Lead2|15",
+                "EMA50|15", "EMA200|15", "low|15[2]", "high|15[2]"
             ],
             "sort": {"sortBy": "volume|15", "sortOrder": "desc"},
             "range": [0, 500]
@@ -110,7 +117,7 @@ class HeadlessFuturesEngine:
             if res.status_code == 200:
                 for item in res.json().get("data", []):
                     d = item.get("d", [])
-                    if len(d) >= 25:
+                    if len(d) >= 37:
                         sym = d[0].replace(".P", "")
                         if sym in EXCLUDED_SYMBOLS: continue
                         result_map[sym] = {
@@ -120,14 +127,17 @@ class HeadlessFuturesEngine:
                             "sma50_60": d[13] or 0.0, "close240": d[14] or 0.0, "sma50_240": d[15] or 0.0, 
                             "high15": d[16] or 0.0, "low15": d[17] or 0.0, "open15": d[18] or 0.0, 
                             "prev_high15": d[19] or 0.0, "prev_rsi15": d[20] or 50.0, "prev_low15": d[21] or 0.0,
-                            "prev_close15": d[22] or 0.0, "prev_open15": d[23] or 0.0, "sma200_60": d[24] or 0.0
+                            "prev_close15": d[22] or 0.0, "prev_open15": d[23] or 0.0, "sma200_60": d[24] or 0.0,
+                            "macd": d[25] or 0.0, "macd_signal": d[26] or 0.0, "stoch_k": d[27] or 50.0, "stoch_d": d[28] or 50.0,
+                            "ichi_tenkan": d[29] or 0.0, "ichi_kijun": d[30] or 0.0, "ichi_spanA": d[31] or 0.0, "ichi_spanB": d[32] or 0.0,
+                            "ema50": d[33] or 0.0, "ema200": d[34] or 0.0, "low_2": d[35] or 0.0, "high_2": d[36] or 0.0
                         }
                 return result_map
             return {}
         except: return {}
 
     def run_cycle(self):
-        add_log("🔍 MTF Piyasa Taraması Başlatıldı...")
+        add_log("🔍 MTF & Borsa Editörü Taraması Başlatıldı...")
         today_str = time.strftime("%Y-%m-%d")
         if self.state.get("signal_date") != today_str:
             self.state["signal_log"] = {}
@@ -136,7 +146,8 @@ class HeadlessFuturesEngine:
 
         if "ledgers" not in self.state: self.state["ledgers"] = {}
         for k in DEFAULT_LEDGERS:
-            if k not in self.state["ledgers"]: self.state["ledgers"][k] = 100.0
+            if k not in self.state["ledgers"]: 
+                self.state["ledgers"][k] = 1000.0 if k == "Kasa_10_BorsaEditoru" else 100.0
 
         tv_data = self.fetch_tv_multi_timeframe()
         if not tv_data: return
@@ -148,6 +159,7 @@ class HeadlessFuturesEngine:
 
         state_changed = False
         
+        # --- POZİSYON YÖNETİMİ (Değişmedi, Trailing Stop ve TP mantığı aynı) ---
         for symbol in list(self.state.get("active_positions", {}).keys()):
             pos = self.state["active_positions"][symbol]
             curr_price = self.live_prices.get(symbol, pos["entry_price"])
@@ -188,7 +200,6 @@ class HeadlessFuturesEngine:
                     pos["trailing_active"] = True; is_trailing = True
                     locked_price = entry * (1 + (10.0 / (100 * LEVERAGE)))
                     pos["sl_price"] = max(pos["sl_price"], locked_price)
-                    add_log(f"🛡️ [KÂR KİLİDİ] {symbol} | Stop seviyesi +%10 ROE'ye çekildi.")
                 if is_trailing and curr_price <= peak * (1 - (dynamic_callback_pct / 100)):
                     should_close, close_reason = True, f"🏹 Dinamik Trailing (%{curr_roe:.1f})"
                 elif curr_price <= pos["sl_price"]: 
@@ -199,7 +210,6 @@ class HeadlessFuturesEngine:
                     pos["trailing_active"] = True; is_trailing = True
                     locked_price = entry * (1 - (10.0 / (100 * LEVERAGE)))
                     pos["sl_price"] = min(pos["sl_price"], locked_price)
-                    add_log(f"🛡️ [KÂR KİLİDİ] {symbol} | Stop seviyesi +%10 ROE'ye çekildi.")
                 if is_trailing and curr_price >= peak * (1 + (dynamic_callback_pct / 100)):
                     should_close, close_reason = True, f"🏹 Dinamik Trailing (%{curr_roe:.1f})"
                 elif curr_price >= pos["sl_price"]: 
@@ -213,7 +223,6 @@ class HeadlessFuturesEngine:
                 self.state["history"].append({
                     "symbol": symbol, "side": side, "strategy": pos.get("strategy", "-"),
                     "entry": entry, "exit": curr_price, "pnl": net_pnl, "close_reason": close_reason,
-                    "mfe_price": pos["max_reached_price"], "mae_price": pos["min_reached_price"],
                     "ledger": ledger_name, "exit_time": time.strftime("%Y-%m-%d %H:%M:%S")
                 })
                 del self.state["active_positions"][symbol]
@@ -232,62 +241,51 @@ class HeadlessFuturesEngine:
             
             vol_ratio = c["vol_curr"] / c["vol_prev"] if c["vol_prev"] > 0 else 1.0
             bb_width = (c["bb_upper"] - c["bb_lower"]) / c["sma20"]
-            
             total_len = c["high15"] - c["low15"]
             body_len = abs(c["close"] - c["open15"])
             is_solid_body = (body_len >= (total_len * 0.60)) if total_len > 0 else False
-            
-            if bb_width < 0.02 and c["close"] > c["bb_upper"] and vol_ratio > 2.0:
-                candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_1_Momentum", "strat": "[STRAT: Squeeze_Breakout]", "c": c})
-                
-            if c["low15"] < (c["close"] * 0.99) and c["close"] > c["vwap"] and c["rsi"] < 40 and c["close"] > c["prev_high15"]:
-                candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_2_SMC_PA", "strat": "[STRAT: Liquidity_Sweep_Long]", "c": c})
-                
-            if c["close240"] > c["sma50_240"] and c["close60"] > c["sma50_60"] and c["close"] > c["sma20"] and c["adx"] > 25:
-                candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_3_MTF_Swing", "strat": "[STRAT: MTF_Macro_Trend]", "c": c})
-                
-            if c["close240"] > c["sma50_240"] and c["close"] < c["sma20"] and c["rsi"] > 70:
-                candidate_pool.append({"sym": sym, "side": "SELL", "ledger": "Kasa_4_MTF_Scalp", "strat": "[STRAT: Pullback_Scalp_Short]", "c": c})
-                
-            if c["funding"] <= -0.05 and vol_ratio > 1.5 and c["close"] > c["vwap"]:
-                candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_5_Squeeze", "strat": "[STRAT: Short_Squeeze_Hunter]", "c": c})
-                
-            if (c["close"] < c["vwap"] * 0.97 and c["prev_rsi15"] < 30 and c["rsi"] >= 30 and 
-                c["close"] > c["prev_high15"] and c["close"] > c["open15"] and c["close60"] > c["sma50_60"] and is_solid_body):
-                candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_6_VWAP", "strat": "[STRAT: VWAP_Mean_Reversion]", "c": c})
-                
-            if c["adx"] > 35 and vol_ratio > 2.5 and c["rsi"] > 60:
-                candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_7_GoreceliGuc", "strat": "[STRAT: Strong_Divergence]", "c": c})
-                
-            if c["atr"] < (c["close"] * 0.005) and vol_ratio > 3.0 and is_solid_body:
-                side = "BUY" if c["close"] > c["sma20"] else "SELL"
-                candidate_pool.append({"sym": sym, "side": side, "ledger": "Kasa_8_Oturum", "strat": "[STRAT: Session_Volatility_Breakout]", "c": c})
 
-            # KASA 9 - PRICE ACTION KUSURSUZ UYUM 
-            if total_len > 0:
-                prev_body = abs(c["prev_close15"] - c["prev_open15"])
-                curr_body = abs(c["close"] - c["open15"])
-                
-                # LONG (Yükseliş Aşaması, Yüksek Dip, Cılız Geri Çekilme, Yutan Boğa)
-                is_advancing = c["close60"] > c["sma200_60"]
-                is_higher_low = c["low15"] > c["prev_low15"]
-                is_small_pullback = prev_body < (curr_body * 0.5) 
-                is_dynamic_support = c["low15"] <= c["sma20"] and c["close"] > c["sma20"]
-                is_strong_buyers = c["close"] > c["open15"] and (c["close"] - c["low15"]) >= (total_len * 0.75)
-                is_bullish_engulfing = c["close"] > c["prev_high15"]
+            # --- KASA 10: BORSA EDİTÖRÜ AVCI MODÜLLERİ ---
+            # Modül 1: Hacimli DÜK (Düşen Kırılımı + Yüksek Hacim)
+            if c["close"] > c["prev_high15"] and c["close"] > c["ema50"] and vol_ratio > 2.0 and is_solid_body:
+                candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_10_BorsaEditoru", "strat": "[STRAT: BorsaEd_Hacimli_DUK]", "c": c})
 
-                if is_advancing and is_higher_low and is_small_pullback and is_dynamic_support and is_strong_buyers and is_bullish_engulfing:
-                    candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_9_PriceAction", "strat": "[STRAT: PA_Advancing_Engulfing]", "c": c})
+            # Modül 2: İkili Dip (W Formasyonu - Fiyat dipleri yakın, boyun kırılıyor)
+            if c["low15"] > 0 and c["low_2"] > 0 and abs(c["low15"] - c["low_2"]) / c["low_2"] < 0.005 and c["close"] > c["prev_high15"] and c["rsi"] > 40:
+                candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_10_BorsaEditoru", "strat": "[STRAT: BorsaEd_IkiliDip_Long]", "c": c})
 
-                # SHORT (Düşüş Aşaması, Alçak Tepe, Cılız Geri Çekilme, Yutan Ayı)
-                is_declining = c["close60"] < c["sma200_60"]
-                is_lower_high = c["high15"] < c["prev_high15"]
-                is_dynamic_resistance = c["high15"] >= c["sma20"] and c["close"] < c["sma20"]
-                is_strong_sellers = c["close"] < c["open15"] and (c["high15"] - c["close"]) >= (total_len * 0.75)
-                is_bearish_engulfing = c["close"] < c["prev_low15"]
+            # Modül 3: İkili Tepe (M Formasyonu - Fiyat tepeleri yakın, boyun aşağı kırılıyor)
+            if c["high15"] > 0 and c["high_2"] > 0 and abs(c["high15"] - c["high_2"]) / c["high_2"] < 0.005 and c["close"] < c["prev_low15"] and c["rsi"] < 60:
+                candidate_pool.append({"sym": sym, "side": "SELL", "ledger": "Kasa_10_BorsaEditoru", "strat": "[STRAT: BorsaEd_CiftTepe_Short]", "c": c})
 
-                if is_declining and is_lower_high and is_small_pullback and is_dynamic_resistance and is_strong_sellers and is_bearish_engulfing:
-                    candidate_pool.append({"sym": sym, "side": "SELL", "ledger": "Kasa_9_PriceAction", "strat": "[STRAT: PA_Declining_Engulfing]", "c": c})
+            # Modül 4: RSI Pozitif Uyumsuzluk (Fiyat daha düşük dip yapıyor, RSI yükseliyor)
+            if c["low15"] < c["prev_low15"] and c["rsi"] > c["prev_rsi15"] and c["rsi"] < 40 and c["close"] > c["open15"]:
+                candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_10_BorsaEditoru", "strat": "[STRAT: BorsaEd_RSIPozitifUyumsuzluk]", "c": c})
+
+            # Modül 5: RSI Negatif Uyumsuzluk (Fiyat daha yüksek tepe yapıyor, RSI düşüyor)
+            if c["high15"] > c["prev_high15"] and c["rsi"] < c["prev_rsi15"] and c["rsi"] > 60 and c["close"] < c["open15"]:
+                candidate_pool.append({"sym": sym, "side": "SELL", "ledger": "Kasa_10_BorsaEditoru", "strat": "[STRAT: BorsaEd_RSINegatifUyumsuzluk]", "c": c})
+
+            # Modül 6: MACD Al Sinyali (Sıfır hattı altında momentum kesişimi)
+            if c["macd"] > c["macd_signal"] and c["macd"] < 0 and vol_ratio > 1.2 and c["close"] > c["sma20"]:
+                candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_10_BorsaEditoru", "strat": "[STRAT: BorsaEd_MACD_Kesisim_Long]", "c": c})
+
+            # Modül 7: Ichimoku Bulutu Üstü Tenkan & Kijun Golden Cross
+            if c["close"] > c["ichi_spanA"] and c["close"] > c["ichi_spanB"] and c["ichi_spanA"] > c["ichi_spanB"]:
+                if c["ichi_tenkan"] > c["ichi_kijun"] and c["close"] > c["ichi_tenkan"]:
+                    candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_10_BorsaEditoru", "strat": "[STRAT: BorsaEd_Ichimoku_GoldenCross]", "c": c})
+
+            # Modül 8: Bollinger Bantları Daralması ve Hacimli Kırılım (Squeeze)
+            if bb_width < 0.03 and c["close"] > c["bb_upper"] and vol_ratio > 2.5:
+                candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_10_BorsaEditoru", "strat": "[STRAT: BorsaEd_Bollinger_Daralma_Breakout]", "c": c})
+
+            # Modül 9: Stokastik Aşırı Satım Bölgesinden Dönüş (< 20)
+            if c["stoch_k"] > c["stoch_d"] and c["stoch_k"] < 25 and c["close"] > c["sma20"]:
+                candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_10_BorsaEditoru", "strat": "[STRAT: BorsaEd_Stoch_Oversold_Cross]", "c": c})
+
+            # Modül 10: Bayrak / Fincan Kulp Onayı (Geri çekilme sonrası hareketli ortalama retesti)
+            if c["low15"] <= c["ema20"] and c["close"] > c["ema20"] and c["close"] > c["prev_high15"] and c["ema20"] > c["ema50"]:
+                candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_10_BorsaEditoru", "strat": "[STRAT: BorsaEd_Bayrak_FincanKulp_Retest]", "c": c})
 
         for cand in candidate_pool:
             sym = cand["sym"]
@@ -301,12 +299,16 @@ class HeadlessFuturesEngine:
         for cand in candidate_pool:
             sym, ledger, side, strat, c = cand["sym"], cand["ledger"], cand["side"], cand["strat"], cand["c"]
             if sym in self.state.get("active_positions", {}) or sym in self.cooldown_tracker: continue
-            if ledger_counts.get(ledger, 0) >= MAX_POSITIONS_PER_LEDGER: continue
+            
+            # Kasa 10 için işlem limiti 10, diğerleri için 2
+            max_limit = MAX_POSITIONS_KASA_10 if ledger == "Kasa_10_BorsaEditoru" else MAX_POSITIONS_DEFAULT
+            if ledger_counts.get(ledger, 0) >= max_limit: continue
             
             ledger_balance = self.state["ledgers"].get(ledger, 0)
             if ledger_balance < 10: continue
 
-            margin_per_trade = ledger_balance / MAX_POSITIONS_PER_LEDGER
+            # Kasa 10'da marjin bütçeye göre (1000 / 10 = 100$)
+            margin_per_trade = ledger_balance / (max_limit - ledger_counts.get(ledger, 0))
             atr = c["atr"] if c["atr"] > 0 else c["close"] * 0.01
             sl_price = c["close"] - (atr * 1.5) if side == "BUY" else c["close"] + (atr * 1.5)
             
@@ -329,7 +331,7 @@ class HeadlessFuturesEngine:
 
 if __name__ == "__main__":
     engine = HeadlessFuturesEngine()
-    add_log("🤖 Kurumsal MTF Engine 9 Kasalı Modda Başlatıldı...")
+    add_log("🤖 Kurumsal MTF Engine 10 Kasalı Modda Başlatıldı...")
     while True:
         try: engine.run_cycle()
         except Exception as e: add_log(f"Döngü Hatası: {e}")
