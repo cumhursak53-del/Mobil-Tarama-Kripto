@@ -180,11 +180,18 @@ def run_paper(scan_limit: int = SCAN_SYMBOLS) -> None:
                 batch = max(6, min(15, len(symbols) // 30 or 6))
                 end = min(cursor + batch, len(symbols))
                 chunk = symbols[cursor:end]
-                cursor = 0 if end >= len(symbols) else end
+                wrapped = end >= len(symbols)
+                cursor = 0 if wrapped else end
                 for sym in chunk:
                     _scan_one(pf, cache, sym, dominance, force_entry=False)
+                if wrapped:
+                    eq = pf.snapshot()["equity"]
+                    pf.log(f"Tur tamam: {len(symbols)} coin | Aktif {len(pf.positions)} | Fon ${eq:.2f}")
 
             if time.time() - last_github_heartbeat > 120:
+                eq = pf.snapshot()["equity"]
+                pos = f"{cursor}/{len(symbols)}" if symbols else "0/0"
+                pf.log(f"Calisiyor | tarama {pos} | Aktif {len(pf.positions)} | Fon ${eq:.2f}")
                 pf.save(sync_github=True)
                 last_github_heartbeat = time.time()
         except Exception as e:
