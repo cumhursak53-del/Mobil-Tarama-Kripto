@@ -9,7 +9,6 @@ from curl_cffi import requests as curl_requests
 STATE_FILE = "state.json"
 MAX_POSITIONS_PER_LEDGER = 2
 LEVERAGE = 10
-TRAILING_ACTIVATION_ROE = 10.0
 
 GITHUB_REPO = "cumhursak53-del/Mobil-Tarama-Krypto"
 GITHUB_FILE_PATH = "state.json"
@@ -92,7 +91,7 @@ class HeadlessFuturesEngine:
         payload = {
             "filter": [{"left": "exchange", "operation": "equal", "right": "BINANCE"}, {"left": "name", "operation": "match", "right": "USDT.P$"}],
             "options": {"active_symbols_only": True},
-            "columns": ["name", "close|15", "RSI|15", "BB.upper|15", "BB.lower|15", "SMA20|15", "funding_rate|15", "volume|15", "volume|15[1]", "VWAP|15", "ADX|15", "ATR|15", "close|60", "SMA50|60", "close|240", "SMA50|240", "high|15", "low|15"],
+            "columns": ["name", "close|15", "RSI|15", "BB.upper|15", "BB.lower|15", "SMA20|15", "funding_rate|15", "volume|15", "volume|15[1]", "VWAP|15", "ADX|15", "ATR|15", "close|60", "SMA50|60", "close|240", "SMA50|240", "high|15", "low|15", "open|15", "high|15[1]"],
             "sort": {"sortBy": "volume|15", "sortOrder": "desc"},
             "range": [0, 500]
         }
@@ -102,14 +101,15 @@ class HeadlessFuturesEngine:
             if res.status_code == 200:
                 for item in res.json().get("data", []):
                     d = item.get("d", [])
-                    if len(d) >= 18:
+                    if len(d) >= 20:
                         sym = d[0].replace(".P", "")
                         if sym in EXCLUDED_SYMBOLS: continue
                         result_map[sym] = {
                             "close": d[1] or 0.0, "rsi": d[2] or 50.0, "bb_upper": d[3] or 0.0, "bb_lower": d[4] or 0.0,
                             "sma20": d[5] or 0.0, "funding": (d[6] or 0.0) * 100, "vol_curr": d[7] or 1.0, "vol_prev": d[8] or 1.0,
                             "vwap": d[9] or 0.0, "adx": d[10] or 0.0, "atr": d[11] or 0.0, "close60": d[12] or 0.0,
-                            "sma50_60": d[13] or 0.0, "close240": d[14] or 0.0, "sma50_240": d[15] or 0.0, "high15": d[16] or 0.0, "low15": d[17] or 0.0
+                            "sma50_60": d[13] or 0.0, "close240": d[14] or 0.0, "sma50_240": d[15] or 0.0, 
+                            "high15": d[16] or 0.0, "low15": d[17] or 0.0, "open15": d[18] or 0.0, "prev_high15": d[19] or 0.0
                         }
                 return result_map
             return {}
@@ -152,30 +152,57 @@ class HeadlessFuturesEngine:
             should_close, close_reason = False, ""
             peak = pos.get("peak_price", entry)
             is_trailing = pos.get("trailing_active", False)
+            partial_tp_taken = pos.get("partial_tp_taken", False)
+            ledger_name = pos.get("ledger_name", "Kasa_1_Momentum")
+
+            # %50 Kademeli Kar Alma (Partial TP)
+            if not partial_tp_taken and curr_roe >= 50.0:
+                tp_margin = margin * 0.5
+                tp_pnl = tp_margin * LEVERAGE * ratio
+                net_tp_pnl = tp_pnl - (tp_margin * LEVERAGE * 0.001)
+                
+                pos["margin"] = margin - tp_margin
+                self.state["ledgers"][ledger_name] += (tp_margin + max(net_tp_pnl, 0))
+                pos["partial_tp_taken"] = True
+                margin = pos["margin"] 
+                state_changed = True
+                add_log(f"💸 [KISMİ KÂR] {symbol} | %50 Kilitlendi | Net PnL: ${net_tp_pnl:+.2f}")
 
             pos_atr = pos.get("atr", curr_price * 0.01)
             dynamic_callback_pct = (pos_atr / curr_price) * 100 * 1.5
             dynamic_callback_pct = max(0.8, min(dynamic_callback_pct, 4.0))
 
+            # Geliştirilmiş Breakeven (Kâr Kilidi)
             if side == "BUY":
                 if curr_price > peak: pos["peak_price"] = curr_price; peak = curr_price
-                if not is_trailing and curr_roe >= TRAILING_ACTIVATION_ROE:
+                
+                if not is_trailing and curr_roe >= 20.0:
                     pos["trailing_active"] = True; is_trailing = True
+                    locked_price = entry * (1 + (10.0 / (100 * LEVERAGE)))
+                    pos["sl_price"] = max(pos["sl_price"], locked_price)
+                    add_log(f"🛡️ [KÂR KİLİDİ] {symbol} | Stop seviyesi +%10 ROE'ye çekildi.")
+                    
                 if is_trailing and curr_price <= peak * (1 - (dynamic_callback_pct / 100)):
                     should_close, close_reason = True, f"🏹 Dinamik Trailing (%{curr_roe:.1f})"
-                elif curr_price <= pos["sl_price"]: should_close, close_reason = True, "🛑 Stop Loss"
+                elif curr_price <= pos["sl_price"]: 
+                    should_close, close_reason = True, "🛑 Stop Loss / Kâr Kilidi"
             else:
                 if peak == entry or curr_price < peak: pos["peak_price"] = curr_price; peak = curr_price
-                if not is_trailing and curr_roe >= TRAILING_ACTIVATION_ROE:
+                
+                if not is_trailing and curr_roe >= 20.0:
                     pos["trailing_active"] = True; is_trailing = True
+                    locked_price = entry * (1 - (10.0 / (100 * LEVERAGE)))
+                    pos["sl_price"] = min(pos["sl_price"], locked_price)
+                    add_log(f"🛡️ [KÂR KİLİDİ] {symbol} | Stop seviyesi +%10 ROE'ye çekildi.")
+                    
                 if is_trailing and curr_price >= peak * (1 + (dynamic_callback_pct / 100)):
                     should_close, close_reason = True, f"🏹 Dinamik Trailing (%{curr_roe:.1f})"
-                elif curr_price >= pos["sl_price"]: should_close, close_reason = True, "🛑 Stop Loss"
+                elif curr_price >= pos["sl_price"]: 
+                    should_close, close_reason = True, "🛑 Stop Loss / Kâr Kilidi"
 
             if should_close:
                 pnl = margin * LEVERAGE * ratio
                 net_pnl = pnl - (margin * LEVERAGE * 0.001)
-                ledger_name = pos.get("ledger_name", "Kasa_1_Momentum")
                 self.state["ledgers"][ledger_name] += max(margin + net_pnl, 0)
                 
                 self.state["history"].append({
@@ -197,24 +224,39 @@ class HeadlessFuturesEngine:
 
         for sym, c in tv_data.items():
             if c["close"] == 0 or c["sma20"] == 0: continue
+            
             vol_ratio = c["vol_curr"] / c["vol_prev"] if c["vol_prev"] > 0 else 1.0
             bb_width = (c["bb_upper"] - c["bb_lower"]) / c["sma20"]
             
+            total_len = c["high15"] - c["low15"]
+            body_len = abs(c["close"] - c["open15"])
+            is_solid_body = (body_len >= (total_len * 0.60)) if total_len > 0 else False
+            
             if bb_width < 0.02 and c["close"] > c["bb_upper"] and vol_ratio > 2.0:
                 candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_1_Momentum", "strat": "[STRAT: Squeeze_Breakout]", "c": c})
-            if c["low15"] < (c["close"] * 0.99) and c["close"] > c["vwap"] and c["rsi"] < 40:
+                
+            # Market Structure Shift (SMC Onayı)
+            if c["low15"] < (c["close"] * 0.99) and c["close"] > c["vwap"] and c["rsi"] < 40 and c["close"] > c["prev_high15"]:
                 candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_2_SMC_PA", "strat": "[STRAT: Liquidity_Sweep_Long]", "c": c})
+                
             if c["close240"] > c["sma50_240"] and c["close60"] > c["sma50_60"] and c["close"] > c["sma20"] and c["adx"] > 25:
                 candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_3_MTF_Swing", "strat": "[STRAT: MTF_Macro_Trend]", "c": c})
+                
             if c["close240"] > c["sma50_240"] and c["close"] < c["sma20"] and c["rsi"] > 70:
                 candidate_pool.append({"sym": sym, "side": "SELL", "ledger": "Kasa_4_MTF_Scalp", "strat": "[STRAT: Pullback_Scalp_Short]", "c": c})
+                
             if c["funding"] <= -0.05 and vol_ratio > 1.5 and c["close"] > c["vwap"]:
                 candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_5_Squeeze", "strat": "[STRAT: Short_Squeeze_Hunter]", "c": c})
-            if c["close"] < c["vwap"] * 0.97 and c["rsi"] < 30:
+                
+            # Hacim Gövde Teyidi
+            if c["close"] < c["vwap"] * 0.97 and c["rsi"] < 30 and is_solid_body:
                 candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_6_VWAP", "strat": "[STRAT: VWAP_Mean_Reversion]", "c": c})
+                
             if c["adx"] > 35 and vol_ratio > 2.5 and c["rsi"] > 60:
                 candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_7_GoreceliGuc", "strat": "[STRAT: Strong_Divergence]", "c": c})
-            if c["atr"] < (c["close"] * 0.005) and vol_ratio > 3.0:
+                
+            # Hacim Gövde Teyidi
+            if c["atr"] < (c["close"] * 0.005) and vol_ratio > 3.0 and is_solid_body:
                 side = "BUY" if c["close"] > c["sma20"] else "SELL"
                 candidate_pool.append({"sym": sym, "side": side, "ledger": "Kasa_8_Oturum", "strat": "[STRAT: Session_Volatility_Breakout]", "c": c})
 
@@ -244,7 +286,8 @@ class HeadlessFuturesEngine:
                 "side": side, "entry_price": c["close"], "current_price": c["close"], "sl_price": sl_price,
                 "max_reached_price": c["close"], "min_reached_price": c["close"],
                 "margin": margin_per_trade, "strategy": strat, "ledger_name": ledger, "atr": atr,
-                "entry_time": time.strftime("%Y-%m-%d %H:%M:%S"), "peak_price": c["close"], "trailing_active": False
+                "entry_time": time.strftime("%Y-%m-%d %H:%M:%S"), "peak_price": c["close"], 
+                "trailing_active": False, "partial_tp_taken": False
             }
             ledger_counts[ledger] += 1
             self.live_prices[sym] = c["close"]
