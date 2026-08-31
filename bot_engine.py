@@ -17,7 +17,11 @@ GITHUB_TOKEN = "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"
 
 EXCLUDED_SYMBOLS = ["USDCUSDT", "FDUSDUSDT", "USDPUSDT", "BTCDOMUSDT", "DEFIUSDT", "UBERUSDT"]
 ENGINE_LOGS = []
-DEFAULT_LEDGERS = ["Kasa_1_Momentum", "Kasa_2_SMC_PA", "Kasa_3_MTF_Swing", "Kasa_4_MTF_Scalp", "Kasa_5_Squeeze", "Kasa_6_VWAP", "Kasa_7_GoreceliGuc", "Kasa_8_Oturum"]
+DEFAULT_LEDGERS = [
+    "Kasa_1_Momentum", "Kasa_2_SMC_PA", "Kasa_3_MTF_Swing", "Kasa_4_MTF_Scalp", 
+    "Kasa_5_Squeeze", "Kasa_6_VWAP", "Kasa_7_GoreceliGuc", "Kasa_8_Oturum", 
+    "Kasa_9_PriceAction"
+]
 
 def add_log(msg: str):
     timestamp = time.strftime("%H:%M:%S")
@@ -91,7 +95,12 @@ class HeadlessFuturesEngine:
         payload = {
             "filter": [{"left": "exchange", "operation": "equal", "right": "BINANCE"}, {"left": "name", "operation": "match", "right": "USDT.P$"}],
             "options": {"active_symbols_only": True},
-            "columns": ["name", "close|15", "RSI|15", "BB.upper|15", "BB.lower|15", "SMA20|15", "funding_rate|15", "volume|15", "volume|15[1]", "VWAP|15", "ADX|15", "ATR|15", "close|60", "SMA50|60", "close|240", "SMA50|240", "high|15", "low|15", "open|15", "high|15[1]", "RSI|15[1]"],
+            "columns": [
+                "name", "close|15", "RSI|15", "BB.upper|15", "BB.lower|15", "SMA20|15", "funding_rate|15", 
+                "volume|15", "volume|15[1]", "VWAP|15", "ADX|15", "ATR|15", "close|60", "SMA50|60", 
+                "close|240", "SMA50|240", "high|15", "low|15", "open|15", "high|15[1]", "RSI|15[1]", 
+                "low|15[1]", "close|15[1]", "open|15[1]", "SMA200|60"
+            ],
             "sort": {"sortBy": "volume|15", "sortOrder": "desc"},
             "range": [0, 500]
         }
@@ -101,7 +110,7 @@ class HeadlessFuturesEngine:
             if res.status_code == 200:
                 for item in res.json().get("data", []):
                     d = item.get("d", [])
-                    if len(d) >= 21:
+                    if len(d) >= 25:
                         sym = d[0].replace(".P", "")
                         if sym in EXCLUDED_SYMBOLS: continue
                         result_map[sym] = {
@@ -109,8 +118,9 @@ class HeadlessFuturesEngine:
                             "sma20": d[5] or 0.0, "funding": (d[6] or 0.0) * 100, "vol_curr": d[7] or 1.0, "vol_prev": d[8] or 1.0,
                             "vwap": d[9] or 0.0, "adx": d[10] or 0.0, "atr": d[11] or 0.0, "close60": d[12] or 0.0,
                             "sma50_60": d[13] or 0.0, "close240": d[14] or 0.0, "sma50_240": d[15] or 0.0, 
-                            "high15": d[16] or 0.0, "low15": d[17] or 0.0, "open15": d[18] or 0.0, "prev_high15": d[19] or 0.0,
-                            "prev_rsi15": d[20] or 50.0
+                            "high15": d[16] or 0.0, "low15": d[17] or 0.0, "open15": d[18] or 0.0, 
+                            "prev_high15": d[19] or 0.0, "prev_rsi15": d[20] or 50.0, "prev_low15": d[21] or 0.0,
+                            "prev_close15": d[22] or 0.0, "prev_open15": d[23] or 0.0, "sma200_60": d[24] or 0.0
                         }
                 return result_map
             return {}
@@ -174,26 +184,22 @@ class HeadlessFuturesEngine:
 
             if side == "BUY":
                 if curr_price > peak: pos["peak_price"] = curr_price; peak = curr_price
-                
                 if not is_trailing and curr_roe >= 20.0:
                     pos["trailing_active"] = True; is_trailing = True
                     locked_price = entry * (1 + (10.0 / (100 * LEVERAGE)))
                     pos["sl_price"] = max(pos["sl_price"], locked_price)
                     add_log(f"🛡️ [KÂR KİLİDİ] {symbol} | Stop seviyesi +%10 ROE'ye çekildi.")
-                    
                 if is_trailing and curr_price <= peak * (1 - (dynamic_callback_pct / 100)):
                     should_close, close_reason = True, f"🏹 Dinamik Trailing (%{curr_roe:.1f})"
                 elif curr_price <= pos["sl_price"]: 
                     should_close, close_reason = True, "🛑 Stop Loss / Kâr Kilidi"
             else:
                 if peak == entry or curr_price < peak: pos["peak_price"] = curr_price; peak = curr_price
-                
                 if not is_trailing and curr_roe >= 20.0:
                     pos["trailing_active"] = True; is_trailing = True
                     locked_price = entry * (1 - (10.0 / (100 * LEVERAGE)))
                     pos["sl_price"] = min(pos["sl_price"], locked_price)
                     add_log(f"🛡️ [KÂR KİLİDİ] {symbol} | Stop seviyesi +%10 ROE'ye çekildi.")
-                    
                 if is_trailing and curr_price >= peak * (1 + (dynamic_callback_pct / 100)):
                     should_close, close_reason = True, f"🏹 Dinamik Trailing (%{curr_roe:.1f})"
                 elif curr_price >= pos["sl_price"]: 
@@ -211,10 +217,7 @@ class HeadlessFuturesEngine:
                     "ledger": ledger_name, "exit_time": time.strftime("%Y-%m-%d %H:%M:%S")
                 })
                 del self.state["active_positions"][symbol]
-                
-                # Cooldown Uzatımı (Düşen bıçak korunması için 90 döngü / 15 dk)
                 self.cooldown_tracker[symbol] = 90
-                
                 state_changed = True
                 add_log(f"🎯 [KAPANDI] {symbol} | Kasa: {ledger_name} | Net PnL: ${net_pnl:+.2f}")
 
@@ -249,13 +252,8 @@ class HeadlessFuturesEngine:
             if c["funding"] <= -0.05 and vol_ratio > 1.5 and c["close"] > c["vwap"]:
                 candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_5_Squeeze", "strat": "[STRAT: Short_Squeeze_Hunter]", "c": c})
                 
-            # KASA 6 VWAP - "ÖLÜ KEDİ SIÇRAMASI" VE DÜŞEN BIÇAK KORUMASI 
-            if (c["close"] < c["vwap"] * 0.97 and 
-                c["prev_rsi15"] < 30 and c["rsi"] >= 30 and 
-                c["close"] > c["prev_high15"] and 
-                c["close"] > c["open15"] and 
-                c["close60"] > c["sma50_60"] and 
-                is_solid_body):
+            if (c["close"] < c["vwap"] * 0.97 and c["prev_rsi15"] < 30 and c["rsi"] >= 30 and 
+                c["close"] > c["prev_high15"] and c["close"] > c["open15"] and c["close60"] > c["sma50_60"] and is_solid_body):
                 candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_6_VWAP", "strat": "[STRAT: VWAP_Mean_Reversion]", "c": c})
                 
             if c["adx"] > 35 and vol_ratio > 2.5 and c["rsi"] > 60:
@@ -264,6 +262,32 @@ class HeadlessFuturesEngine:
             if c["atr"] < (c["close"] * 0.005) and vol_ratio > 3.0 and is_solid_body:
                 side = "BUY" if c["close"] > c["sma20"] else "SELL"
                 candidate_pool.append({"sym": sym, "side": side, "ledger": "Kasa_8_Oturum", "strat": "[STRAT: Session_Volatility_Breakout]", "c": c})
+
+            # KASA 9 - PRICE ACTION KUSURSUZ UYUM 
+            if total_len > 0:
+                prev_body = abs(c["prev_close15"] - c["prev_open15"])
+                curr_body = abs(c["close"] - c["open15"])
+                
+                # LONG (Yükseliş Aşaması, Yüksek Dip, Cılız Geri Çekilme, Yutan Boğa)
+                is_advancing = c["close60"] > c["sma200_60"]
+                is_higher_low = c["low15"] > c["prev_low15"]
+                is_small_pullback = prev_body < (curr_body * 0.5) 
+                is_dynamic_support = c["low15"] <= c["sma20"] and c["close"] > c["sma20"]
+                is_strong_buyers = c["close"] > c["open15"] and (c["close"] - c["low15"]) >= (total_len * 0.75)
+                is_bullish_engulfing = c["close"] > c["prev_high15"]
+
+                if is_advancing and is_higher_low and is_small_pullback and is_dynamic_support and is_strong_buyers and is_bullish_engulfing:
+                    candidate_pool.append({"sym": sym, "side": "BUY", "ledger": "Kasa_9_PriceAction", "strat": "[STRAT: PA_Advancing_Engulfing]", "c": c})
+
+                # SHORT (Düşüş Aşaması, Alçak Tepe, Cılız Geri Çekilme, Yutan Ayı)
+                is_declining = c["close60"] < c["sma200_60"]
+                is_lower_high = c["high15"] < c["prev_high15"]
+                is_dynamic_resistance = c["high15"] >= c["sma20"] and c["close"] < c["sma20"]
+                is_strong_sellers = c["close"] < c["open15"] and (c["high15"] - c["close"]) >= (total_len * 0.75)
+                is_bearish_engulfing = c["close"] < c["prev_low15"]
+
+                if is_declining and is_lower_high and is_small_pullback and is_dynamic_resistance and is_strong_sellers and is_bearish_engulfing:
+                    candidate_pool.append({"sym": sym, "side": "SELL", "ledger": "Kasa_9_PriceAction", "strat": "[STRAT: PA_Declining_Engulfing]", "c": c})
 
         for cand in candidate_pool:
             sym = cand["sym"]
@@ -305,7 +329,7 @@ class HeadlessFuturesEngine:
 
 if __name__ == "__main__":
     engine = HeadlessFuturesEngine()
-    add_log("🤖 Kurumsal MTF Engine 8 Kasalı Modda Başlatıldı...")
+    add_log("🤖 Kurumsal MTF Engine 9 Kasalı Modda Başlatıldı...")
     while True:
         try: engine.run_cycle()
         except Exception as e: add_log(f"Döngü Hatası: {e}")
