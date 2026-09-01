@@ -1,7 +1,8 @@
 import json
 import os
 import base64
-
+import io
+from datetime import datetime
 from typing import Optional
 
 import pandas as pd
@@ -80,6 +81,106 @@ def load_data() -> dict:
     }
 
 
+def _pos_rows(active: dict) -> pd.DataFrame:
+    rows = []
+    for key, p in (active or {}).items():
+        if not isinstance(p, dict):
+            continue
+        rows.append({
+            "Sembol": p.get("symbol", key),
+            "Kasa": p.get("ledger_name", "-"),
+            "Yon": p.get("side"),
+            "Giris": p.get("entry_price"),
+            "Anlik": p.get("current_price"),
+            "SL": p.get("sl_price"),
+            "TP": p.get("tp_price"),
+            "ROE_%": p.get("roe_pct"),
+            "Acik_PnL": p.get("unrealized_pnl"),
+            "Marjin": p.get("margin"),
+            "Kaldirac": p.get("leverage"),
+            "Notional": p.get("notional"),
+            "Strateji": p.get("strategy"),
+            "Giris_zamani": p.get("entry_time"),
+        })
+    return pd.DataFrame(rows)
+
+
+def _ledger_rows(ledgers: dict) -> pd.DataFrame:
+    start = 100.0
+    rows = [{"Kasa": k, "Bakiye": v, "PnL": float(v) - start} for k, v in (ledgers or {}).items()]
+    return pd.DataFrame(rows)
+
+
+def _history_rows(history: list) -> pd.DataFrame:
+    if not history:
+        return pd.DataFrame()
+    df = pd.DataFrame(history)
+    rename = {
+        "exit_time": "Cikis_zamani",
+        "entry_time": "Giris_zamani",
+        "symbol": "Sembol",
+        "ledger": "Kasa",
+        "side": "Yon",
+        "entry": "Giris",
+        "exit": "Cikis",
+        "pnl": "PnL",
+        "r": "R",
+        "close_reason": "Neden",
+        "strategy": "Strateji",
+        "new_balance": "Yeni_bakiye",
+    }
+    df = df.rename(columns={k: v for k, v in rename.items() if k in df.columns})
+    return df
+
+
+def _signal_rows(sig_log: dict) -> pd.DataFrame:
+    rows = []
+    for sym, s in (sig_log or {}).items():
+        if not isinstance(s, dict):
+            continue
+        strats = s.get("strategies") or []
+        if isinstance(strats, list):
+            strats = " | ".join(str(x) for x in strats)
+        rows.append({
+            "Sembol": sym,
+            "Sinyal_sayisi": s.get("count", 0),
+            "Son_yon": s.get("last_side", "-"),
+            "Kasa": s.get("last_ledger", "-"),
+            "Zaman": s.get("last_time", "-"),
+            "Stratejiler": strats,
+        })
+    return pd.DataFrame(rows)
+
+
+def build_excel_bytes(data: dict) -> bytes:
+    buf = io.BytesIO()
+    ozet = pd.DataFrame([{
+        "Kaynak": data.get("_source", "-"),
+        "Guncelleme": data.get("updated_at", "-"),
+        "Ozsermaye": data.get("equity", 0),
+        "Nakit": data.get("balance", 0),
+        "Acik_islem": len(data.get("active_positions") or {}),
+        "Kapanan_islem": len(data.get("history") or []),
+    }])
+    sheets = {
+        "Ozet": ozet,
+        "Kasalar": _ledger_rows(data.get("ledgers") or {}),
+        "Acik_Pozisyonlar": _pos_rows(data.get("active_positions") or {}),
+        "Islem_Gecmisi": _history_rows(data.get("history") or []),
+        "Sinyaller": _signal_rows(data.get("signal_log") or {}),
+        "Motor_Log": pd.DataFrame({"Log": data.get("engine_logs") or []}),
+    }
+    with pd.ExcelWriter(buf, engine="openpyxl") as writer:
+        for name, df in sheets.items():
+            out = df if not df.empty else pd.DataFrame({"Bilgi": ["Kayit yok"]})
+            out.to_excel(writer, sheet_name=name[:31], index=False)
+            ws = writer.sheets[name[:31]]
+            for col in ws.columns:
+                width = min(max(12, max(len(str(c.value or "")) for c in col) + 2), 48)
+                ws.column_dimensions[col[0].column_letter].width = width
+    return buf.getvalue()
+
+
 st_autorefresh = getattr(st, "autorefresh", None)
 if st_autorefresh:
     st_autorefresh(interval=10_000, key="live_refresh")
@@ -107,6 +208,15 @@ c2.metric("Nakit (kasalar)", f"${cash:,.2f}")
 c3.metric("Açık işlem", f"{len(active)}")
 c4.metric("Açık PnL", f"${unreal:+,.2f}")
 c5.metric("Kapanan işlem", f"{len(history)}")
+
+xlsx = build_excel_bytes(data)
+st.download_button(
+    label="Excel indir (.xlsx)",
+    data=xlsx,
+    file_name=f"krpito_rapor_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    use_container_width=True,
+)
 
 tab1, tab2, tab3, tab4, tab5 = st.tabs(
     ["Açık pozisyonlar", "Kasalar", "İşlem geçmişi", "Sinyal günlüğü", "Motor log"]
