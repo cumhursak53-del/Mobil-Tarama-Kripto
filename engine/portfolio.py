@@ -28,6 +28,7 @@ class Portfolio:
         self.positions: dict[str, Position] = {}  # key: ledger|symbol
         self.history: list[dict] = []
         self.signal_log: dict = {}
+        self.patlama_scan: dict[str, dict] = {}
         self.logs: list[str] = []
         self._equity_curve: list[dict] = []
         remote = pull_state()
@@ -55,6 +56,7 @@ class Portfolio:
             self.ledgers.setdefault(k, KASA_START_USD)
         self.history = raw.get("history") or []
         self.signal_log = raw.get("signal_log") or {}
+        self.patlama_scan = raw.get("patlama_selale_scan") or {}
         self.logs = raw.get("engine_logs") or []
         self._equity_curve = raw.get("equity_curve") or []
         self.positions = {}
@@ -240,6 +242,18 @@ class Portfolio:
         self.log(f"KAPANDI {p.symbol} {reason} | {p.ledger} | PnL ${net:+.2f}")
         return trade
 
+    def record_patlama_scan(self, symbol: str, payload: dict) -> None:
+        payload = dict(payload)
+        payload["updated_at"] = now_tr()
+        self.patlama_scan[symbol] = payload
+        if len(self.patlama_scan) > 600:
+            ranked = sorted(
+                self.patlama_scan.items(),
+                key=lambda kv: float(kv[1].get("best_score") or 0),
+                reverse=True,
+            )
+            self.patlama_scan = dict(ranked[:500])
+
     def record_signal(self, symbol: str, sig: Signal) -> None:
         rec = self.signal_log.setdefault(symbol, {"count": 0, "strategies": [], "last_side": "", "last_time": ""})
         rec["count"] += 1
@@ -269,6 +283,7 @@ class Portfolio:
             "active_positions": pos_dicts,
             "history": self.history[-200:],
             "signal_log": {k: v for k, v in self.signal_log.items() if not str(k).startswith("_")},
+            "patlama_selale_scan": self.patlama_scan,
             "engine_logs": self.logs[-100:],
             "equity_curve": self._equity_curve[-300:],
             "kasa_count": len(LEDGER_NAMES),

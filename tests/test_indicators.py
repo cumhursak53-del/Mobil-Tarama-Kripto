@@ -92,14 +92,46 @@ def test_risk_sizer():
 
 
 def test_rejim_osilator_priority_and_count():
-    from engine.config import COMBO_LEDGER, LEDGER_NAMES
+    from engine.config import COMBO_LEDGER, LEDGER_NAMES, PATLAMA_LEDGER
     from strategies.registry import all_strategies
 
     strats = all_strategies()
     assert strats[0].ledger == COMBO_LEDGER
+    assert strats[1].ledger == PATLAMA_LEDGER
     assert COMBO_LEDGER in LEDGER_NAMES
+    assert PATLAMA_LEDGER in LEDGER_NAMES
     assert len(strats) == len(LEDGER_NAMES)
-    assert len(strats) == 29
+    assert len(strats) == 30
+
+
+def test_momentum_scan_smoke():
+    import numpy as np
+    import pandas as pd
+    from engine.context import build_context
+    from engine.momentum_scan import score_momentum, trade_signal_from_score
+    from engine.config import TIMEFRAMES
+
+    rng = np.random.default_rng(2)
+    n = 260
+    frames = {}
+    for tf in TIMEFRAMES:
+        close = 100 + np.cumsum(rng.normal(0, 0.5, n))
+        idx = pd.date_range("2024-01-01", periods=n, freq="h", tz="UTC")
+        df = pd.DataFrame({
+            "open": close,
+            "high": close + 0.5,
+            "low": close - 0.5,
+            "close": close,
+            "volume": rng.random(n) * 1000 + 50,
+        }, index=idx)
+        df["close_time"] = idx + pd.Timedelta(hours=1)
+        frames[tf] = df
+    ctx = build_context("TESTUSDT", frames, indicated=False)
+    scored = score_momentum(ctx)
+    assert scored.symbol == "TESTUSDT"
+    assert 0 <= scored.long_score <= 8
+    assert 0 <= scored.short_score <= 8
+    assert trade_signal_from_score(scored) is None or scored.best_score >= 4
 
 
 def test_symbol_lock_caps_and_combo_risk():
@@ -168,7 +200,7 @@ def run_all():
         test_sma, test_ema_reacts_faster_than_sma, test_wma_weights_recent,
         test_rsi_bounds_and_wilder, test_macd_cross_identity,
         test_bollinger_contains_price_mostly, test_no_lookahead_sma,
-        test_risk_sizer, test_rejim_osilator_priority_and_count,
+        test_risk_sizer, test_rejim_osilator_priority_and_count, test_momentum_scan_smoke,
         test_symbol_lock_caps_and_combo_risk, test_strategy_count_and_smoke,
     ]
     for t in tests:

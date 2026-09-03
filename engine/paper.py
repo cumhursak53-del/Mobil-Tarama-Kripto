@@ -6,9 +6,10 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-from engine.config import COMBO_LEDGER, LEDGER_NAMES, PRICE_POLL_SEC, SCAN_SYMBOLS, TIMEFRAMES
+from engine.config import PATLAMA_LEDGER, PRIORITY_LEDGERS, LEDGER_NAMES, PRICE_POLL_SEC, SCAN_SYMBOLS, TIMEFRAMES
 from engine.context import build_context
 from engine.data import fetch_dominance, fetch_klines, fetch_symbols, last_prices
+from engine.momentum_scan import score_momentum
 from engine.portfolio import Portfolio
 from strategies.registry import all_strategies
 
@@ -119,9 +120,10 @@ def _scan_one(pf: Portfolio, cache: FrameCache, sym: str, dominance: dict, force
         if not force_entry and not cache.new_closed_bar(sym, "1h"):
             return
         ctx = build_context(sym, frames, dominance, indicated=False)
+        pf.record_patlama_scan(sym, score_momentum(ctx).to_dict())
         opened = False
-        priority = [s for s in _STRATS if s.ledger == COMBO_LEDGER]
-        others = [s for s in _STRATS if s.ledger != COMBO_LEDGER]
+        priority = [s for s in _STRATS if s.ledger in PRIORITY_LEDGERS]
+        others = [s for s in _STRATS if s.ledger not in PRIORITY_LEDGERS]
         for strat in priority:
             if _try_entry(pf, strat, ctx, sym, last):
                 opened = True
