@@ -321,6 +321,11 @@ class Portfolio:
             else:
                 d["unrealized_pnl"] = 0.0
                 d["roe_pct"] = 0.0
+        candidates = self.lab_state.get("candidates") or []
+        recipes = self.lab_state.get("recipes") or []
+        backtests = self.lab_state.get("backtests") or []
+        paper = [c for c in candidates if c.get("status") == "paper"]
+        rejected = [c for c in candidates if c.get("status") == "rejected"]
         return {
             "ledgers": self.ledgers,
             "balance": cash,
@@ -332,8 +337,15 @@ class Portfolio:
             "engine_logs": self.logs[-100:],
             "equity_curve": self._equity_curve[-300:],
             "kasa_count": len(LEDGER_NAMES) + len(self.active_lab_ledgers()),
-            "lab_candidates": [
-                c for c in (self.lab_state.get("candidates") or []) if c.get("status") == "paper"
-            ],
+            "lab_candidates": paper,
+            "lab_summary": {
+                "updated_at": self.lab_state.get("updated_at"),
+                "recipe_count": len(recipes),
+                "backtest_count": len(backtests),
+                "paper_count": len(paper),
+                "rejected_count": len(rejected),
+                "recent_backtests": backtests[-10:],
+                "all_candidates": candidates,
+            },
             "updated_at": now_tr(),
         }

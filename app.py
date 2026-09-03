@@ -19,6 +19,9 @@ unreal = sum(float(p.get("unrealized_pnl") or 0) for p in active.values())
 
 st.title("Canli piyasa simulasyonu")
 st.caption(source_caption(data))
+st.markdown(
+    "Sol menü: **Patlama Selale** · **Strateji Lab** (performans) · **Strateji Uretimi** (uretim hatti durumu)"
+)
 
 c1, c2, c3, c4, c5 = st.columns(5)
 c1.metric("Toplam ozsermaye", f"${equity:,.2f}")

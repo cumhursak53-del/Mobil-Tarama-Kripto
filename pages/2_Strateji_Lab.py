@@ -1,12 +1,8 @@
-import os
-
 import pandas as pd
 import streamlit as st
 
-from engine.config import LAB_STATE_FILE
-from engine.lab_state import load_lab_state_local
 from strategies.registry import all_strategies, lab_strategies
-from ui_common import setup_page, source_caption
+from ui_common import load_lab_data, setup_page, source_caption
 
 data = setup_page("Strateji Lab", icon="🧪")
 history = data.get("history") or []
@@ -14,15 +10,7 @@ lab_candidates = data.get("lab_candidates") or []
 
 st.title("Strateji Lab")
 st.caption(source_caption(data))
-
-st.markdown(
-    """
-### Bu sayfa ne yapar?
-1. **Canli performans:** Kapanan islemlerden hangi strateji/kasa iyi gidiyor gosterir.
-2. **Lab adaylari:** Backtestten gecen tarifler ayri `Kasa_Lab_XXX` kasalarinda paper'da calisir.
-3. **Ar-Ge hatti:** `lab-generate` → `lab-backtest` komutlari ile otomatik tarif uretimi.
-"""
-)
+st.info("Strateji **uretim hattinin canli durumu** icin sol menuden **Strateji Uretimi** sayfasina gec.")
 
 if history:
     df = pd.DataFrame(history)
@@ -66,7 +54,7 @@ if lab_candidates:
 else:
     st.info("Henuz lab adayi yok. Asagidaki komutlarla uretilebilir.")
 
-lab_local = load_lab_state_local() if os.path.exists(LAB_STATE_FILE) else {}
+lab_local = load_lab_data(force_version=st.session_state.get("refresh_version", 0))
 backtests = lab_local.get("backtests") or []
 if backtests:
     st.subheader("Son backtest sonuclari")
@@ -98,4 +86,4 @@ python -m engine.main lab-backtest --limit 20 --universe 6""",
     language="bash",
 )
 
-st.caption("Strateji Lab v2 — tarif uretimi, backtest, paper aday kasalari. Deploy sonrasi state GitHub'dan birlesir.")
+st.caption("Strateji Lab — performans analizi. Uretim durumu: **Strateji Uretimi** sayfasi.")

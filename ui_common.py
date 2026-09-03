@@ -26,6 +26,7 @@ GITHUB_REPO = os.environ.get("GITHUB_REPO", "cumhursak53-del/Mobil-Tarama-Kripto
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 GITHUB_BRANCH = os.environ.get("GITHUB_BRANCH", "main")
 STATE_FILE = os.environ.get("STATE_FILE", "state.json")
+LAB_STATE_FILE = os.environ.get("LAB_STATE_FILE", "lab_state.json")
 
 
 def _get_json(url: str, headers: Optional[dict] = None, timeout: int = 12):
@@ -87,10 +88,83 @@ def load_data(force_version: int = 0) -> dict:
         "signal_log": {},
         "patlama_selale_scan": {},
         "engine_logs": [],
+        "lab_candidates": [],
+        "lab_summary": {},
         "equity": 0.0,
         "balance": 0.0,
         "_source": "veri yok",
     }
+
+
+def _fetch_github_json(path: str) -> Optional[dict]:
+    if requests is None:
+        return None
+    if GITHUB_TOKEN:
+        url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{path}?ref={GITHUB_BRANCH}"
+        headers = {
+            "Authorization": f"token {GITHUB_TOKEN}",
+            "Accept": "application/vnd.github.v3+json",
+            "User-Agent": "KrpitoMTF-UI",
+        }
+        raw = _get_json(url, headers=headers)
+        if raw and raw.get("content"):
+            try:
+                return json.loads(base64.b64decode(raw["content"]).decode("utf-8"))
+            except Exception:
+                pass
+    raw_url = f"https://raw.githubusercontent.com/{GITHUB_REPO}/{GITHUB_BRANCH}/{path}"
+    return _get_json(raw_url)
+
+
+@st.cache_data(ttl=8, show_spinner=False)
+def load_lab_data(force_version: int = 0) -> dict:
+    del force_version
+    data = _fetch_github_json(LAB_STATE_FILE)
+    if data:
+        data["_source"] = "GitHub lab_state.json"
+        return data
+    if os.path.exists(LAB_STATE_FILE):
+        try:
+            with open(LAB_STATE_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            data["_source"] = "local lab_state.json"
+            return data
+        except Exception:
+            pass
+    return {
+        "schema_version": 1,
+        "recipes": [],
+        "backtests": [],
+        "candidates": [],
+        "updated_at": "",
+        "_source": "lab verisi yok",
+    }
+
+
+def minutes_since_update(ts: Optional[str]) -> Optional[float]:
+    if not ts:
+        return None
+    try:
+        from engine.config import TR_TZ
+        dt = datetime.strptime(str(ts)[:19], "%Y-%m-%d %H:%M:%S").replace(tzinfo=TR_TZ)
+        now = datetime.now(TR_TZ)
+        return (now - dt).total_seconds() / 60.0
+    except Exception:
+        return None
+
+
+def engine_status(data: dict) -> tuple[str, str, str]:
+    """Durum metni, renk anahtari, aciklama."""
+    mins = minutes_since_update(data.get("updated_at"))
+    logs = data.get("engine_logs") or []
+    has_heartbeat = any("Calisiyor" in str(x) for x in logs[-20:])
+    if mins is None:
+        return "Bilinmiyor", "offline", "Motor guncelleme zamani gelmedi."
+    if mins <= 5 and (has_heartbeat or len(logs) > 0):
+        return "Calisiyor", "ok", f"Son guncelleme {mins:.0f} dk once."
+    if mins <= 15:
+        return "Yavas", "warn", f"Son guncelleme {mins:.0f} dk once; motor uyuyor olabilir."
+    return "Durdu / erisilemiyor", "offline", f"Son guncelleme {mins:.0f} dk once."
 
 
 def setup_page(title: str, icon: str = "📈") -> dict:
