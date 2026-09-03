@@ -8,7 +8,13 @@ import pandas as pd
 from engine.config import LEDGER_NAMES, TAKER_FEE
 from engine.context import build_context, indicate_frame
 from engine.types import Side, Signal
-from risk.sizer import size_position
+from risk.sizer import (
+    PositionRisk,
+    max_positions_for_ledger,
+    risk_pct_for_ledger,
+    size_position,
+    would_survive_all_sl,
+)
 from strategies.registry import all_strategies
 from structure.core import add_structure
 
@@ -80,8 +86,11 @@ def backtest_symbol(symbol: str, frames: dict[str, pd.DataFrame], dominance: Opt
             counts[p["ledger"]] += 1
 
         for strat in strats:
-            if counts[strat.ledger] >= 2:
+            cap = max_positions_for_ledger(strat.ledger)
+            if cap is not None and counts[strat.ledger] >= cap:
                 continue
+            if any(p["symbol"] == symbol for p in open_pos.values()):
+                break
             if f"{strat.ledger}|{symbol}" in open_pos:
                 continue
             try:
@@ -90,16 +99,33 @@ def backtest_symbol(symbol: str, frames: dict[str, pd.DataFrame], dominance: Opt
                 continue
             if sig is None:
                 continue
-            sized = size_position(ledger_balance=ledgers[sig.ledger], entry=price, sl=sig.sl_price)
+            if not ctx.aligned(sig.side):
+                continue
+            cash = ledgers[sig.ledger]
+            sized = size_position(
+                ledger_balance=cash,
+                entry=price,
+                sl=sig.sl_price,
+                risk_pct=risk_pct_for_ledger(sig.ledger),
+            )
             if sized is None:
+                continue
+            existing = [
+                PositionRisk(entry=p["entry"], sl=p["sl"], notional=p["notional"], margin=p["margin"])
+                for p in open_pos.values()
+                if p["ledger"] == sig.ledger
+            ]
+            new_risk = PositionRisk(entry=price, sl=sig.sl_price, notional=sized.notional, margin=sized.margin)
+            if not would_survive_all_sl(cash=cash, open_positions=existing, new=new_risk):
                 continue
             ledgers[sig.ledger] -= sized.margin
             open_pos[f"{sig.ledger}|{symbol}"] = {
                 "side": sig.side, "entry": price, "sl": sig.sl_price, "tp": sig.tp_price,
                 "margin": sized.margin, "notional": sized.notional, "ledger": sig.ledger,
-                "strategy": sig.strategy,
+                "strategy": sig.strategy, "symbol": symbol,
             }
             counts[sig.ledger] += 1
+            break
 
     # flatten remaining at last close
     last = float(h1["close"].iloc[-1])

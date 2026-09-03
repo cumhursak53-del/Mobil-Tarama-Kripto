@@ -6,7 +6,7 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-from engine.config import PRICE_POLL_SEC, SCAN_SYMBOLS, TIMEFRAMES
+from engine.config import COMBO_LEDGER, LEDGER_NAMES, PRICE_POLL_SEC, SCAN_SYMBOLS, TIMEFRAMES
 from engine.context import build_context
 from engine.data import fetch_dominance, fetch_klines, fetch_symbols, last_prices
 from engine.portfolio import Portfolio
@@ -120,20 +120,34 @@ def _scan_one(pf: Portfolio, cache: FrameCache, sym: str, dominance: dict, force
             return
         ctx = build_context(sym, frames, dominance, indicated=False)
         opened = False
-        for strat in _STRATS:
-            try:
-                sig = strat.signal(ctx)
-            except Exception:
-                continue
-            if sig is None:
-                continue
-            pf.record_signal(sym, sig)
-            if pf.try_open(sym, sig, last):
+        priority = [s for s in _STRATS if s.ledger == COMBO_LEDGER]
+        others = [s for s in _STRATS if s.ledger != COMBO_LEDGER]
+        for strat in priority:
+            if _try_entry(pf, strat, ctx, sym, last):
                 opened = True
+                break
+        if not opened:
+            for strat in others:
+                if _try_entry(pf, strat, ctx, sym, last):
+                    opened = True
+                    break
         if opened:
             pf.save(sync_github=True)
     except Exception as e:
         pf.log(f"{sym} hata: {e}")
+
+
+def _try_entry(pf: Portfolio, strat, ctx, sym: str, last: float) -> bool:
+    try:
+        sig = strat.signal(ctx)
+    except Exception:
+        return False
+    if sig is None:
+        return False
+    pf.record_signal(sym, sig)
+    if not ctx.aligned(sig.side):
+        return False
+    return pf.try_open(sym, sig, last)
 
 
 def run_price_pass(pf: Portfolio) -> bool:
@@ -157,7 +171,7 @@ def run_price_pass(pf: Portfolio) -> bool:
 def run_paper(scan_limit: int = SCAN_SYMBOLS) -> None:
     pf = Portfolio()
     start_http(pf)
-    pf.log("Canli piyasa simülasyonu: tum USDT perpetual, 28 kasa, mum kapanisi giris")
+    pf.log(f"Canli piyasa simulasyonu: tum USDT perpetual, {len(LEDGER_NAMES)} kasa, mum kapanisi giris")
     cache = FrameCache()
     cursor = 0
     last_universe_refresh = 0.0

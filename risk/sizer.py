@@ -1,8 +1,20 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Sequence
 
-from engine.config import CASH_RESERVE_PCT, MAX_LEVERAGE, MIN_LEVERAGE, RISK_PCT
+from engine.config import (
+    CASH_RESERVE_PCT,
+    COMBO_LEDGER,
+    COMBO_RISK_PCT,
+    KASA_START_USD,
+    LIQ_ADVERSE_PCT,
+    MAX_LEVERAGE,
+    MAX_POSITIONS_PER_KASA,
+    MIN_LEVERAGE,
+    MIN_SURVIVAL_USD,
+    RISK_PCT,
+)
 
 
 @dataclass
@@ -21,6 +33,55 @@ class SizedTrade:
     leverage: float
     qty: float
     risk_usd: float
+
+
+@dataclass
+class PositionRisk:
+    entry: float
+    sl: float
+    notional: float
+    margin: float
+
+
+def risk_pct_for_ledger(ledger: str) -> float:
+    return COMBO_RISK_PCT if ledger == COMBO_LEDGER else RISK_PCT
+
+
+def max_positions_for_ledger(ledger: str) -> int | None:
+    if ledger == COMBO_LEDGER:
+        return None
+    return MAX_POSITIONS_PER_KASA
+
+
+def _sl_loss(entry: float, sl: float, notional: float) -> float:
+    if entry <= 0:
+        return 0.0
+    return abs(entry - sl) / entry * notional
+
+
+def would_survive_all_sl(
+    *,
+    cash: float,
+    open_positions: Sequence[PositionRisk],
+    new: PositionRisk,
+    kasa_start: float = KASA_START_USD,
+    min_equity: float | None = None,
+    adverse_pct: float = LIQ_ADVERSE_PCT,
+) -> bool:
+    """True if the kasa still stands after every SL at once, and after an 8% correlated dump at 10x."""
+    if new.margin > cash + 1e-9:
+        return False
+    cash_after = cash - new.margin
+    positions = list(open_positions) + [new]
+    sl_loss = sum(_sl_loss(p.entry, p.sl, p.notional) for p in positions)
+    margins = sum(p.margin for p in positions)
+    after_sl = cash_after + margins - sl_loss
+    floor = min_equity if min_equity is not None else max(MIN_SURVIVAL_USD, kasa_start * CASH_RESERVE_PCT)
+    if after_sl < floor:
+        return False
+    shock = adverse_pct * sum(p.notional for p in positions)
+    after_shock = cash_after + margins - shock
+    return after_shock >= 0
 
 
 def size_position(

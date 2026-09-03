@@ -5,10 +5,16 @@ import os
 from datetime import datetime
 from typing import Optional
 
-from engine.config import KASA_START_USD, LEDGER_NAMES, MAX_POSITIONS_PER_KASA, STATE_FILE, TAKER_FEE, TR_TZ
+from engine.config import KASA_START_USD, LEDGER_NAMES, STATE_FILE, TAKER_FEE, TR_TZ
 from engine.github_sync import pull_state, push_state
 from engine.types import ClosedTrade, Position, Side, Signal
-from risk.sizer import size_position
+from risk.sizer import (
+    PositionRisk,
+    max_positions_for_ledger,
+    risk_pct_for_ledger,
+    size_position,
+    would_survive_all_sl,
+)
 
 
 def now_tr(fmt: str = "%Y-%m-%d %H:%M:%S") -> str:
@@ -112,14 +118,36 @@ class Portfolio:
     def ledger_position_count(self, ledger: str) -> int:
         return sum(1 for p in self.positions.values() if p.ledger == ledger)
 
+    def symbol_open(self, symbol: str) -> bool:
+        return any(p.symbol == symbol for p in self.positions.values())
+
+    def _ledger_risks(self, ledger: str) -> list[PositionRisk]:
+        return [
+            PositionRisk(entry=p.entry_price, sl=p.sl_price, notional=p.notional, margin=p.margin)
+            for p in self.positions.values()
+            if p.ledger == ledger
+        ]
+
     def try_open(self, symbol: str, sig: Signal, price: float) -> bool:
-        if self.ledger_position_count(sig.ledger) >= MAX_POSITIONS_PER_KASA:
+        cap = max_positions_for_ledger(sig.ledger)
+        if cap is not None and self.ledger_position_count(sig.ledger) >= cap:
+            return False
+        if self.symbol_open(symbol):
             return False
         key = self.pos_key(sig.ledger, symbol)
         if key in self.positions:
             return False
-        sized = size_position(ledger_balance=self.ledgers.get(sig.ledger, 0), entry=price, sl=sig.sl_price)
+        cash = self.ledgers.get(sig.ledger, 0)
+        sized = size_position(
+            ledger_balance=cash,
+            entry=price,
+            sl=sig.sl_price,
+            risk_pct=risk_pct_for_ledger(sig.ledger),
+        )
         if sized is None:
+            return False
+        new_risk = PositionRisk(entry=price, sl=sig.sl_price, notional=sized.notional, margin=sized.margin)
+        if not would_survive_all_sl(cash=cash, open_positions=self._ledger_risks(sig.ledger), new=new_risk):
             return False
         self.ledgers[sig.ledger] -= sized.margin
         self.positions[key] = Position(

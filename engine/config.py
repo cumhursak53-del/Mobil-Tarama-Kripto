@@ -21,6 +21,10 @@ TRIGGER_TF = "15m"
 KASA_START_USD = 100.0
 CASH_RESERVE_PCT = 0.20
 RISK_PCT = 0.02
+COMBO_LEDGER = "Kasa_RejimOsilator"
+COMBO_RISK_PCT = 0.03
+MIN_SURVIVAL_USD = 20.0
+LIQ_ADVERSE_PCT = 0.08  # 10x korelasyonlu dump tamponu
 MIN_LEVERAGE = float(os.environ.get("MIN_LEVERAGE", "10"))
 MAX_LEVERAGE = float(os.environ.get("MAX_LEVERAGE", "10"))
 MAX_POSITIONS_PER_KASA = 2
@@ -44,6 +48,7 @@ EXCLUDED_SYMBOLS = {
 }
 
 LEDGER_NAMES = [
+    "Kasa_RejimOsilator",
     "Kasa_TrendCizgisi",
     "Kasa_PulbackRetest",
     "Kasa_DUK",

@@ -74,7 +74,7 @@ def test_no_lookahead_sma():
 
 
 def test_risk_sizer():
-    from risk.sizer import size_position
+    from risk.sizer import PositionRisk, size_position, would_survive_all_sl
     sized = size_position(ledger_balance=100.0, entry=100.0, sl=98.0)
     assert sized is not None
     assert abs(sized.notional - 100.0) < 1e-6  # 2% of 100 / 2% SL
@@ -82,6 +82,58 @@ def test_risk_sizer():
     assert abs(sized.margin - 10.0) < 1e-6  # 100 notional / 10x
     too_tight = size_position(ledger_balance=100.0, entry=100.0, sl=100.0)
     assert too_tight is None
+    ok = PositionRisk(entry=100.0, sl=98.0, notional=100.0, margin=10.0)
+    assert would_survive_all_sl(cash=100.0, open_positions=[], new=ok)
+    nuke = PositionRisk(entry=100.0, sl=99.0, notional=2000.0, margin=80.0)
+    assert not would_survive_all_sl(cash=100.0, open_positions=[], new=nuke)
+    existing = [PositionRisk(entry=100.0, sl=90.0, notional=200.0, margin=50.0)]
+    extra = PositionRisk(entry=100.0, sl=90.0, notional=200.0, margin=50.0)
+    assert not would_survive_all_sl(cash=25.0, open_positions=existing, new=extra)
+
+
+def test_rejim_osilator_priority_and_count():
+    from engine.config import COMBO_LEDGER, LEDGER_NAMES
+    from strategies.registry import all_strategies
+
+    strats = all_strategies()
+    assert strats[0].ledger == COMBO_LEDGER
+    assert COMBO_LEDGER in LEDGER_NAMES
+    assert len(strats) == len(LEDGER_NAMES)
+    assert len(strats) == 29
+
+
+def test_symbol_lock_caps_and_combo_risk():
+    import os
+    import tempfile
+
+    from engine.config import COMBO_LEDGER
+    from engine.portfolio import Portfolio
+    from engine.types import Signal, Side
+
+    fd, path = tempfile.mkstemp(suffix=".json")
+    os.close(fd)
+    os.remove(path)
+    pf = Portfolio(path=path)
+
+    def sig(ledger: str) -> Signal:
+        return Signal(
+            side=Side.SELL,
+            strategy="t",
+            ledger=ledger,
+            reason="t",
+            sl_price=101.5,
+            tp_price=97.0,
+        )
+
+    assert pf.try_open("AAAUSDT", sig("Kasa_CCI"), 100.0)
+    assert not pf.try_open("AAAUSDT", sig("Kasa_Stoch"), 100.0)
+    assert pf.try_open("BBBUSDT", sig("Kasa_CCI"), 100.0)
+    assert not pf.try_open("CCCUSDT", sig("Kasa_CCI"), 100.0)
+    assert pf.try_open("DDDUSDT", sig(COMBO_LEDGER), 100.0)
+    assert pf.try_open("EEEUSDT", sig(COMBO_LEDGER), 100.0)
+    assert pf.try_open("FFFUSDT", sig(COMBO_LEDGER), 100.0)
+    combo_n = pf.ledger_position_count(COMBO_LEDGER)
+    assert combo_n >= 3
 
 
 def test_strategy_count_and_smoke():
@@ -116,7 +168,8 @@ def run_all():
         test_sma, test_ema_reacts_faster_than_sma, test_wma_weights_recent,
         test_rsi_bounds_and_wilder, test_macd_cross_identity,
         test_bollinger_contains_price_mostly, test_no_lookahead_sma,
-        test_risk_sizer, test_strategy_count_and_smoke,
+        test_risk_sizer, test_rejim_osilator_priority_and_count,
+        test_symbol_lock_caps_and_combo_risk, test_strategy_count_and_smoke,
     ]
     for t in tests:
         t()

@@ -16,6 +16,7 @@ from strategies.oscillators import (
     StochRSICross,
 )
 from strategies.pa import MumOnay, PiyasaEvresi, YapiKirilim
+from strategies.rejim_osilator import RejimOsilator
 from strategies.patterns import (
     BayrakFlama,
     Dortgen,
@@ -28,6 +29,7 @@ from strategies.patterns import (
 from strategies.trend import DUK, DominanceAlt, PulbackRetest, TrendCizgisi, Tuzak
 
 _CLASSES: list[type[Strategy]] = [
+    RejimOsilator,
     TrendCizgisi,
     PulbackRetest,
     DUK,
