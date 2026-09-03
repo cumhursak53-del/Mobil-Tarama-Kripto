@@ -5,11 +5,9 @@ import json
 
 from engine.backtest import backtest_symbol, summarize
 from engine.data import fetch_all_timeframes, fetch_dominance, fetch_symbols
-from engine.lab_backtest import run_lab_backtests
-from engine.lab_state import load_lab_state, promote_recipe, sync_lab_state
+from engine.lab_state import load_lab_state
 from engine.paper import run_paper, run_scan
 from engine.portfolio import Portfolio
-from engine.strategy_generator import generate_recipes
 from strategies.registry import all_strategies
 
 
@@ -45,50 +43,21 @@ def cmd_backtest(symbols: list[str], n_universe: int) -> None:
 
 
 def cmd_lab_generate(limit: int) -> None:
+    from engine.lab_runner import run_lab_pipeline
+    from engine.lab_state import load_lab_state
+
+    run_lab_pipeline(force=True)
     state = load_lab_state()
-    recipes = generate_recipes(limit=limit)
-    state.setdefault("recipes", []).extend(recipes)
-    sync_lab_state(state)
-    print(json.dumps({"generated": len(recipes), "total_recipes": len(state["recipes"])}, indent=2))
+    print(json.dumps({"total_recipes": len(state.get("recipes") or [])}, indent=2))
 
 
 def cmd_lab_backtest(limit: int, symbols: list[str], n_universe: int) -> None:
+    from engine.lab_runner import run_lab_pipeline
+    from engine.lab_state import load_lab_state
+
+    result = run_lab_pipeline(force=True)
     state = load_lab_state()
-    recipes = (state.get("recipes") or [])[:limit]
-    if not recipes:
-        print("Tarif yok. Once: python -m engine.main lab-generate")
-        return
-    if not symbols:
-        symbols = fetch_symbols(n_universe)[:6]
-    dominance = fetch_dominance()
-    symbol_frames = {}
-    for sym in symbols:
-        print(f"Veri cekiliyor {sym} ...", flush=True)
-        symbol_frames[sym] = fetch_all_timeframes(sym)
-    rows = run_lab_backtests(recipes, symbol_frames, dominance)
-    passed = []
-    for row in rows:
-        m = row["metrics"]
-        state.setdefault("backtests", []).append({
-            "recipe_id": row["recipe"]["id"],
-            "metrics": m,
-            "symbols": symbols,
-        })
-        if m.get("passed"):
-            cand = promote_recipe(state, row["recipe"], m)
-            if cand:
-                passed.append(cand.ledger)
-    sync_lab_state(state)
-    print(json.dumps({
-        "tested": len(rows),
-        "passed": len(passed),
-        "promoted_ledgers": passed,
-        "top": sorted(
-            [{"id": r["recipe"]["id"], **r["metrics"]} for r in rows],
-            key=lambda x: x.get("profit_factor") or 0,
-            reverse=True,
-        )[:5],
-    }, indent=2))
+    print(json.dumps({**result, "backtest_count": len(state.get("backtests") or [])}, indent=2))
 
 
 def main() -> None:

@@ -346,6 +346,7 @@ class Portfolio:
                 "rejected_count": len(rejected),
                 "recent_backtests": backtests[-10:],
                 "all_candidates": candidates,
+                "pipeline": self.lab_state.get("pipeline") or {},
             },
             "updated_at": now_tr(),
         }

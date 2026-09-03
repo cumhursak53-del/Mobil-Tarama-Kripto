@@ -4,7 +4,7 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from engine.config import LAB_LEDGER_PREFIX, LAB_MAX_CANDIDATES
+from engine.config import LAB_AUTO, LAB_AUTO_INTERVAL_SEC, LAB_LEDGER_PREFIX, LAB_MAX_CANDIDATES
 from ui_common import (
     engine_status,
     load_lab_data,
@@ -36,6 +36,7 @@ if remote_mins is not None and (summary_mins is None or remote_mins <= summary_m
         "rejected_count": len([c for c in lab_remote.get("candidates") or [] if c.get("status") == "rejected"]),
         "recent_backtests": (lab_remote.get("backtests") or [])[-10:],
         "all_candidates": lab_remote.get("candidates") or [],
+        "pipeline": lab_remote.get("pipeline") or {},
     }
     lab_candidates = [c for c in lab_remote.get("candidates") or [] if c.get("status") == "paper"]
 
@@ -43,8 +44,31 @@ st.title("Strateji uretimi — canli durum")
 st.caption(source_caption(engine_data))
 st.markdown(
     "Bu sayfa **tarif uretimi → backtest → paper aday kasa** hattinin calisip calismadigini gosterir. "
-    "Sol menuden **Simdi yenile** ile guncelleyebilirsin."
+    "**Shell gerekmez** — motor deploy olduktan sonra lab hattini otomatik calistirir."
 )
+
+pipeline = lab_summary.get("pipeline") or lab_remote.get("pipeline") or {}
+pipe_status = pipeline.get("status", "bekleniyor")
+pipe_msg = pipeline.get("last_message") or "-"
+pipe_run = pipeline.get("last_run_at") or "-"
+interval_h = LAB_AUTO_INTERVAL_SEC // 3600
+
+if LAB_AUTO:
+    st.info(
+        f"Otomasyon **acik**. Motor acilista ve her ~{interval_h} saatte bir tarif uretir, "
+        f"backtest yapar, basarili adaylari paper kasaya alir."
+    )
+else:
+    st.warning("Lab otomasyon kapali (`LAB_AUTO=0`).")
+
+if pipe_status == "running":
+    st.warning(f"Lab pipeline su an calisiyor… {pipe_msg}")
+elif pipe_status == "ok":
+    st.success(f"Son otomasyon: {pipe_run} — {pipe_msg}")
+elif pipe_status == "error":
+    st.error(f"Son otomasyon hatasi: {pipe_msg}")
+else:
+    st.caption(f"Pipeline durumu: {pipe_status}. Deploy sonrasi ilk calisma birkaç dakika surebilir.")
 
 motor_label, motor_level, motor_note = engine_status(engine_data)
 lab_mins = minutes_since_update(lab_summary.get("updated_at"))
@@ -78,19 +102,24 @@ st.subheader("Uretim hatti adimlari")
 
 steps = [
     (
+        "0. Otomasyon motoru",
+        LAB_AUTO and pipe_status in ("ok", "running"),
+        f"Durum: {pipe_status} | Son calisma: {pipe_run}",
+    ),
+    (
         "1. Tarif havuzu",
         recipe_n > 0,
-        f"{recipe_n} tarif kayitli" if recipe_n else "Henuz tarif yok — Render shell: lab-generate",
+        f"{recipe_n} tarif kayitli" if recipe_n else "Motor ilk calismada tarif uretecek",
     ),
     (
         "2. Backtest calisti",
         bt_n > 0,
-        f"{bt_n} backtest kaydi" if bt_n else "Backtest yok — Render shell: lab-backtest",
+        f"{bt_n} backtest kaydi" if bt_n else "Backtest bekleniyor (otomasyon arka planda)",
     ),
     (
         "3. Paper aday secildi",
         paper_n > 0,
-        f"{paper_n} aday kasada" if paper_n else "Gecen aday yok (PF/WR esigi veya slot dolu)",
+        f"{paper_n} aday kasada" if paper_n else "Gecen aday bekleniyor (PF/WR esigi)",
     ),
     (
         "4. Lab islem acti",
@@ -138,9 +167,8 @@ with tab1:
         st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
     else:
         st.info(
-            "Henuz paper aday kasa yok. Render **Shell** sekmesinde su komutlari calistir:\n\n"
-            "`python -m engine.main lab-generate --limit 40`\n\n"
-            "`python -m engine.main lab-backtest --limit 20 --universe 6`"
+            "Henuz paper aday kasa yok. Motor deploy olduktan sonra otomasyon "
+            f"~{interval_h} saat icinde tarif uretip backtest yapacak; ilk calisma deploy sonrasi birkaç dakika surer."
         )
 
 with tab2:
@@ -213,13 +241,15 @@ with tab5:
     else:
         st.info("Motor logu bos.")
 
-with st.expander("Ne zaman calisir?"):
+with st.expander("Nasil calisir?"):
     st.markdown(
         f"""
-- **Paper motoru** (7/24): Render worker — taranan coinlerde lab aday stratejileri de dener.
-- **Tarif uretimi / backtest**: Otomatik degil; Render Shell'den komut calistirilir.
-- **Lab aday limiti**: En fazla {LAB_MAX_CANDIDATES} kasa (`Kasa_Lab_001` …).
-- **Veri kaynagi**: Motor `{engine_data.get('_source', '-')}` · Lab `{lab_remote.get('_source', '-')}`.
+- **Git push → Render deploy** yeterli; Shell gerekmez.
+- **Paper motoru** (7/24): coin tarar, lab aday stratejileri de dener.
+- **Lab otomasyonu** (`LAB_AUTO=1`): acilista + her ~{interval_h} saatte tarif uretir, backtest yapar, aday secer.
+- **Lab aday limiti**: en fazla {LAB_MAX_CANDIDATES} kasa (`Kasa_Lab_001` …).
+- Ilk backtest birkaç dakika surer (Binance verisi cekilir); **Strateji Uretimi** sayfasindan izleyebilirsin.
+- Veri: Motor `{engine_data.get('_source', '-')}` · Lab `{lab_remote.get('_source', '-')}`.
 """
     )
 

@@ -6,9 +6,19 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-from engine.config import PATLAMA_LEDGER, PRIORITY_LEDGERS, LEDGER_NAMES, PRICE_POLL_SEC, SCAN_SYMBOLS, TIMEFRAMES
+from engine.config import (
+    LAB_AUTO,
+    LAB_AUTO_INTERVAL_SEC,
+    PATLAMA_LEDGER,
+    PRIORITY_LEDGERS,
+    LEDGER_NAMES,
+    PRICE_POLL_SEC,
+    SCAN_SYMBOLS,
+    TIMEFRAMES,
+)
 from engine.context import build_context
 from engine.data import fetch_dominance, fetch_klines, fetch_symbols, last_prices
+from engine.lab_runner import maybe_run_lab_pipeline
 from engine.lab_state import load_lab_state
 from engine.momentum_scan import score_momentum
 from engine.portfolio import Portfolio
@@ -181,10 +191,14 @@ def run_paper(scan_limit: int = SCAN_SYMBOLS) -> None:
     pf = Portfolio()
     start_http(pf)
     pf.log(f"Canli piyasa simulasyonu: tum USDT perpetual, {len(LEDGER_NAMES)} kasa, mum kapanisi giris")
+    if LAB_AUTO:
+        pf.log("Lab otomasyon acik: tarif uretimi/backtest arka planda calisacak")
+        threading.Thread(target=lambda: maybe_run_lab_pipeline(pf, force=True), daemon=True).start()
     cache = FrameCache()
     cursor = 0
     last_universe_refresh = 0.0
     last_lab_refresh = 0.0
+    last_lab_pipeline = 0.0
     last_github_heartbeat = 0.0
     symbols: list[str] = []
     dominance: dict = {}
@@ -217,6 +231,10 @@ def run_paper(scan_limit: int = SCAN_SYMBOLS) -> None:
                 pf._ensure_lab_ledgers()
                 _refresh_strats(pf)
                 last_lab_refresh = time.time()
+
+            if LAB_AUTO and time.time() - last_lab_pipeline > LAB_AUTO_INTERVAL_SEC:
+                threading.Thread(target=lambda: maybe_run_lab_pipeline(pf), daemon=True).start()
+                last_lab_pipeline = time.time()
 
             if time.time() - last_github_heartbeat > 120:
                 eq = pf.snapshot()["equity"]

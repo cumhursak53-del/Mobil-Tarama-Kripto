@@ -79,11 +79,12 @@ for s in lab_only:
         rows.append({"Kasa": s.ledger, "Sinif": s.__class__.__name__})
 st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True, height=360)
 
-st.subheader("Komutlar (Render shell / lokal)")
+st.subheader("Komutlar (istege bagli — lokal gelistirme)")
 st.code(
     """python -m engine.main lab-generate --limit 40
 python -m engine.main lab-backtest --limit 20 --universe 6""",
     language="bash",
 )
+st.caption("Render'da Shell gerekmez; motor otomasyonu kendisi calistirir.")
 
 st.caption("Strateji Lab — performans analizi. Uretim durumu: **Strateji Uretimi** sayfasi.")
