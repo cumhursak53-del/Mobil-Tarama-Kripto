@@ -168,17 +168,18 @@ def engine_status(data: dict) -> tuple[str, str, str]:
 
 
 def setup_page(title: str, icon: str = "📈") -> dict:
-    st.set_page_config(page_title=title, page_icon=icon, layout="wide")
+    """Geriye donuk uyumluluk; yeni ekranlar render_sidebar_refresh kullanir."""
+    return render_sidebar_refresh()
+
+
+def render_sidebar_refresh() -> dict:
     if "refresh_version" not in st.session_state:
         st.session_state.refresh_version = 0
     if "auto_refresh" not in st.session_state:
         st.session_state.auto_refresh = False
     if "refresh_sec" not in st.session_state:
         st.session_state.refresh_sec = 60
-    return render_sidebar_refresh()
 
-
-def render_sidebar_refresh() -> dict:
     with st.sidebar:
         st.subheader("Yenileme")
         st.session_state.auto_refresh = st.toggle(
