@@ -20,15 +20,15 @@ def _headers() -> dict:
     }
 
 
-def _url() -> str:
-    return f"https://api.github.com/repos/{GITHUB_REPO}/contents/{GITHUB_STATE_PATH}"
+def _contents_url(path: str) -> str:
+    return f"https://api.github.com/repos/{GITHUB_REPO}/contents/{path}"
 
 
-def pull_state() -> Optional[dict]:
+def pull_json(path: str = GITHUB_STATE_PATH) -> Optional[dict]:
     if not GITHUB_TOKEN:
         return None
     try:
-        res = http.get(_url() + f"?ref={GITHUB_BRANCH}", headers=_headers(), timeout=12)
+        res = http.get(_contents_url(path) + f"?ref={GITHUB_BRANCH}", headers=_headers(), timeout=12)
         if res.status_code != 200:
             return None
         content = res.json().get("content") or ""
@@ -39,19 +39,27 @@ def pull_state() -> Optional[dict]:
         return None
 
 
-def push_state(data: dict) -> None:
+def push_json(data: dict, path: str = GITHUB_STATE_PATH, message: str = "Auto update state [MTF Engine]") -> None:
     if not GITHUB_TOKEN:
         return
     try:
-        res = http.get(_url() + f"?ref={GITHUB_BRANCH}", headers=_headers(), timeout=12)
+        res = http.get(_contents_url(path) + f"?ref={GITHUB_BRANCH}", headers=_headers(), timeout=12)
         sha = res.json().get("sha", "") if res.status_code == 200 else ""
         body = {
-            "message": "Auto update state [MTF Engine]",
+            "message": message,
             "content": base64.b64encode(json.dumps(data, indent=2).encode("utf-8")).decode("utf-8"),
             "branch": GITHUB_BRANCH,
         }
         if sha:
             body["sha"] = sha
-        http.put(_url(), headers=_headers(), json=body, timeout=15)
+        http.put(_contents_url(path), headers=_headers(), json=body, timeout=15)
     except Exception as e:
-        print(f"GitHub sync hatasi: {e}", flush=True)
+        print(f"GitHub sync hatasi ({path}): {e}", flush=True)
+
+
+def pull_state() -> Optional[dict]:
+    return pull_json(GITHUB_STATE_PATH)
+
+
+def push_state(data: dict) -> None:
+    push_json(data, GITHUB_STATE_PATH)

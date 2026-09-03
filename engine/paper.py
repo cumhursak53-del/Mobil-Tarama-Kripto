@@ -9,6 +9,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from engine.config import PATLAMA_LEDGER, PRIORITY_LEDGERS, LEDGER_NAMES, PRICE_POLL_SEC, SCAN_SYMBOLS, TIMEFRAMES
 from engine.context import build_context
 from engine.data import fetch_dominance, fetch_klines, fetch_symbols, last_prices
+from engine.lab_state import load_lab_state
 from engine.momentum_scan import score_momentum
 from engine.portfolio import Portfolio
 from strategies.registry import all_strategies
@@ -107,6 +108,12 @@ def run_scan(pf: Portfolio, symbols: list[str], dominance: dict) -> None:
     pf.log(f"Tarama bitti. Aktif {len(pf.positions)} | Toplam ${eq:.2f}")
 
 
+def _refresh_strats(pf: Portfolio) -> list:
+    global _STRATS
+    _STRATS = all_strategies(pf.lab_state)
+    return _STRATS
+
+
 def _scan_one(pf: Portfolio, cache: FrameCache, sym: str, dominance: dict, force_entry: bool) -> None:
     try:
         frames = cache.refresh(sym)
@@ -122,17 +129,17 @@ def _scan_one(pf: Portfolio, cache: FrameCache, sym: str, dominance: dict, force
         ctx = build_context(sym, frames, dominance, indicated=False)
         pf.record_patlama_scan(sym, score_momentum(ctx).to_dict())
         opened = False
-        priority = [s for s in _STRATS if s.ledger in PRIORITY_LEDGERS]
-        others = [s for s in _STRATS if s.ledger not in PRIORITY_LEDGERS]
-        for strat in priority:
+        strats = _refresh_strats(pf)
+        priority = [s for s in strats if s.ledger in PRIORITY_LEDGERS]
+        lab = [s for s in strats if s.ledger.startswith("Kasa_Lab_")]
+        others = [
+            s for s in strats
+            if s.ledger not in PRIORITY_LEDGERS and not s.ledger.startswith("Kasa_Lab_")
+        ]
+        for strat in priority + lab + others:
             if _try_entry(pf, strat, ctx, sym, last):
                 opened = True
                 break
-        if not opened:
-            for strat in others:
-                if _try_entry(pf, strat, ctx, sym, last):
-                    opened = True
-                    break
         if opened:
             pf.save(sync_github=True)
     except Exception as e:
@@ -177,6 +184,7 @@ def run_paper(scan_limit: int = SCAN_SYMBOLS) -> None:
     cache = FrameCache()
     cursor = 0
     last_universe_refresh = 0.0
+    last_lab_refresh = 0.0
     last_github_heartbeat = 0.0
     symbols: list[str] = []
     dominance: dict = {}
@@ -203,6 +211,12 @@ def run_paper(scan_limit: int = SCAN_SYMBOLS) -> None:
                 if wrapped:
                     eq = pf.snapshot()["equity"]
                     pf.log(f"Tur tamam: {len(symbols)} coin | Aktif {len(pf.positions)} | Fon ${eq:.2f}")
+
+            if time.time() - last_lab_refresh > 300:
+                pf.lab_state = load_lab_state()
+                pf._ensure_lab_ledgers()
+                _refresh_strats(pf)
+                last_lab_refresh = time.time()
 
             if time.time() - last_github_heartbeat > 120:
                 eq = pf.snapshot()["equity"]

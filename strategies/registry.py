@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from engine.config import LEDGER_NAMES
+from engine.strategy_recipe import StrategyRecipe
 from strategies.base import Strategy
 from strategies.fib import Fib618
 from strategies.ma import DinamikMA, EMAFib, SMA9_14
@@ -18,6 +19,7 @@ from strategies.oscillators import (
 from strategies.patlama_selale import PatlamaSelale
 from strategies.pa import MumOnay, PiyasaEvresi, YapiKirilim
 from strategies.rejim_osilator import RejimOsilator
+from strategies.recipe_strategy import RecipeStrategy
 from strategies.patterns import (
     BayrakFlama,
     Dortgen,
@@ -63,9 +65,38 @@ _CLASSES: list[type[Strategy]] = [
 ]
 
 
-def all_strategies() -> list[Strategy]:
-    return [cls() for cls in _CLASSES]
+def all_strategies(lab_state: dict | None = None) -> list[Strategy]:
+    base = [cls() for cls in _CLASSES]
+    if not lab_state:
+        return base
+    return base + lab_strategies(lab_state)
 
 
-def ledger_names() -> list[str]:
-    return list(LEDGER_NAMES)
+def lab_strategies(lab_state: dict) -> list[Strategy]:
+    out: list[Strategy] = []
+    for c in lab_state.get("candidates") or []:
+        if c.get("status") != "paper":
+            continue
+        ledger = c.get("ledger")
+        rid = c.get("recipe_id")
+        if not ledger or not rid:
+            continue
+        recipe_raw = None
+        for r in lab_state.get("recipes") or []:
+            if r.get("id") == rid:
+                recipe_raw = r
+                break
+        if not recipe_raw:
+            continue
+        recipe = StrategyRecipe.from_dict(recipe_raw)
+        out.append(RecipeStrategy(recipe, ledger))
+    return out
+
+
+def ledger_names(lab_state: dict | None = None) -> list[str]:
+    names = list(LEDGER_NAMES)
+    if lab_state:
+        for c in lab_state.get("candidates") or []:
+            if c.get("status") == "paper" and c.get("ledger"):
+                names.append(c["ledger"])
+    return names

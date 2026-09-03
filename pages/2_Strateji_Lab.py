@@ -1,11 +1,16 @@
+import os
+
 import pandas as pd
 import streamlit as st
 
-from strategies.registry import all_strategies
+from engine.config import LAB_STATE_FILE
+from engine.lab_state import load_lab_state_local
+from strategies.registry import all_strategies, lab_strategies
 from ui_common import setup_page, source_caption
 
 data = setup_page("Strateji Lab", icon="🧪")
 history = data.get("history") or []
+lab_candidates = data.get("lab_candidates") or []
 
 st.title("Strateji Lab")
 st.caption(source_caption(data))
@@ -14,9 +19,8 @@ st.markdown(
     """
 ### Bu sayfa ne yapar?
 1. **Canli performans:** Kapanan islemlerden hangi strateji/kasa iyi gidiyor gosterir.
-2. **Aday kurallar:** Patlama/Selale ve Rejim Osilator gibi birlesik kurallari listeler.
-3. **Otomatik kesif (gelecek):** Webden strateji ogrenip tek basina guvenilir bot uretmek mumkun ama
-   bugunku haliyle **henuz yok** — asagida neden ve nasil yapilabilecegi yaziyor.
+2. **Lab adaylari:** Backtestten gecen tarifler ayri `Kasa_Lab_XXX` kasalarinda paper'da calisir.
+3. **Ar-Ge hatti:** `lab-generate` → `lab-backtest` komutlari ile otomatik tarif uretimi.
 """
 )
 
@@ -42,49 +46,56 @@ if history:
 else:
     st.info("Henuz kapanan islem yok; performans tablosu bos.")
 
-st.subheader("Kayitli strateji kasalari")
+st.subheader("Lab aday kasalari (paper)")
+if lab_candidates:
+    rows = []
+    for c in lab_candidates:
+        m = c.get("metrics") or {}
+        bt = c.get("backtest") or {}
+        rows.append({
+            "Kasa": c.get("ledger"),
+            "Tarif": c.get("recipe_id"),
+            "Paper baslangic": c.get("paper_started_at"),
+            "Islem": m.get("n", 0),
+            "WR": f"{100 * float(m.get('wr') or 0):.0f}%",
+            "PnL": f"${float(m.get('pnl') or 0):+.2f}",
+            "BT islem": bt.get("n", "-"),
+            "BT PF": bt.get("profit_factor", "-"),
+        })
+    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+else:
+    st.info("Henuz lab adayi yok. Asagidaki komutlarla uretilebilir.")
+
+lab_local = load_lab_state_local() if os.path.exists(LAB_STATE_FILE) else {}
+backtests = lab_local.get("backtests") or []
+if backtests:
+    st.subheader("Son backtest sonuclari")
+    bt_rows = []
+    for b in backtests[-30:]:
+        m = b.get("metrics") or {}
+        bt_rows.append({
+            "Tarif": b.get("recipe_id"),
+            "Islem": m.get("n"),
+            "WR": f"{100 * float(m.get('win_rate') or 0):.0f}%",
+            "PF": m.get("profit_factor"),
+            "PnL": m.get("pnl"),
+            "Gecti": "Evet" if m.get("passed") else "Hayir",
+        })
+    st.dataframe(pd.DataFrame(bt_rows), use_container_width=True, hide_index=True)
+
+st.subheader("Kayitli strateji kasalari (30 sabit + lab)")
 rows = [{"Kasa": s.ledger, "Sinif": s.__class__.__name__} for s in all_strategies()]
+lab_only = lab_strategies(lab_local) if lab_local else []
+for s in lab_only:
+    if not any(r["Kasa"] == s.ledger for r in rows):
+        rows.append({"Kasa": s.ledger, "Sinif": s.__class__.__name__})
 st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True, height=360)
 
-st.subheader("Aday birlesik kurallar (manuel onayli)")
-st.table({
-    "Kural": [
-        "Rejim + CCI/MACD + Stoch (RejimOsilator)",
-        "MTF patlama/selale skoru >= 4 (PatlamaSelale)",
-        "4H BOS + hacim + 1D yon",
-        "BB squeeze + kirilim + retest",
-    ],
-    "Durum": ["Canli", "Canli", "Kismi (YapiKirilim kasasi)", "Kismi (BB_Squeeze kasasi)"],
-    "Not": [
-        "Oncelikli giris",
-        "Ayri sayfada skor gorunur",
-        "Ayri kasada",
-        "Ayri kasada",
-    ],
-})
-
-st.subheader("Otomatik strateji uretimi yapilir mi?")
-st.markdown(
-    """
-**Kisa cevap:** Evet, ama tek tikla degil; asamali bir **Ar-Ge hattı** gerekir.
-
-| Asama | Ne yapar | Zorluk |
-|---|---|---|
-| 1. Fikir havuzu | Web/PDF kaynaklarindan kural sablonlari (su an elle) | Orta |
-| 2. Backtest | Gecmis veride WR, PF, max dusus olc | Kolay (motor var) |
-| 3. Paper canli | Basarili adaylari ayri kasada dene | Kolay (su anki sistem) |
-| 4. Otomatik secim | En iyi 2-3 kurali tut, kotuleri kapat | Orta |
-| 5. Tam otonom AI | Internetten okuyup kodsuz strateji uret | Zor / guvenilmez |
-
-**Neden hemen yapilmiyor?**
-- Webden okunan stratejiler cogunlukla **overfit** veya **belirsiz** (ornek yok, stop yok).
-- Kripto vadeli islemde kayma, likidasyon ve rejim degisimi backtesti yalanlar.
-- Guvenilir bot icin: **net giris/cikis + risk + rejim filtresi + yeterli orneklem** sart.
-
-**Sonraki mantikli adim:** Bu lab sayfasina bir **backtest calistir** butonu eklemek
-(secilen coin listesi + mevcut stratejiler → en iyi 5'i paper'a al). Tam web taramasi icin
-ayri bir arka plan isi (Render worker) gerekir.
-"""
+st.subheader("Komutlar (Render shell / lokal)")
+st.code(
+    """python -m engine.main lab-generate --limit 40
+python -m engine.main lab-backtest --limit 20 --universe 6""",
+    language="bash",
 )
 
-st.caption("Strateji Lab v1 — canli performans + yol haritasi. Otomatik web kesfi henuz aktif degil.")
+st.caption("Strateji Lab v2 — tarif uretimi, backtest, paper aday kasalari. Deploy sonrasi state GitHub'dan birlesir.")

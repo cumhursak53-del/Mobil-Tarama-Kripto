@@ -42,6 +42,12 @@ GITHUB_REPO = os.environ.get("GITHUB_REPO", "cumhursak53-del/Mobil-Tarama-Kripto
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 GITHUB_BRANCH = os.environ.get("GITHUB_BRANCH", "main")
 GITHUB_STATE_PATH = os.environ.get("GITHUB_STATE_PATH", "state.json")
+LAB_STATE_FILE = os.environ.get("LAB_STATE_FILE", "lab_state.json")
+LAB_LEDGER_PREFIX = "Kasa_Lab_"
+LAB_MAX_CANDIDATES = int(os.environ.get("LAB_MAX_CANDIDATES", "5"))
+LAB_FREEZE = os.environ.get("LAB_FREEZE", "0") == "1"
+LAB_MIN_BACKTEST_TRADES = int(os.environ.get("LAB_MIN_BACKTEST_TRADES", "20"))
+LAB_MIN_BACKTEST_PF = float(os.environ.get("LAB_MIN_BACKTEST_PF", "1.15"))
 ENGINE_URL = os.environ.get("ENGINE_URL", "")
 
 EXCLUDED_SYMBOLS = {

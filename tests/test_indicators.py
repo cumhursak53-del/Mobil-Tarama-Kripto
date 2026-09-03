@@ -195,6 +195,58 @@ def test_strategy_count_and_smoke():
         assert sig is None or sig.ledger == s.ledger
 
 
+def test_state_merge_picks_newer():
+    from engine.state_merge import pick_newer_state
+
+    local = {"updated_at": "2026-01-01 10:00:00", "equity": 100, "history": []}
+    remote = {"updated_at": "2026-01-02 10:00:00", "equity": 120, "history": [{"pnl": 1}]}
+    assert pick_newer_state(local, remote) == remote
+    assert pick_newer_state(remote, local) == remote
+
+
+def test_recipe_generator_and_eval():
+    from engine.context import build_context
+    from engine.config import TIMEFRAMES
+    from engine.strategy_generator import generate_recipes
+    from engine.strategy_recipe import StrategyRecipe, evaluate_recipe
+    from engine.types import Side
+
+    recipes = generate_recipes(limit=4)
+    assert len(recipes) == 4
+    assert all("id" in r for r in recipes)
+    rng = np.random.default_rng(3)
+    n = 260
+    frames = {}
+    for tf in TIMEFRAMES:
+        close = 100 + np.cumsum(rng.normal(0, 0.5, n))
+        idx = pd.date_range("2024-01-01", periods=n, freq="h", tz="UTC")
+        df = pd.DataFrame({
+            "open": close, "high": close + 0.5, "low": close - 0.5,
+            "close": close, "volume": rng.random(n) * 1000 + 50,
+        }, index=idx)
+        df["close_time"] = idx + pd.Timedelta(hours=1)
+        frames[tf] = df
+    ctx = build_context("TESTUSDT", frames, indicated=False)
+    rec = StrategyRecipe.from_dict(recipes[0])
+    side = evaluate_recipe(ctx, rec)
+    assert side is None or side in (Side.BUY, Side.SELL)
+
+
+def test_lab_promote_respects_cap():
+    from engine.lab_state import empty_lab_state, next_lab_ledger, promote_recipe
+    from engine.config import LAB_MAX_CANDIDATES
+
+    state = empty_lab_state()
+    recipe = {"id": "abc12345", "name": "Test", "min_votes": 2, "long_rules": [], "short_rules": []}
+    bt = {"n": 25, "win_rate": 0.5, "profit_factor": 1.2, "passed": True}
+    for i in range(LAB_MAX_CANDIDATES + 2):
+        r = dict(recipe, id=f"id{i:04d}")
+        promote_recipe(state, r, bt)
+    active = [c for c in state["candidates"] if c["status"] == "paper"]
+    assert len(active) <= LAB_MAX_CANDIDATES
+    assert next_lab_ledger(state) is None
+
+
 def run_all():
     tests = [
         test_sma, test_ema_reacts_faster_than_sma, test_wma_weights_recent,
@@ -202,6 +254,7 @@ def run_all():
         test_bollinger_contains_price_mostly, test_no_lookahead_sma,
         test_risk_sizer, test_rejim_osilator_priority_and_count, test_momentum_scan_smoke,
         test_symbol_lock_caps_and_combo_risk, test_strategy_count_and_smoke,
+        test_state_merge_picks_newer, test_recipe_generator_and_eval, test_lab_promote_respects_cap,
     ]
     for t in tests:
         t()

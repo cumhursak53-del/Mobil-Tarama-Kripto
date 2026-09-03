@@ -5,8 +5,22 @@ import os
 from datetime import datetime
 from typing import Optional
 
-from engine.config import KASA_START_USD, LEDGER_NAMES, STATE_FILE, TAKER_FEE, TR_TZ
+from engine.config import (
+    KASA_START_USD,
+    LAB_LEDGER_PREFIX,
+    LEDGER_NAMES,
+    STATE_FILE,
+    TAKER_FEE,
+    TR_TZ,
+)
 from engine.github_sync import pull_state, push_state
+from engine.lab_state import (
+    evaluate_lab_candidates,
+    load_lab_state,
+    record_lab_trade,
+    sync_lab_state,
+)
+from engine.state_merge import pick_newer_state
 from engine.types import ClosedTrade, Position, Side, Signal
 from risk.sizer import (
     PositionRisk,
@@ -29,16 +43,43 @@ class Portfolio:
         self.history: list[dict] = []
         self.signal_log: dict = {}
         self.patlama_scan: dict[str, dict] = {}
+        self.lab_state: dict = {}
         self.logs: list[str] = []
         self._equity_curve: list[dict] = []
         remote = pull_state()
-        if remote and not os.path.exists(self.path):
-            self._apply_raw(remote)
-        self.load()
+        local_raw = None
+        if os.path.exists(self.path):
+            try:
+                with open(self.path, "r", encoding="utf-8") as f:
+                    local_raw = json.load(f)
+            except Exception:
+                local_raw = None
+        merged = pick_newer_state(local_raw, remote)
+        if merged:
+            self._apply_raw(merged)
+        else:
+            self.load()
+        self.lab_state = load_lab_state()
+        self._ensure_lab_ledgers()
 
     @staticmethod
     def pos_key(ledger: str, symbol: str) -> str:
         return f"{ledger}|{symbol}"
+
+    def _ensure_lab_ledgers(self) -> None:
+        for c in self.lab_state.get("candidates") or []:
+            if c.get("status") != "paper":
+                continue
+            ledger = c.get("ledger")
+            if ledger:
+                self.ledgers.setdefault(ledger, KASA_START_USD)
+
+    def active_lab_ledgers(self) -> list[str]:
+        return [
+            c.get("ledger")
+            for c in self.lab_state.get("candidates") or []
+            if c.get("status") == "paper" and c.get("ledger")
+        ]
 
     def load(self) -> None:
         if not os.path.exists(self.path):
@@ -89,6 +130,7 @@ class Portfolio:
             json.dump(payload, f, indent=2)
         if sync_github:
             push_state(payload)
+            sync_lab_state(self.lab_state)
 
     def _pos_dict(self, p: Position) -> dict:
         return {
@@ -240,6 +282,9 @@ class Portfolio:
         self._equity_curve.append({"time": trade.exit_time, "equity": eq})
         self._equity_curve = self._equity_curve[-300:]
         self.log(f"KAPANDI {p.symbol} {reason} | {p.ledger} | PnL ${net:+.2f}")
+        if p.ledger.startswith(LAB_LEDGER_PREFIX):
+            record_lab_trade(self.lab_state, p.ledger, net)
+            evaluate_lab_candidates(self.lab_state)
         return trade
 
     def record_patlama_scan(self, symbol: str, payload: dict) -> None:
@@ -286,6 +331,9 @@ class Portfolio:
             "patlama_selale_scan": self.patlama_scan,
             "engine_logs": self.logs[-100:],
             "equity_curve": self._equity_curve[-300:],
-            "kasa_count": len(LEDGER_NAMES),
+            "kasa_count": len(LEDGER_NAMES) + len(self.active_lab_ledgers()),
+            "lab_candidates": [
+                c for c in (self.lab_state.get("candidates") or []) if c.get("status") == "paper"
+            ],
             "updated_at": now_tr(),
         }
