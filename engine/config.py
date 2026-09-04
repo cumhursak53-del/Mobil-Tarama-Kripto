@@ -49,7 +49,7 @@ LAB_FREEZE = os.environ.get("LAB_FREEZE", "0") == "1"
 LAB_MIN_BACKTEST_TRADES = int(os.environ.get("LAB_MIN_BACKTEST_TRADES", "20"))
 LAB_MIN_BACKTEST_PF = float(os.environ.get("LAB_MIN_BACKTEST_PF", "1.15"))
 LAB_AUTO = os.environ.get("LAB_AUTO", "1") == "1"
-LAB_AUTO_INTERVAL_SEC = int(os.environ.get("LAB_AUTO_INTERVAL_SEC", "14400"))  # 4 saat
+LAB_AUTO_INTERVAL_SEC = int(os.environ.get("LAB_AUTO_INTERVAL_SEC", "3600"))  # 1 saat
 LAB_GENERATE_LIMIT = int(os.environ.get("LAB_GENERATE_LIMIT", "24"))
 LAB_BACKTEST_BATCH = int(os.environ.get("LAB_BACKTEST_BATCH", "8"))
 LAB_BACKTEST_UNIVERSE = int(os.environ.get("LAB_BACKTEST_UNIVERSE", "4"))
