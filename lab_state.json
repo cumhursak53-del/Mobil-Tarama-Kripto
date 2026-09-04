@@ -101,24 +101,24 @@
     "lab_auto": true,
     "github_token": false
   },
-  "updated_at": "2026-09-04 18:25:37",
+  "updated_at": "2026-09-04 18:41:46",
   "pipeline": {
     "status": "ok",
-    "last_run_at": "2026-09-04 18:16:05",
-    "last_generate_at": "2026-09-04 17:39:39",
-    "last_backtest_at": "2026-09-04 18:16:05",
-    "last_message": "Arastirma 0, uretim 0, backtest 8, yeni aday 1",
+    "last_run_at": "2026-09-04 18:38:02",
+    "last_generate_at": "2026-09-04 18:28:14",
+    "last_backtest_at": "2026-09-04 18:38:02",
+    "last_message": "Arastirma 0, uretim 24, backtest 8, yeni aday 0",
     "last_generated": 24,
     "last_backtested": 8,
-    "last_promoted": 1,
+    "last_promoted": 0,
     "last_researched": 0
   },
   "research": {
     "gemini_configured": true,
     "research_enabled": true,
     "processed_videos": [
-      "Nmu5Rkt7Mjw",
-      "DHqGzh5PN0s"
+      "DHqGzh5PN0s",
+      "Nmu5Rkt7Mjw"
     ],
     "last_youtube_at": "2026-09-04 17:39:23",
     "youtube_recipes": 0,
@@ -723,6 +723,600 @@
       ],
       "require_aligned": true,
       "source": "combinator"
+    },
+    {
+      "id": "0a423f21",
+      "name": "LabLong_0a423f21",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "cci_cross_up",
+          "extra": "cci_lt_100"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "bos_high"
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "dfb42624",
+      "name": "LabLong_dfb42624",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "cci_cross_up",
+          "extra": "cci_lt_100"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "squeeze"
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "0e214124",
+      "name": "LabLong_0e214124",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "cci_cross_up",
+          "extra": "cci_lt_100"
+        },
+        {
+          "type": "volume",
+          "tf": "1h"
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "0d0af970",
+      "name": "LabLong_0d0af970",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "cci_cross_up",
+          "extra": "cci_lt_100"
+        },
+        {
+          "type": "momentum_score",
+          "side": "long",
+          "min": 4
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "e4ef0cdf",
+      "name": "LabLong_e4ef0cdf",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "macd_cross_up",
+          "extra": "hist_pos"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "bos_high"
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "89e7ff65",
+      "name": "LabLong_89e7ff65",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "macd_cross_up",
+          "extra": "hist_pos"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "squeeze"
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "362466af",
+      "name": "LabLong_362466af",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "macd_cross_up",
+          "extra": "hist_pos"
+        },
+        {
+          "type": "volume",
+          "tf": "1h"
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "df1aa6ff",
+      "name": "LabLong_df1aa6ff",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "macd_cross_up",
+          "extra": "hist_pos"
+        },
+        {
+          "type": "momentum_score",
+          "side": "long",
+          "min": 4
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "4272f68c",
+      "name": "LabLong_4272f68c",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "stoch_cross_up",
+          "extra": "k_lt_25"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "bos_high"
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "243e82ce",
+      "name": "LabLong_243e82ce",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "stoch_cross_up",
+          "extra": "k_lt_25"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "squeeze"
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "8dbbffe9",
+      "name": "LabLong_8dbbffe9",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "stoch_cross_up",
+          "extra": "k_lt_25"
+        },
+        {
+          "type": "volume",
+          "tf": "1h"
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "025d56c9",
+      "name": "LabLong_025d56c9",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "stoch_cross_up",
+          "extra": "k_lt_25"
+        },
+        {
+          "type": "momentum_score",
+          "side": "long",
+          "min": 4
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "599c60fd",
+      "name": "LabShort_599c60fd",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "cci_cross_down",
+          "extra": "cci_gt_-100"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "bos_low"
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "b910520b",
+      "name": "LabShort_b910520b",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "cci_cross_down",
+          "extra": "cci_gt_-100"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "squeeze"
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "46e34292",
+      "name": "LabShort_46e34292",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "cci_cross_down",
+          "extra": "cci_gt_-100"
+        },
+        {
+          "type": "volume",
+          "tf": "1h"
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "05fadcad",
+      "name": "LabShort_05fadcad",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "cci_cross_down",
+          "extra": "cci_gt_-100"
+        },
+        {
+          "type": "momentum_score",
+          "side": "short",
+          "min": 4
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "d7b9eeef",
+      "name": "LabShort_d7b9eeef",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "macd_cross_down",
+          "extra": "hist_neg"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "bos_low"
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "2412a921",
+      "name": "LabShort_2412a921",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "macd_cross_down",
+          "extra": "hist_neg"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "squeeze"
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "426b4867",
+      "name": "LabShort_426b4867",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "macd_cross_down",
+          "extra": "hist_neg"
+        },
+        {
+          "type": "volume",
+          "tf": "1h"
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "d0e1f1a0",
+      "name": "LabShort_d0e1f1a0",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "macd_cross_down",
+          "extra": "hist_neg"
+        },
+        {
+          "type": "momentum_score",
+          "side": "short",
+          "min": 4
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "ee90e570",
+      "name": "LabShort_ee90e570",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "stoch_cross_down",
+          "extra": "k_gt_75"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "bos_low"
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "4a612ba8",
+      "name": "LabShort_4a612ba8",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "stoch_cross_down",
+          "extra": "k_gt_75"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "squeeze"
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "fd746b6a",
+      "name": "LabShort_fd746b6a",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "stoch_cross_down",
+          "extra": "k_gt_75"
+        },
+        {
+          "type": "volume",
+          "tf": "1h"
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "86819a2b",
+      "name": "LabShort_86819a2b",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "stoch_cross_down",
+          "extra": "k_gt_75"
+        },
+        {
+          "type": "momentum_score",
+          "side": "short",
+          "min": 4
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator"
     }
   ],
   "backtests": [
@@ -1157,6 +1751,150 @@
         "BONKUSDT"
       ],
       "run_at": "2026-09-04 18:16:05"
+    },
+    {
+      "recipe_id": "0a423f21",
+      "metrics": {
+        "n": 1,
+        "win_rate": 0.0,
+        "pnl": -2.083377399839148,
+        "profit_factor": 0.0,
+        "passed": false,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 18:38:02"
+    },
+    {
+      "recipe_id": "dfb42624",
+      "metrics": {
+        "n": 2,
+        "win_rate": 0.5,
+        "pnl": 1.5991344024321066,
+        "profit_factor": 1.744305132402226,
+        "passed": false,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 18:38:02"
+    },
+    {
+      "recipe_id": "0e214124",
+      "metrics": {
+        "n": 0,
+        "win_rate": 0.0,
+        "pnl": 0,
+        "profit_factor": null,
+        "passed": false,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 18:38:02"
+    },
+    {
+      "recipe_id": "0d0af970",
+      "metrics": {
+        "n": 0,
+        "win_rate": 0.0,
+        "pnl": 0,
+        "profit_factor": null,
+        "passed": false,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 18:38:02"
+    },
+    {
+      "recipe_id": "e4ef0cdf",
+      "metrics": {
+        "n": 0,
+        "win_rate": 0.0,
+        "pnl": 0,
+        "profit_factor": null,
+        "passed": false,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 18:38:02"
+    },
+    {
+      "recipe_id": "89e7ff65",
+      "metrics": {
+        "n": 2,
+        "win_rate": 0.0,
+        "pnl": -4.098462633715291,
+        "profit_factor": 0.0,
+        "passed": false,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 18:38:02"
+    },
+    {
+      "recipe_id": "362466af",
+      "metrics": {
+        "n": 0,
+        "win_rate": 0.0,
+        "pnl": 0,
+        "profit_factor": null,
+        "passed": false,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 18:38:02"
+    },
+    {
+      "recipe_id": "df1aa6ff",
+      "metrics": {
+        "n": 0,
+        "win_rate": 0.0,
+        "pnl": 0,
+        "profit_factor": null,
+        "passed": false,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 18:38:02"
     }
   ],
   "candidates": [
