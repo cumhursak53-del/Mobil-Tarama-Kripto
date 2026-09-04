@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import atexit
 import json
 import os
+import signal
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -187,8 +189,21 @@ def run_price_pass(pf: Portfolio) -> bool:
     return changed
 
 
+def _shutdown_save(pf: Portfolio) -> None:
+    try:
+        pf.log("Motor kapaniyor — state GitHub'a kaydediliyor...")
+        pf.save(sync_github=True)
+    except Exception as e:
+        print(f"Kapanis kayit hatasi: {e}", flush=True)
+
+
 def run_paper(scan_limit: int = SCAN_SYMBOLS) -> None:
     pf = Portfolio()
+    atexit.register(_shutdown_save, pf)
+    try:
+        signal.signal(signal.SIGTERM, lambda *_: _shutdown_save(pf))
+    except Exception:
+        pass
     start_http(pf)
     pf.log(f"Canli piyasa simulasyonu: tum USDT perpetual, {len(LEDGER_NAMES)} kasa, mum kapanisi giris")
     if LAB_AUTO:
@@ -236,7 +251,7 @@ def run_paper(scan_limit: int = SCAN_SYMBOLS) -> None:
                 threading.Thread(target=lambda: maybe_run_lab_pipeline(pf), daemon=True).start()
                 last_lab_pipeline = time.time()
 
-            if time.time() - last_github_heartbeat > 120:
+            if time.time() - last_github_heartbeat > 60:
                 eq = pf.snapshot()["equity"]
                 pos = f"{cursor}/{len(symbols)}" if symbols else "0/0"
                 pf.log(f"Calisiyor | tarama {pos} | Aktif {len(pf.positions)} | Fon ${eq:.2f}")

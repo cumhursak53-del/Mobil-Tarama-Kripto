@@ -196,12 +196,33 @@ def test_strategy_count_and_smoke():
 
 
 def test_state_merge_picks_newer():
-    from engine.state_merge import pick_newer_state
+    from engine.state_merge import pick_best_state, pick_newer_state
 
     local = {"updated_at": "2026-01-01 10:00:00", "equity": 100, "history": []}
     remote = {"updated_at": "2026-01-02 10:00:00", "equity": 120, "history": [{"pnl": 1}]}
     assert pick_newer_state(local, remote) == remote
     assert pick_newer_state(remote, local) == remote
+
+
+def test_pick_best_state_prefers_github_on_deploy_empty():
+    from engine.state_merge import pick_best_state
+
+    local = {
+        "updated_at": "2026-09-04 16:00:00",
+        "equity": 3000,
+        "active_positions": {},
+        "history": [],
+        "ledgers": {"Kasa_CCI": 100},
+    }
+    remote = {
+        "updated_at": "2026-09-04 15:55:00",
+        "equity": 2800,
+        "active_positions": {"Kasa_CCI|BTCUSDT": {"symbol": "BTCUSDT"}},
+        "history": [{"pnl": 1}, {"pnl": -1}],
+    }
+    merged, src = pick_best_state(local, remote)
+    assert merged is remote
+    assert src == "github"
 
 
 def test_recipe_generator_and_eval():
@@ -275,7 +296,7 @@ def run_all():
         test_bollinger_contains_price_mostly, test_no_lookahead_sma,
         test_risk_sizer, test_rejim_osilator_priority_and_count, test_momentum_scan_smoke,
         test_symbol_lock_caps_and_combo_risk, test_strategy_count_and_smoke,
-        test_state_merge_picks_newer, test_recipe_generator_and_eval, test_lab_promote_respects_cap,
+        test_state_merge_picks_newer, test_pick_best_state_prefers_github_on_deploy_empty, test_recipe_generator_and_eval, test_lab_promote_respects_cap,
         test_recipe_validator_accepts_known_rules,
     ]
     for t in tests:

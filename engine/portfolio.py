@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Optional
 
 from engine.config import (
+    GITHUB_TOKEN,
     KASA_START_USD,
     LAB_LEDGER_PREFIX,
     LEDGER_NAMES,
@@ -20,7 +21,7 @@ from engine.lab_state import (
     record_lab_trade,
     sync_lab_state,
 )
-from engine.state_merge import pick_newer_state
+from engine.state_merge import pick_best_state
 from engine.types import ClosedTrade, Position, Side, Signal
 from risk.sizer import (
     PositionRisk,
@@ -46,6 +47,7 @@ class Portfolio:
         self.lab_state: dict = {}
         self.logs: list[str] = []
         self._equity_curve: list[dict] = []
+        self.state_source: str = "fresh"
         remote = pull_state()
         local_raw = None
         if os.path.exists(self.path):
@@ -54,13 +56,21 @@ class Portfolio:
                     local_raw = json.load(f)
             except Exception:
                 local_raw = None
-        merged = pick_newer_state(local_raw, remote)
+        merged, self.state_source = pick_best_state(local_raw, remote)
         if merged:
             self._apply_raw(merged)
         else:
             self.load()
         self.lab_state = load_lab_state()
         self._ensure_lab_ledgers()
+        n_pos = len(self.positions)
+        n_hist = len(self.history)
+        self.log(
+            f"State yuklendi [{self.state_source}] | acik {n_pos} | kapanan {n_hist} | "
+            f"github={'ok' if remote else 'yok'} | token={'var' if GITHUB_TOKEN else 'YOK'}"
+        )
+        if n_pos or n_hist:
+            self.save(sync_github=bool(GITHUB_TOKEN))
 
     @staticmethod
     def pos_key(ledger: str, symbol: str) -> str:
@@ -129,8 +139,10 @@ class Portfolio:
         with open(self.path, "w", encoding="utf-8") as f:
             json.dump(payload, f, indent=2)
         if sync_github:
-            push_state(payload)
+            ok = push_state(payload)
             sync_lab_state(self.lab_state)
+            if not ok:
+                self.log("UYARI: GitHub state push basarisiz — deploy'da veri kaybi riski")
 
     def _pos_dict(self, p: Position) -> dict:
         return {

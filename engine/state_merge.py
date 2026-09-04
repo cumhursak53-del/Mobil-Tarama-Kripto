@@ -33,6 +33,16 @@ def _state_score(raw: Optional[dict]) -> tuple[float, float]:
     return ts, eq + len(hist) * 0.001
 
 
+def _richness(raw: Optional[dict]) -> tuple[int, int, float]:
+    """Once acik pozisyon + gecmis, sonra zaman. Deploy sifirlamasini onler."""
+    if not raw:
+        return 0, 0, 0.0
+    pos = len(raw.get("active_positions") or {})
+    hist = len(raw.get("history") or {})
+    ts = _parse_ts(raw.get("updated_at"))
+    return pos, hist, ts
+
+
 def pick_newer_state(local: Optional[dict], remote: Optional[dict]) -> Optional[dict]:
     if local and not remote:
         return local
@@ -49,3 +59,23 @@ def pick_newer_state(local: Optional[dict], remote: Optional[dict]) -> Optional[
     if re >= le:
         return remote
     return local
+
+
+def pick_best_state(local: Optional[dict], remote: Optional[dict]) -> tuple[Optional[dict], str]:
+    """Deploy sonrasi bos yerel state'in dolu GitHub state'ini ezmesini engeller."""
+    if not local and not remote:
+        return None, "empty"
+    if not local:
+        return remote, "github"
+    if not remote:
+        return local, "local"
+    lr = _richness(local)
+    rr = _richness(remote)
+    if rr > lr:
+        return remote, "github"
+    if lr > rr:
+        return local, "local"
+    newer = pick_newer_state(local, remote)
+    if newer is remote:
+        return remote, "github"
+    return local, "local"
