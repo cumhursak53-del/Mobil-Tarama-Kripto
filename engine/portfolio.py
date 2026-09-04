@@ -6,10 +6,13 @@ from datetime import datetime
 from typing import Optional
 
 from engine.config import (
+    GEMINI_API_KEY,
     GITHUB_TOKEN,
     KASA_START_USD,
+    LAB_AUTO,
     LAB_LEDGER_PREFIX,
     LEDGER_NAMES,
+    RESEARCH_ENABLED,
     STATE_FILE,
     TAKER_FEE,
     TR_TZ,
@@ -359,7 +362,17 @@ class Portfolio:
                 "recent_backtests": backtests[-10:],
                 "all_candidates": candidates,
                 "pipeline": self.lab_state.get("pipeline") or {},
-                "research": self.lab_state.get("research") or {},
+                "research": {
+                    **(self.lab_state.get("research") or {}),
+                    "gemini_configured": bool(GEMINI_API_KEY),
+                    "research_enabled": RESEARCH_ENABLED,
+                },
+            },
+            "engine_flags": {
+                "research_enabled": RESEARCH_ENABLED,
+                "gemini_configured": bool(GEMINI_API_KEY),
+                "lab_auto": LAB_AUTO,
+                "github_token": bool(GITHUB_TOKEN),
             },
             "updated_at": now_tr(),
         }

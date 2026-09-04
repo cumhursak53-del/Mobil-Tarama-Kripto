@@ -4,7 +4,7 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from engine.config import GEMINI_API_KEY, LAB_AUTO, LAB_AUTO_INTERVAL_SEC, LAB_LEDGER_PREFIX, LAB_MAX_CANDIDATES, RESEARCH_ENABLED
+from engine.config import LAB_AUTO, LAB_AUTO_INTERVAL_SEC, LAB_LEDGER_PREFIX, LAB_MAX_CANDIDATES
 from ui_common import (
     engine_status,
     load_lab_data,
@@ -72,14 +72,31 @@ def render() -> None:
         st.caption(f"Pipeline durumu: {pipe_status}. Deploy sonrasi ilk calisma birkaç dakika surebilir.")
 
     research = lab_summary.get("research") or lab_remote.get("research") or {}
-    if RESEARCH_ENABLED and GEMINI_API_KEY:
+    flags = engine_data.get("engine_flags") or {}
+    research_on = bool(flags.get("research_enabled", research.get("research_enabled", True)))
+    gemini_ok = bool(flags.get("gemini_configured", research.get("gemini_configured")))
+    has_activity = bool(
+        research.get("last_youtube_at") or research.get("last_news_at")
+        or (research.get("youtube_recipes") or research.get("news_recipes"))
+    )
+
+    if research_on and gemini_ok:
         st.success(
-            f"Gemini arastirma **acik** | YouTube: {research.get('last_youtube_at') or '-'} "
+            f"Gemini arastirma **motor uzerinde acik** | YouTube: {research.get('last_youtube_at') or '-'} "
             f"| Haber: {research.get('last_news_at') or '-'} "
             f"| Uretilen: YT {research.get('youtube_recipes', 0)} + haber {research.get('news_recipes', 0)}"
         )
-    elif RESEARCH_ENABLED:
-        st.warning("Arastirma acik ama `GEMINI_API_KEY` Render env'de yok.")
+    elif research_on and has_activity:
+        st.success("Gemini arastirma calismis (motor log / lab_state kaniti var).")
+    elif research_on:
+        st.warning(
+            "Arastirma acik ama motor **Worker** servisinde `GEMINI_API_KEY` yok. "
+            "Streamlit degil — Render'da paper motoru calisan servise key ekle."
+        )
+        st.caption(
+            "Render Dashboard → **Worker** (mobil-tarama-kripto.onrender.com) → Environment → "
+            "`GEMINI_API_KEY` = Google AI Studio key → Save → redeploy."
+        )
     else:
         st.caption("Arastirma kapali (`RESEARCH_ENABLED=0`).")
 
@@ -115,10 +132,8 @@ def render() -> None:
     steps = [
         (
             "0. Gemini arastirma",
-            RESEARCH_ENABLED and bool(GEMINI_API_KEY) and bool(
-                research.get("last_youtube_at") or research.get("last_news_at")
-            ),
-            f"YT {research.get('youtube_recipes', 0)} + haber {research.get('news_recipes', 0)} tarif",
+            gemini_ok and (has_activity or pipe_status in ("ok", "running")),
+            f"Motor key: {'var' if gemini_ok else 'YOK'} | YT {research.get('youtube_recipes', 0)} + haber {research.get('news_recipes', 0)}",
         ),
         ("1. Otomasyon motoru", LAB_AUTO and pipe_status in ("ok", "running"), f"Durum: {pipe_status} | Son: {pipe_run}"),
         ("2. Tarif havuzu", recipe_n > 0, f"{recipe_n} tarif" if recipe_n else "Ilk calismada uretilecek"),

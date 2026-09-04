@@ -83,6 +83,9 @@ def run_lab_pipeline(*, log=None, force: bool = False) -> dict:
         pipe = _pipeline(state)
         pipe["status"] = "running"
         pipe["last_message"] = "Lab pipeline calisiyor..."
+        research_meta = state.setdefault("research", {})
+        research_meta["gemini_configured"] = bool(GEMINI_API_KEY)
+        research_meta["research_enabled"] = RESEARCH_ENABLED
         sync_lab_state(state)
 
         generated = 0
@@ -91,12 +94,17 @@ def run_lab_pipeline(*, log=None, force: bool = False) -> dict:
 
         if RESEARCH_ENABLED and GEMINI_API_KEY:
             new_research = run_research(state, log=log)
-            if new_research:
-                state.setdefault("recipes", []).extend(new_research)
-                researched = len(new_research)
-                pipe["last_researched"] = researched
-                if log:
-                    log(f"Arastirma: {researched} yeni tarif (YouTube/haber/Gemini)")
+        elif RESEARCH_ENABLED and log:
+            log("Arastirma atlandi: GEMINI_API_KEY worker env'de tanimli degil")
+            new_research = []
+        else:
+            new_research = []
+        if new_research:
+            state.setdefault("recipes", []).extend(new_research)
+            researched = len(new_research)
+            pipe["last_researched"] = researched
+            if log:
+                log(f"Arastirma: {researched} yeni tarif (YouTube/haber/Gemini)")
 
         need_recipes = len(state.get("recipes") or []) < LAB_MIN_RECIPES or (
             force and _paper_slots_free(state) > 0 and len(_pending_recipes(state, 1)) == 0
