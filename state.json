@@ -1,7 +1,7 @@
 {
   "ledgers": {
     "Kasa_RejimOsilator": 100.0,
-    "Kasa_PatlamaSelale": 100.0,
+    "Kasa_PatlamaSelale": 93.37152716150219,
     "Kasa_TrendCizgisi": 100.0,
     "Kasa_PulbackRetest": 100.0,
     "Kasa_DUK": 100.0,
@@ -39,12 +39,474 @@
     "Kasa_7_GoreceliGuc": 100.0,
     "Kasa_8_Oturum": 100.0
   },
-  "balance": 3800.0,
+  "balance": 3793.3715271615024,
   "equity": 3800.0,
-  "active_positions": {},
+  "active_positions": {
+    "Kasa_PatlamaSelale|BOMEUSDT": {
+      "symbol": "BOMEUSDT",
+      "side": "BUY",
+      "ledger_name": "Kasa_PatlamaSelale",
+      "strategy": "[STRAT: Patlama_Long]",
+      "entry_price": 0.0008178,
+      "sl_price": 0.0007931246329908675,
+      "tp_price": 0.000870450734018265,
+      "margin": 6.628472838497808,
+      "notional": 66.28472838497808,
+      "leverage": 10.0,
+      "qty": 81052.49252259487,
+      "entry_time": "2026-09-04 17:17:18",
+      "entry_tf": "15m",
+      "peak_price": 0.0008178,
+      "partial_tp_taken": false,
+      "current_price": 0.0008168,
+      "unrealized_pnl": -0.08105249252259683,
+      "roe_pct": -1.2227928588897339
+    }
+  },
   "history": [],
-  "signal_log": {},
-  "patlama_selale_scan": {},
+  "signal_log": {
+    "BOMEUSDT": {
+      "count": 1,
+      "strategies": [
+        "[STRAT: Patlama_Long]"
+      ],
+      "last_side": "BUY",
+      "last_time": "2026-09-04 17:17:18",
+      "last_ledger": "Kasa_PatlamaSelale"
+    }
+  },
+  "patlama_selale_scan": {
+    "SATSUSDT": {
+      "symbol": "SATSUSDT",
+      "long_score": 2,
+      "short_score": 1,
+      "best_side": "NONE",
+      "best_score": 2,
+      "long_notes": "1D:birikim | 4H:direnc_kirildi",
+      "short_notes": "4H:LH-LL",
+      "updated_at": "2026-09-04 17:16:56"
+    },
+    "PEPEUSDT": {
+      "symbol": "PEPEUSDT",
+      "long_score": 1,
+      "short_score": 1,
+      "best_side": "NONE",
+      "best_score": 1,
+      "long_notes": "1D:birikim",
+      "short_notes": "1W:ayı",
+      "updated_at": "2026-09-04 17:16:59"
+    },
+    "SHIBUSDT": {
+      "symbol": "SHIBUSDT",
+      "long_score": 2,
+      "short_score": 1,
+      "best_side": "NONE",
+      "best_score": 2,
+      "long_notes": "1D:birikim | 4H:hacimli_yukari",
+      "short_notes": "1W:ayı",
+      "updated_at": "2026-09-04 17:17:02"
+    },
+    "BONKUSDT": {
+      "symbol": "BONKUSDT",
+      "long_score": 1,
+      "short_score": 1,
+      "best_side": "NONE",
+      "best_score": 1,
+      "long_notes": "4H:HH-HL",
+      "short_notes": "1D:dusus",
+      "updated_at": "2026-09-04 17:17:05"
+    },
+    "FLOKIUSDT": {
+      "symbol": "FLOKIUSDT",
+      "long_score": 1,
+      "short_score": 2,
+      "best_side": "NONE",
+      "best_score": 2,
+      "long_notes": "4H:hacimli_yukari",
+      "short_notes": "1D:dusus | 4H:LH-LL",
+      "updated_at": "2026-09-04 17:17:08"
+    },
+    "PUMPUSDT": {
+      "symbol": "PUMPUSDT",
+      "long_score": 1,
+      "short_score": 1,
+      "best_side": "NONE",
+      "best_score": 1,
+      "long_notes": "1D:yukselis",
+      "short_notes": "4H:LH-LL",
+      "updated_at": "2026-09-04 17:17:10"
+    },
+    "NEIROUSDT": {
+      "symbol": "NEIROUSDT",
+      "long_score": 2,
+      "short_score": 0,
+      "best_side": "NONE",
+      "best_score": 2,
+      "long_notes": "1D:birikim | 4H:direnc_kirildi",
+      "short_notes": "",
+      "updated_at": "2026-09-04 17:17:13"
+    },
+    "TRIAUSDT": {
+      "symbol": "TRIAUSDT",
+      "long_score": 0,
+      "short_score": 1,
+      "best_side": "NONE",
+      "best_score": 1,
+      "long_notes": "",
+      "short_notes": "4H:LH-LL",
+      "updated_at": "2026-09-04 17:17:15"
+    },
+    "BOMEUSDT": {
+      "symbol": "BOMEUSDT",
+      "long_score": 4,
+      "short_score": 1,
+      "best_side": "BUY",
+      "best_score": 4,
+      "long_notes": "1D:yukselis | 1W:boğa | 4H:HH-HL | 4H:sikisma",
+      "short_notes": "4H:sikisma",
+      "updated_at": "2026-09-04 17:17:18"
+    },
+    "DOGEUSDT": {
+      "symbol": "DOGEUSDT",
+      "long_score": 1,
+      "short_score": 3,
+      "best_side": "WATCH_SHORT",
+      "best_score": 3,
+      "long_notes": "4H:hacimli_yukari",
+      "short_notes": "1D:dusus | 1W:ayı | 4H:LH-LL",
+      "updated_at": "2026-09-04 17:17:20"
+    },
+    "HMSTRUSDT": {
+      "symbol": "HMSTRUSDT",
+      "long_score": 2,
+      "short_score": 0,
+      "best_side": "NONE",
+      "best_score": 2,
+      "long_notes": "1D:birikim | 15M:macd_up",
+      "short_notes": "",
+      "updated_at": "2026-09-04 17:17:27"
+    },
+    "PENGUUSDT": {
+      "symbol": "PENGUUSDT",
+      "long_score": 1,
+      "short_score": 2,
+      "best_side": "NONE",
+      "best_score": 2,
+      "long_notes": "1D:yukselis",
+      "short_notes": "1W:ayı | 4H:LH-LL",
+      "updated_at": "2026-09-04 17:17:34"
+    },
+    "USELESSUSDT": {
+      "symbol": "USELESSUSDT",
+      "long_score": 3,
+      "short_score": 0,
+      "best_side": "WATCH_LONG",
+      "best_score": 3,
+      "long_notes": "1D:yukselis | 4H:HH-HL | 4H:hacimli_yukari",
+      "short_notes": "",
+      "updated_at": "2026-09-04 17:17:40"
+    },
+    "NOTUSDT": {
+      "symbol": "NOTUSDT",
+      "long_score": 3,
+      "short_score": 1,
+      "best_side": "WATCH_LONG",
+      "best_score": 3,
+      "long_notes": "1D:birikim | 4H:HH-HL | 4H:sikisma",
+      "short_notes": "4H:sikisma",
+      "updated_at": "2026-09-04 17:17:47"
+    },
+    "MEMEUSDT": {
+      "symbol": "MEMEUSDT",
+      "long_score": 2,
+      "short_score": 2,
+      "best_side": "NONE",
+      "best_score": 2,
+      "long_notes": "4H:direnc_kirildi | 4H:hacimli_yukari",
+      "short_notes": "1D:dusus | 1W:ayı",
+      "updated_at": "2026-09-04 17:17:53"
+    },
+    "GALAUSDT": {
+      "symbol": "GALAUSDT",
+      "long_score": 1,
+      "short_score": 2,
+      "best_side": "NONE",
+      "best_score": 2,
+      "long_notes": "4H:sikisma",
+      "short_notes": "1D:dusus | 4H:sikisma",
+      "updated_at": "2026-09-04 17:18:03"
+    },
+    "TURBOUSDT": {
+      "symbol": "TURBOUSDT",
+      "long_score": 1,
+      "short_score": 3,
+      "best_side": "WATCH_SHORT",
+      "best_score": 3,
+      "long_notes": "4H:sikisma",
+      "short_notes": "1D:dusus | 1W:ayı | 4H:sikisma",
+      "updated_at": "2026-09-04 17:18:11"
+    },
+    "CHIPUSDT": {
+      "symbol": "CHIPUSDT",
+      "long_score": 0,
+      "short_score": 0,
+      "best_side": "NONE",
+      "best_score": 0,
+      "long_notes": "",
+      "short_notes": "",
+      "updated_at": "2026-09-04 17:18:19"
+    },
+    "ARBUSDT": {
+      "symbol": "ARBUSDT",
+      "long_score": 2,
+      "short_score": 1,
+      "best_side": "NONE",
+      "best_score": 2,
+      "long_notes": "1D:birikim | 15M:macd_up",
+      "short_notes": "1W:ayı",
+      "updated_at": "2026-09-04 17:18:28"
+    },
+    "CPUSDT": {
+      "symbol": "CPUSDT",
+      "long_score": 0,
+      "short_score": 0,
+      "best_side": "NONE",
+      "best_score": 0,
+      "long_notes": "",
+      "short_notes": "",
+      "updated_at": "2026-09-04 17:18:34"
+    },
+    "MEWUSDT": {
+      "symbol": "MEWUSDT",
+      "long_score": 0,
+      "short_score": 1,
+      "best_side": "NONE",
+      "best_score": 1,
+      "long_notes": "",
+      "short_notes": "1D:dusus",
+      "updated_at": "2026-09-04 17:18:43"
+    },
+    "PEOPLEUSDT": {
+      "symbol": "PEOPLEUSDT",
+      "long_score": 1,
+      "short_score": 1,
+      "best_side": "NONE",
+      "best_score": 1,
+      "long_notes": "1D:yukselis",
+      "short_notes": "1W:ayı",
+      "updated_at": "2026-09-04 17:18:50"
+    },
+    "ZORAUSDT": {
+      "symbol": "ZORAUSDT",
+      "long_score": 1,
+      "short_score": 2,
+      "best_side": "NONE",
+      "best_score": 2,
+      "long_notes": "4H:sikisma",
+      "short_notes": "1D:dusus | 4H:sikisma",
+      "updated_at": "2026-09-04 17:18:59"
+    },
+    "ENAUSDT": {
+      "symbol": "ENAUSDT",
+      "long_score": 3,
+      "short_score": 0,
+      "best_side": "WATCH_LONG",
+      "best_score": 3,
+      "long_notes": "1D:yukselis | 4H:HH-HL | 4H:direnc_kirildi",
+      "short_notes": "",
+      "updated_at": "2026-09-04 17:19:06"
+    },
+    "ONEUSDT": {
+      "symbol": "ONEUSDT",
+      "long_score": 0,
+      "short_score": 2,
+      "best_side": "NONE",
+      "best_score": 2,
+      "long_notes": "",
+      "short_notes": "1D:dusus | 1W:ayı",
+      "updated_at": "2026-09-04 17:19:15"
+    },
+    "CAPUSDT": {
+      "symbol": "CAPUSDT",
+      "long_score": 1,
+      "short_score": 0,
+      "best_side": "NONE",
+      "best_score": 1,
+      "long_notes": "4H:HH-HL",
+      "short_notes": "",
+      "updated_at": "2026-09-04 17:19:22"
+    },
+    "XRPUSDT": {
+      "symbol": "XRPUSDT",
+      "long_score": 1,
+      "short_score": 2,
+      "best_side": "NONE",
+      "best_score": 2,
+      "long_notes": "1D:birikim",
+      "short_notes": "1W:ayı | 4H:LH-LL",
+      "updated_at": "2026-09-04 17:19:31"
+    },
+    "XPLUSDT": {
+      "symbol": "XPLUSDT",
+      "long_score": 2,
+      "short_score": 2,
+      "best_side": "NONE",
+      "best_score": 2,
+      "long_notes": "1D:birikim | 4H:hacimli_yukari",
+      "short_notes": "1W:ayı | 4H:LH-LL",
+      "updated_at": "2026-09-04 17:19:37"
+    },
+    "MUBARAKUSDT": {
+      "symbol": "MUBARAKUSDT",
+      "long_score": 1,
+      "short_score": 0,
+      "best_side": "NONE",
+      "best_score": 1,
+      "long_notes": "1D:yukselis",
+      "short_notes": "",
+      "updated_at": "2026-09-04 17:19:44"
+    },
+    "AZTECUSDT": {
+      "symbol": "AZTECUSDT",
+      "long_score": 1,
+      "short_score": 1,
+      "best_side": "NONE",
+      "best_score": 1,
+      "long_notes": "4H:hacimli_yukari",
+      "short_notes": "4H:LH-LL",
+      "updated_at": "2026-09-04 17:19:51"
+    },
+    "BICOUSDT": {
+      "symbol": "BICOUSDT",
+      "long_score": 1,
+      "short_score": 3,
+      "best_side": "WATCH_SHORT",
+      "best_score": 3,
+      "long_notes": "4H:sikisma",
+      "short_notes": "1D:dusus | 4H:LH-LL | 4H:sikisma",
+      "updated_at": "2026-09-04 17:20:00"
+    },
+    "HOMEUSDT": {
+      "symbol": "HOMEUSDT",
+      "long_score": 0,
+      "short_score": 2,
+      "best_side": "NONE",
+      "best_score": 2,
+      "long_notes": "",
+      "short_notes": "1D:dusus | 4H:LH-LL",
+      "updated_at": "2026-09-04 17:20:07"
+    },
+    "IOSTUSDT": {
+      "symbol": "IOSTUSDT",
+      "long_score": 1,
+      "short_score": 2,
+      "best_side": "NONE",
+      "best_score": 2,
+      "long_notes": "4H:HH-HL",
+      "short_notes": "1D:dusus | 1W:ayı",
+      "updated_at": "2026-09-04 17:20:15"
+    },
+    "MERLUSDT": {
+      "symbol": "MERLUSDT",
+      "long_score": 1,
+      "short_score": 3,
+      "best_side": "WATCH_SHORT",
+      "best_score": 3,
+      "long_notes": "4H:hacimli_yukari",
+      "short_notes": "1D:dusus | 1W:ayı | 4H:LH-LL",
+      "updated_at": "2026-09-04 17:20:22"
+    },
+    "LINEAUSDT": {
+      "symbol": "LINEAUSDT",
+      "long_score": 1,
+      "short_score": 1,
+      "best_side": "NONE",
+      "best_score": 1,
+      "long_notes": "4H:HH-HL",
+      "short_notes": "1D:dusus",
+      "updated_at": "2026-09-04 17:20:29"
+    },
+    "ADAUSDT": {
+      "symbol": "ADAUSDT",
+      "long_score": 2,
+      "short_score": 1,
+      "best_side": "NONE",
+      "best_score": 2,
+      "long_notes": "1D:birikim | 4H:hacimli_yukari",
+      "short_notes": "1W:ayı",
+      "updated_at": "2026-09-04 17:20:36"
+    },
+    "MOVEUSDT": {
+      "symbol": "MOVEUSDT",
+      "long_score": 0,
+      "short_score": 2,
+      "best_side": "NONE",
+      "best_score": 2,
+      "long_notes": "",
+      "short_notes": "1D:dusus | 1W:ayı",
+      "updated_at": "2026-09-04 17:20:43"
+    },
+    "MONUSDT": {
+      "symbol": "MONUSDT",
+      "long_score": 1,
+      "short_score": 1,
+      "best_side": "NONE",
+      "best_score": 1,
+      "long_notes": "1D:yukselis",
+      "short_notes": "4H:LH-LL",
+      "updated_at": "2026-09-04 17:20:50"
+    },
+    "GPSUSDT": {
+      "symbol": "GPSUSDT",
+      "long_score": 3,
+      "short_score": 1,
+      "best_side": "WATCH_LONG",
+      "best_score": 3,
+      "long_notes": "1D:yukselis | 1W:boğa | 1H:kirilim+hacim",
+      "short_notes": "15M:macd_down",
+      "updated_at": "2026-09-04 17:20:57"
+    },
+    "ROBOUSDT": {
+      "symbol": "ROBOUSDT",
+      "long_score": 0,
+      "short_score": 0,
+      "best_side": "NONE",
+      "best_score": 0,
+      "long_notes": "",
+      "short_notes": "",
+      "updated_at": "2026-09-04 17:21:04"
+    },
+    "RSRUSDT": {
+      "symbol": "RSRUSDT",
+      "long_score": 0,
+      "short_score": 3,
+      "best_side": "WATCH_SHORT",
+      "best_score": 3,
+      "long_notes": "",
+      "short_notes": "1D:dusus | 1W:ayı | 4H:LH-LL",
+      "updated_at": "2026-09-04 17:21:11"
+    },
+    "SIGNUSDT": {
+      "symbol": "SIGNUSDT",
+      "long_score": 2,
+      "short_score": 1,
+      "best_side": "NONE",
+      "best_score": 2,
+      "long_notes": "4H:HH-HL | 4H:hacimli_yukari",
+      "short_notes": "1D:dusus",
+      "updated_at": "2026-09-04 17:21:18"
+    },
+    "PIPPINUSDT": {
+      "symbol": "PIPPINUSDT",
+      "long_score": 0,
+      "short_score": 3,
+      "best_side": "WATCH_SHORT",
+      "best_score": 3,
+      "long_notes": "",
+      "short_notes": "1D:dusus | 1W:ayı | 4H:LH-LL",
+      "updated_at": "2026-09-04 17:21:24"
+    }
+  },
   "engine_logs": [
     "[16:59:40] State yuklendi [local] | acik 0 | kapanan 0 | github=yok | token=YOK",
     "[16:59:40] HTTP state API :10000",
@@ -60,37 +522,34 @@
     "[17:01:20] Calisiyor | tarama 60/454 | Aktif 0 | Fon $3800.00",
     "[17:01:20] UYARI: GitHub state push basarisiz — deploy'da veri kaybi riski",
     "[17:02:34] Calisiyor | tarama 90/454 | Aktif 0 | Fon $3800.00",
-    "[17:02:34] UYARI: GitHub state push basarisiz — deploy'da veri kaybi riski"
+    "[17:02:34] UYARI: GitHub state push basarisiz — deploy'da veri kaybi riski",
+    "[17:16:52] State yuklendi [github] | acik 0 | kapanan 0 | github=ok | sync=actions",
+    "[17:16:52] HTTP state API :10000",
+    "[17:16:52] Canli piyasa simulasyonu: tum USDT perpetual, 30 kasa | klasik=1h kapanis, Patlama/SMC=anlik (~20sn)",
+    "[17:16:52] Lab otomasyon acik: tarif uretimi/backtest arka planda calisacak",
+    "[17:16:53] Piyasa listesi: 454 sembol (tum USDT perpetual)",
+    "[17:17:00] Gemini baglantisi OK (auth (AQ.), model gemini-3.6-flash)",
+    "[17:17:14] Haber batch 91554d4cbfd9949d: 2 tarif",
+    "[17:17:14] Arastirma: 2 yeni tarif (YouTube/haber/Gemini)",
+    "[17:17:14] Lab: 24 yeni tarif uretildi (toplam 26)",
+    "[17:17:18] YENI BUY BOMEUSDT | [STRAT: Patlama_Long] | Kasa_PatlamaSelale | 10x | marjin $6.63 | notional $66.28",
+    "[17:17:18] GitHub yedek: Actions otomatik senkron (token gerekmez) — public pull acik",
+    "[17:17:54] Calisiyor | tarama 15/454 | Aktif 1 | Fon $3800.00",
+    "[17:19:51] Calisiyor | tarama 30/454 | Aktif 1 | Fon $3800.00"
   ],
   "equity_curve": [],
   "kasa_count": 30,
   "lab_candidates": [],
   "lab_summary": {
-    "updated_at": "2026-09-04 17:02:34",
+    "updated_at": "2026-09-04 17:19:51",
     "recipe_count": 0,
     "backtest_count": 0,
     "paper_count": 0,
     "rejected_count": 0,
     "recent_backtests": [],
     "all_candidates": [],
-    "pipeline": {
-      "status": "running",
-      "last_run_at": "",
-      "last_generate_at": "",
-      "last_backtest_at": "",
-      "last_message": "Lab pipeline calisiyor...",
-      "last_generated": 0,
-      "last_backtested": 0,
-      "last_promoted": 0,
-      "last_researched": 0
-    },
+    "pipeline": {},
     "research": {
-      "processed_videos": [],
-      "processed_news_batches": [],
-      "last_youtube_at": "",
-      "last_news_at": "",
-      "youtube_recipes": 0,
-      "news_recipes": 0,
       "gemini_configured": true,
       "research_enabled": true
     }
@@ -101,5 +560,5 @@
     "lab_auto": true,
     "github_token": false
   },
-  "updated_at": "2026-09-04 17:03:02"
+  "updated_at": "2026-09-04 17:21:25"
 }
