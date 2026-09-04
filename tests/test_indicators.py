@@ -140,7 +140,7 @@ def test_smc_scan_smoke():
     from engine.context import build_context
     from engine.config import TIMEFRAMES
     from engine.smc_scan import score_smc, smc_trade_side
-    from structure.smc import analyze_smc_mtf
+    from structure.smc import analyze_smc, analyze_smc_mtf
 
     rng = np.random.default_rng(4)
     n = 260
@@ -156,18 +156,42 @@ def test_smc_scan_smoke():
             "volume": rng.random(n) * 1000 + 50,
         }, index=idx)
         df["close_time"] = idx + pd.Timedelta(hours=1)
+        df["atr"] = 1.0
+        df["vol_sma"] = df["volume"].rolling(20, min_periods=1).mean()
         frames[tf] = df
     ctx = build_context("TESTUSDT", frames, indicated=False)
     scored = score_smc(ctx)
     assert scored.best_score >= 0
     assert scored.trend in ("bull", "bear", "range")
+    assert scored.internal_event in ("bos_bull", "bos_bear", "choch_bull", "choch_bear", "none")
+    assert scored.external_event in ("bos_bull", "bos_bear", "choch_bull", "choch_bear", "none")
     d = scored.to_dict()
     assert "long_score" in d and "short_score" in d
+    assert "breaker_bull" in d and "active_fvg_bull" in d
+    assert "setup_grade_long" in d and "confluence_long" in d
+    assert "session" in d and "killzone" in d
+    assert "internal_swing_n" in d and "external_swing_n" in d
+    assert scored.setup_grade_long in ("A", "B", "C", "none")
+
+    from structure.adaptive_swing import swing_ns
+    i, e = swing_ns(frames["4h"])
+    assert 2 <= i < e <= 12
     assert analyze_smc_mtf(frames).best_side in (
         "BUY", "SELL", "WATCH_LONG", "WATCH_SHORT", "NONE"
     )
     side = smc_trade_side(scored)
     assert side is None or scored.best_score >= 5
+
+    single = analyze_smc(frames["4h"])
+    assert hasattr(single, "breaker_blocks")
+    assert hasattr(single, "mitigation_blocks")
+    assert single.dealing_range is not None or single.trend == "range"
+    for fvg in single.fvgs:
+        assert 0.0 <= fvg.fill_pct <= 1.0
+
+    from structure.smc_sessions import in_killzone, session_label
+    assert isinstance(session_label(), str)
+    assert isinstance(in_killzone(), bool)
 
 
 def test_symbol_lock_caps_and_combo_risk():

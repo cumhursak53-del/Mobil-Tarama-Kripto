@@ -45,7 +45,7 @@ Kural tipleri (SADECE bunlar):
 - {"type":"structure","tf":"4h"|"1h","kind":"bos_high"|"bos_low"|"squeeze"|"hh_hl"|"lh_ll"}
 - {"type":"indicator","tf":"1h"|"4h","field":"macd_cross_up"|"macd_cross_down"|"stoch_cross_up"|"stoch_cross_down"|"stochrsi_cross_up"|"stochrsi_cross_down"|"cci_cross_up"|"cci_cross_down"|"tenkan_cross_up"|"tenkan_cross_down","extra":""|"k_lt_25"|"k_gt_75"|"rsi_lt_45"|"rsi_gt_55"|"hist_pos"|"hist_neg"|"cci_lt_100"|"cci_gt_-100"}
 - {"type":"momentum_score","side":"long"|"short","min":4}
-- {"type":"smc","tf":"4h"|"1h"|"15m","kind":"bos_bull"|"bos_bear"|"choch_bull"|"choch_bear"|"ob_bull_retest"|"ob_bear_retest"|"fvg_bull"|"fvg_bear"|"sweep_bull"|"sweep_bear"|"discount"|"premium"|"trend_bull"|"trend_bear"|"smc_score_long"|"smc_score_short","min":5}
+- {"type":"smc","tf":"4h"|"1h"|"15m","kind":"bos_bull"|"bos_bear"|"choch_bull"|"choch_bear"|"internal_bos_bull"|"external_bos_bull"|"ob_bull_retest"|"ob_bear_retest"|"breaker_bull_retest"|"breaker_bear_retest"|"mitigation_bull"|"mitigation_bear"|"fvg_bull_active"|"fvg_bear_active"|"sweep_bull"|"sweep_bear"|"weak_low_swept"|"weak_high_swept"|"discount"|"premium"|"trend_bull"|"trend_bear"|"smc_score_long"|"smc_score_short","min":5}
 
 Long strateji: long_rules dolu, short_rules bos veya zayif.
 Short strateji: short_rules dolu.
@@ -317,3 +317,124 @@ En fazla {max_recipes} tarif. JSON array only.
         if log:
             log(msg)
         return []
+
+
+def generate_smc_commentary(
+    *,
+    symbol: str,
+    timeframe: str,
+    analysis: dict,
+    log: LogFn | None = None,
+) -> str:
+    """SMC metriklerinden Turkce grafik yorumu (Gemini)."""
+    if not gemini_available():
+        return "Gemini API anahtari tanimli degil — yorum yapilamiyor."
+    import json
+
+    prompt = f"""Sen deneyimli bir Smart Money Concepts (SMC) analistsin.
+Sembol: {symbol} | Timeframe: {timeframe}
+
+Motor ciktisi (JSON):
+{json.dumps(analysis, ensure_ascii=False, indent=2)}
+
+Gorev: Turkce, net ve kisa (5-8 cumle):
+1) Mevcut yapı (trend, external/internal olay)
+2) Premium/discount/OTE konumu
+3) Aktif zone'lar (OB, breaker, FVG, likidite)
+4) Long ve short icin olasi senaryo
+5) Setup grade ve islem icin dikkat (risk)
+
+Sadece verilen metrikleri kullan; uydurma fiyat veya haber ekleme.
+"""
+    try:
+        return _generate_text(prompt=prompt, json_mode=False, log=log).strip()
+    except Exception as e:
+        return f"Gemini yorum hatasi: {_format_error(e)}"
+
+
+def _generate_vision(
+    *,
+    prompt: str,
+    image_bytes: bytes,
+    log: LogFn | None = None,
+) -> str:
+    """Gemini multimodal — grafik PNG + metin."""
+    import base64
+
+    global _last_model_used
+    errors: list[str] = []
+    for model in _model_chain():
+        try:
+            if genai is not None and genai_types is not None:
+                client = _sdk_client()
+                response = client.models.generate_content(
+                    model=model,
+                    contents=[
+                        genai_types.Content(
+                            role="user",
+                            parts=[
+                                genai_types.Part.from_bytes(data=image_bytes, mime_type="image/png"),
+                                genai_types.Part.from_text(text=prompt),
+                            ],
+                        )
+                    ],
+                )
+                text = (getattr(response, "text", None) or "").strip()
+                if text:
+                    _last_model_used = model
+                    return text
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+            payload = {
+                "contents": [{
+                    "parts": [
+                        {"inline_data": {"mime_type": "image/png", "data": base64.b64encode(image_bytes).decode()}},
+                        {"text": prompt},
+                    ]
+                }]
+            }
+            res = http.post(url, headers=_gemini_headers(), json=payload, timeout=90)
+            if res.status_code != 200:
+                raise RuntimeError(f"HTTP {res.status_code}: {res.text[:180]}")
+            parts = res.json().get("candidates", [{}])[0].get("content", {}).get("parts", [{}])
+            text = parts[0].get("text", "") if parts else ""
+            if text:
+                _last_model_used = model
+                return text.strip()
+            raise RuntimeError("Gemini bos vision yaniti")
+        except Exception as e:
+            errors.append(f"{model}: {_format_error(e)}")
+            if _error_kind(e) == "auth":
+                raise
+    raise RuntimeError(" | ".join(errors[-3:]))
+
+
+def generate_smc_vision_commentary(
+    *,
+    symbol: str,
+    timeframe: str,
+    analysis: dict,
+    image_bytes: bytes,
+    log: LogFn | None = None,
+) -> str:
+    """Grafik goruntusu + SMC metrikleri ile Turkce yorum."""
+    if not gemini_available():
+        return "Gemini API anahtari tanimli degil."
+    import json
+
+    prompt = f"""Sen LuxAlgo SMC uzmanisin. Ekte {symbol} {timeframe} mum grafigi var (OB, FVG, OTE, BOS etiketleri cizili).
+
+Motor metrikleri:
+{json.dumps(analysis, ensure_ascii=False, indent=2)}
+
+Gorev — Turkce, 6-10 cumle:
+1) Grafikte gordugun yapı (BOS/CHoCH, zone'lar)
+2) Premium/discount/OTE konumu
+3) Long ve short senaryo + hangi grade (A/B/C) mantikli
+4) Risk ve invalidation seviyesi
+
+Grafik + metrikleri birlikte kullan; uydurma haber ekleme.
+"""
+    try:
+        return _generate_vision(prompt=prompt, image_bytes=image_bytes, log=log)
+    except Exception as e:
+        return f"Gemini vision hatasi: {_format_error(e)}"

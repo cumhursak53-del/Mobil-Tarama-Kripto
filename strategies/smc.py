@@ -33,10 +33,10 @@ class SmartMoneyConcepts(Strategy):
         if side is None or not ctx.aligned(side):
             return None
 
-        # OB tabanli SL
+        # OB / breaker tabanli SL
         sl = sl_from_swing(df, side)
-        active_bull = [ob for ob in analysis.order_blocks if ob.side == "bull" and not ob.mitigated]
-        active_bear = [ob for ob in analysis.order_blocks if ob.side == "bear" and not ob.mitigated]
+        active_bull = analysis.active_blocks("bull")
+        active_bear = analysis.active_blocks("bear")
         price = float(df["close"].iloc[-1])
         if side == Side.BUY and active_bull:
             sl = min(sl or price * 0.99, active_bull[-1].bottom * 0.998)
@@ -52,8 +52,11 @@ class SmartMoneyConcepts(Strategy):
             sl=sl,
             extra={
                 "smc_score": analysis.long_score if side == Side.BUY else analysis.short_score,
+                "smc_grade": analysis.setup_grade_long if side == Side.BUY else analysis.setup_grade_short,
+                "smc_confluence": analysis.confluence_long if side == Side.BUY else analysis.confluence_short,
                 "trend": analysis.trend,
                 "last_event": analysis.last_event,
+                "session": analysis.session,
                 "notes": analysis.to_dict().get("long_notes" if side == Side.BUY else "short_notes", ""),
             },
         )

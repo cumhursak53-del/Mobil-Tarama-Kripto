@@ -34,6 +34,8 @@ LIVE_ENTRY_LEDGERS = tuple(
     ).split(",")
     if x.strip()
 )
+SMC_MIN_GRADE = os.environ.get("SMC_MIN_GRADE", "B")
+SMC_MIN_CONFLUENCE = int(os.environ.get("SMC_MIN_CONFLUENCE", "4"))
 PRIORITY_LEDGERS = (COMBO_LEDGER, PATLAMA_LEDGER)
 MIN_SURVIVAL_USD = 20.0
 LIQ_ADVERSE_PCT = 0.08  # 10x korelasyonlu dump tamponu

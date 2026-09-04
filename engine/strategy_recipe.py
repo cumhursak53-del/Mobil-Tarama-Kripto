@@ -4,7 +4,6 @@ from dataclasses import dataclass, field
 from typing import Any, Optional
 
 from engine.momentum_scan import score_momentum
-from engine.smc_scan import score_smc
 from engine.types import Side
 from strategies.base import MarketContext
 from strategies.helpers import valid_row
@@ -94,33 +93,96 @@ def _eval_rule(ctx: MarketContext, rule: dict) -> bool:
             smc = analyze_smc_mtf(ctx.frames)
         else:
             smc = analyze_smc(df)
-        notes = " ".join(smc.long_notes + smc.short_notes)
         price = float(df["close"].iloc[-1])
-        active_bull = [ob for ob in smc.order_blocks if ob.side == "bull" and not ob.mitigated]
-        active_bear = [ob for ob in smc.order_blocks if ob.side == "bear" and not ob.mitigated]
+        active_bull = smc.active_blocks("bull")
+        active_bear = smc.active_blocks("bear")
         in_bull_ob = any(
             min(ob.top, ob.bottom) * 0.997 <= price <= max(ob.top, ob.bottom) * 1.003
-            for ob in active_bull
+            for ob in smc.order_blocks
+            if ob.side == "bull" and not ob.mitigated and ob.block_type == "order"
         )
         in_bear_ob = any(
             min(ob.top, ob.bottom) * 0.997 <= price <= max(ob.top, ob.bottom) * 1.003
-            for ob in active_bear
+            for ob in smc.order_blocks
+            if ob.side == "bear" and not ob.mitigated and ob.block_type == "order"
         )
+        in_bull_breaker = any(
+            min(ob.top, ob.bottom) * 0.997 <= price <= max(ob.top, ob.bottom) * 1.003
+            for ob in smc.breaker_blocks
+            if ob.side == "bull" and not ob.mitigated
+        )
+        in_bear_breaker = any(
+            min(ob.top, ob.bottom) * 0.997 <= price <= max(ob.top, ob.bottom) * 1.003
+            for ob in smc.breaker_blocks
+            if ob.side == "bear" and not ob.mitigated
+        )
+        in_bull_mit = any(
+            min(ob.top, ob.bottom) * 0.997 <= price <= max(ob.top, ob.bottom) * 1.003
+            for ob in smc.mitigation_blocks
+            if ob.side == "bull" and not ob.mitigated
+        )
+        in_bear_mit = any(
+            min(ob.top, ob.bottom) * 0.997 <= price <= max(ob.top, ob.bottom) * 1.003
+            for ob in smc.mitigation_blocks
+            if ob.side == "bear" and not ob.mitigated
+        )
+        active_fvg_bull = any(
+            not f.mitigated for f in smc.fvgs if f.side == "bull"
+        )
+        active_fvg_bear = any(
+            not f.mitigated for f in smc.fvgs if f.side == "bear"
+        )
+        notes_l = " ".join(smc.long_notes)
+        notes_s = " ".join(smc.short_notes)
         mapping = {
             "bos_bull": smc.last_event == "bos_bull",
             "bos_bear": smc.last_event == "bos_bear",
             "choch_bull": smc.last_event == "choch_bull",
             "choch_bear": smc.last_event == "choch_bear",
+            "internal_bos_bull": smc.internal_event == "bos_bull",
+            "internal_bos_bear": smc.internal_event == "bos_bear",
+            "external_bos_bull": smc.external_event == "bos_bull",
+            "external_bos_bear": smc.external_event == "bos_bear",
             "ob_bull_retest": in_bull_ob,
             "ob_bear_retest": in_bear_ob,
+            "breaker_bull_retest": in_bull_breaker,
+            "breaker_bear_retest": in_bear_breaker,
+            "mitigation_bull": in_bull_mit,
+            "mitigation_bear": in_bear_mit,
             "sweep_bull": smc.sweep_bull,
             "sweep_bear": smc.sweep_bear,
+            "inducement_bull": smc.inducement_bull,
+            "inducement_bear": smc.inducement_bear,
+            "turtle_soup_bull": smc.turtle_soup_bull,
+            "turtle_soup_bear": smc.turtle_soup_bear,
+            "nested_sweep_bull": smc.nested_sweep_bull,
+            "nested_sweep_bear": smc.nested_sweep_bear,
             "discount": smc.in_discount,
             "premium": smc.in_premium,
+            "ote_long": smc.in_ote_long,
+            "ote_short": smc.in_ote_short,
+            "equilibrium": smc.in_equilibrium,
+            "killzone": smc.killzone,
+            "hierarchy_long": smc.hierarchy_long,
+            "hierarchy_short": smc.hierarchy_short,
             "trend_bull": smc.trend == "bull",
             "trend_bear": smc.trend == "bear",
-            "fvg_bull": "FVG" in smc.long_notes,
-            "fvg_bear": "FVG" in smc.short_notes,
+            "fvg_bull": "FVG" in notes_l,
+            "fvg_bear": "FVG" in notes_s,
+            "fvg_bull_active": active_fvg_bull and "FVG_active" in notes_l,
+            "fvg_bear_active": active_fvg_bear and "FVG_active" in notes_s,
+            "ifvg_bull": "IFVG" in notes_l,
+            "ifvg_bear": "IFVG" in notes_s,
+            "fvg_ce_bull": "FVG_CE" in notes_l,
+            "fvg_ce_bear": "FVG_CE" in notes_s,
+            "weak_high_swept": smc.swing_high_strength == "weak" and smc.sweep_bear,
+            "weak_low_swept": smc.swing_low_strength == "weak" and smc.sweep_bull,
+            "strong_high_break": smc.swing_high_strength == "strong" and smc.external_event == "bos_bear",
+            "strong_low_break": smc.swing_low_strength == "strong" and smc.external_event == "bos_bull",
+            "setup_grade_a_long": smc.setup_grade_long == "A",
+            "setup_grade_b_long": smc.setup_grade_long in ("A", "B"),
+            "setup_grade_a_short": smc.setup_grade_short == "A",
+            "setup_grade_b_short": smc.setup_grade_short in ("A", "B"),
             "smc_score_long": smc.long_score >= int(rule.get("min", 5)),
             "smc_score_short": smc.short_score >= int(rule.get("min", 5)),
         }

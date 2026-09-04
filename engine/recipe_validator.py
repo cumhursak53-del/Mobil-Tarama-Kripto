@@ -15,11 +15,22 @@ ALLOWED_FIELDS = {
 }
 ALLOWED_SMC = {
     "bos_bull", "bos_bear", "choch_bull", "choch_bear",
+    "internal_bos_bull", "internal_bos_bear", "external_bos_bull", "external_bos_bear",
     "ob_bull_retest", "ob_bear_retest",
-    "fvg_bull", "fvg_bear",
+    "breaker_bull_retest", "breaker_bear_retest",
+    "mitigation_bull", "mitigation_bear",
+    "fvg_bull", "fvg_bear", "fvg_bull_active", "fvg_bear_active",
+    "ifvg_bull", "ifvg_bear", "fvg_ce_bull", "fvg_ce_bear",
     "sweep_bull", "sweep_bear",
-    "discount", "premium", "trend_bull", "trend_bear",
+    "inducement_bull", "inducement_bear",
+    "turtle_soup_bull", "turtle_soup_bear",
+    "nested_sweep_bull", "nested_sweep_bear",
+    "weak_high_swept", "weak_low_swept", "strong_high_break", "strong_low_break",
+    "discount", "premium", "ote_long", "ote_short", "equilibrium",
+    "killzone", "hierarchy_long", "hierarchy_short",
+    "trend_bull", "trend_bear",
     "smc_score_long", "smc_score_short",
+    "setup_grade_a_long", "setup_grade_b_long", "setup_grade_a_short", "setup_grade_b_short",
 }
 ALLOWED_EXTRA = {
     "", "k_lt_25", "k_gt_75", "rsi_lt_45", "rsi_gt_55",
