@@ -2,11 +2,11 @@ import pandas as pd
 import streamlit as st
 
 from engine.config import PATLAMA_LEDGER
-from ui_common import patlama_rows, render_sidebar_refresh, source_caption
+from ui_common import get_engine_data, patlama_rows, source_caption
 
 
 def render() -> None:
-    data = render_sidebar_refresh()
+    data = get_engine_data()
     scan = data.get("patlama_selale_scan") or {}
     active = data.get("active_positions") or {}
     history = data.get("history") or []

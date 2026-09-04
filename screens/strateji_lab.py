@@ -2,11 +2,11 @@ import pandas as pd
 import streamlit as st
 
 from strategies.registry import all_strategies, lab_strategies
-from ui_common import load_lab_data, render_sidebar_refresh, source_caption
+from ui_common import get_engine_data, load_lab_data, source_caption
 
 
 def render() -> None:
-    data = render_sidebar_refresh()
+    data = get_engine_data()
     history = data.get("history") or []
     lab_candidates = data.get("lab_candidates") or []
 

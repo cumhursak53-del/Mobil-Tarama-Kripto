@@ -3,11 +3,11 @@ from datetime import datetime
 import pandas as pd
 import streamlit as st
 
-from ui_common import build_excel_bytes, render_sidebar_refresh, source_caption
+from ui_common import build_excel_bytes, get_engine_data, source_caption
 
 
 def render() -> None:
-    data = render_sidebar_refresh()
+    data = get_engine_data()
     ledgers = data.get("ledgers") or {}
     active = data.get("active_positions") or {}
     history = data.get("history") or []

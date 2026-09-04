@@ -1,12 +1,17 @@
 """Krpito MTF — Streamlit ana giris noktasi."""
 import streamlit as st
 
+from ui_common import render_global_sidebar, run_autorefresh
+
 st.set_page_config(
     page_title="Krpito MTF",
     page_icon="📈",
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+render_global_sidebar()
+run_autorefresh()
 
 pg = st.navigation(
     [

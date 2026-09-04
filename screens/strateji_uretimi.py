@@ -7,15 +7,15 @@ import streamlit as st
 from engine.config import LAB_AUTO, LAB_AUTO_INTERVAL_SEC, LAB_LEDGER_PREFIX, LAB_MAX_CANDIDATES
 from ui_common import (
     engine_status,
+    get_engine_data,
     load_lab_data,
     minutes_since_update,
-    render_sidebar_refresh,
     source_caption,
 )
 
 
 def render() -> None:
-    engine_data = render_sidebar_refresh()
+    engine_data = get_engine_data()
     lab_remote = load_lab_data(force_version=st.session_state.get("refresh_version", 0))
 
     lab_summary = engine_data.get("lab_summary") or {}

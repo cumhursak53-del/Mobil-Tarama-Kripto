@@ -21,6 +21,13 @@ try:
 except Exception:
     requests = None
 
+try:
+    from streamlit_autorefresh import st_autorefresh
+except ImportError:
+    st_autorefresh = None
+
+REFRESH_SEC_OPTIONS = [30, 60, 120, 300]
+
 ENGINE_URL = os.environ.get("ENGINE_URL", "https://mobil-tarama-kripto.onrender.com").rstrip("/")
 GITHUB_REPO = os.environ.get("GITHUB_REPO", "cumhursak53-del/Mobil-Tarama-Kripto")
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
@@ -172,27 +179,84 @@ def setup_page(title: str, icon: str = "📈") -> dict:
     return render_sidebar_refresh()
 
 
-def render_sidebar_refresh() -> dict:
+def init_refresh_persistence() -> None:
+    """URL + tarayici localStorage ile yenileme tercihlerini kalici tut."""
+    if st.session_state.get("_refresh_persistence_ready"):
+        return
+
+    import streamlit.components.v1 as components
+
+    components.html(
+        """
+<script>
+(function () {
+  const p = new URLSearchParams(window.location.search);
+  if (p.has("auto_refresh")) {
+    localStorage.setItem("krpito_auto_refresh", p.get("auto_refresh") || "0");
+    localStorage.setItem("krpito_refresh_sec", p.get("refresh_sec") || "60");
+    return;
+  }
+  const saved = localStorage.getItem("krpito_auto_refresh");
+  if (saved === null) return;
+  p.set("auto_refresh", saved);
+  p.set("refresh_sec", localStorage.getItem("krpito_refresh_sec") || "60");
+  if (!sessionStorage.getItem("krpito_refresh_restore")) {
+    sessionStorage.setItem("krpito_refresh_restore", "1");
+    window.location.search = p.toString();
+  }
+})();
+</script>
+        """,
+        height=0,
+        width=0,
+    )
+
+    qp = st.query_params
+    auto_raw = qp.get("auto_refresh")
+    sec_raw = qp.get("refresh_sec")
+
+    if auto_raw is not None:
+        st.session_state.auto_refresh = str(auto_raw).lower() in ("1", "true", "yes", "on")
+    elif "auto_refresh" not in st.session_state:
+        st.session_state.auto_refresh = False
+
+    if sec_raw is not None:
+        try:
+            st.session_state.refresh_sec = int(sec_raw)
+        except (TypeError, ValueError):
+            st.session_state.refresh_sec = 60
+    elif "refresh_sec" not in st.session_state:
+        st.session_state.refresh_sec = 60
+
+    if st.session_state.refresh_sec not in REFRESH_SEC_OPTIONS:
+        st.session_state.refresh_sec = 60
+
     if "refresh_version" not in st.session_state:
         st.session_state.refresh_version = 0
-    if "auto_refresh" not in st.session_state:
-        st.session_state.auto_refresh = False
-    if "refresh_sec" not in st.session_state:
-        st.session_state.refresh_sec = 60
+
+    st.session_state._refresh_persistence_ready = True
+
+
+def _sync_refresh_prefs_to_url() -> None:
+    st.query_params["auto_refresh"] = "1" if st.session_state.auto_refresh else "0"
+    st.query_params["refresh_sec"] = str(st.session_state.refresh_sec)
+
+
+def render_global_sidebar() -> None:
+    """Tum sayfalarda ortak yenileme paneli."""
+    init_refresh_persistence()
 
     with st.sidebar:
         st.subheader("Yenileme")
-        st.session_state.auto_refresh = st.toggle(
+        st.toggle(
             "Otomatik yenile",
-            value=st.session_state.auto_refresh,
-            help="Kapali: tablo donuk kalir, rahat incelersin.",
+            key="auto_refresh",
+            help="Tercihin kaydedilir; sayfa yenilense de acik kalir.",
         )
-        st.session_state.refresh_sec = st.selectbox(
+        st.selectbox(
             "Aralik (sn)",
-            options=[30, 60, 120, 300],
-            index=[30, 60, 120, 300].index(st.session_state.refresh_sec)
-            if st.session_state.refresh_sec in [30, 60, 120, 300]
-            else 1,
+            options=REFRESH_SEC_OPTIONS,
+            key="refresh_sec",
             disabled=not st.session_state.auto_refresh,
         )
         if st.button("Simdi yenile", use_container_width=True):
@@ -201,15 +265,29 @@ def render_sidebar_refresh() -> dict:
             st.rerun()
         st.caption(
             "Otomatik yenileme kapaliysa veri sabit kalir. "
-            "Incelemeyi bitirince acip yenileyebilirsin."
+            "Acik biraktiginda tercih tarayicida saklanir."
         )
 
-    if st.session_state.auto_refresh:
-        st_autorefresh = getattr(st, "autorefresh", None)
-        if st_autorefresh:
-            st_autorefresh(interval=int(st.session_state.refresh_sec) * 1000, key="live_refresh")
+    _sync_refresh_prefs_to_url()
 
+
+def run_autorefresh() -> None:
+    if st.session_state.get("auto_refresh") and st_autorefresh is not None:
+        st_autorefresh(
+            interval=int(st.session_state.refresh_sec) * 1000,
+            key="krpito_live_refresh",
+        )
+
+
+def get_engine_data() -> dict:
+    if "refresh_version" not in st.session_state:
+        st.session_state.refresh_version = 0
     return load_data(force_version=st.session_state.refresh_version)
+
+
+def render_sidebar_refresh() -> dict:
+    """Geriye donuk uyumluluk."""
+    return get_engine_data()
 
 
 def _pos_rows(active: dict) -> pd.DataFrame:
