@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import re
+import time
 from typing import Any, Callable
 
 try:
@@ -17,7 +18,13 @@ try:
 except Exception:
     import requests as http
 
-from engine.config import GEMINI_API_KEY, GEMINI_MODEL
+from engine.config import (
+    GEMINI_API_KEY,
+    GEMINI_MODEL,
+    GEMINI_MODEL_FALLBACKS,
+    GEMINI_RETRY_DELAY_SEC,
+    GEMINI_RETRY_MAX,
+)
 
 LogFn = Callable[[str], None]
 
@@ -45,6 +52,7 @@ Her tarifte en az 2 long veya 2 short kural. Belirsiz metin varsa bos array don.
 """
 
 _genai_client: Any = None
+_last_model_used = GEMINI_MODEL
 
 
 def gemini_available() -> bool:
@@ -61,8 +69,20 @@ def key_format_hint() -> str:
     return "custom"
 
 
+def last_model_used() -> str:
+    return _last_model_used
+
+
 def _api_key() -> str:
     return GEMINI_API_KEY.strip()
+
+
+def _model_chain() -> list[str]:
+    chain = [GEMINI_MODEL.strip()]
+    for model in GEMINI_MODEL_FALLBACKS:
+        if model and model not in chain:
+            chain.append(model)
+    return chain
 
 
 def _sdk_client() -> Any:
@@ -103,7 +123,30 @@ def _format_error(exc: Exception) -> str:
     return msg[:220] if msg else exc.__class__.__name__
 
 
-def _generate_text_sdk(*, prompt: str, json_mode: bool = False) -> str:
+def _error_kind(exc: Exception) -> str:
+    msg = str(exc).upper()
+    if "401" in msg or "UNAUTHENTICATED" in msg or "ACCESS_TOKEN" in msg:
+        return "auth"
+    if "404" in msg or "NOT_FOUND" in msg or "NO LONGER AVAILABLE" in msg:
+        return "model"
+    if any(
+        token in msg
+        for token in (
+            "503",
+            "429",
+            "500",
+            "UNAVAILABLE",
+            "RESOURCE_EXHAUSTED",
+            "HIGH DEMAND",
+            "OVERLOADED",
+            "TRY AGAIN",
+        )
+    ):
+        return "retry"
+    return "fatal"
+
+
+def _generate_text_sdk(*, prompt: str, model: str, json_mode: bool = False) -> str:
     client = _sdk_client()
     config = None
     if json_mode and genai_types is not None:
@@ -112,7 +155,7 @@ def _generate_text_sdk(*, prompt: str, json_mode: bool = False) -> str:
             response_mime_type="application/json",
         )
     response = client.models.generate_content(
-        model=GEMINI_MODEL,
+        model=model,
         contents=prompt,
         config=config,
     )
@@ -122,8 +165,8 @@ def _generate_text_sdk(*, prompt: str, json_mode: bool = False) -> str:
     raise RuntimeError("Gemini bos yanit dondurdu")
 
 
-def _generate_text_rest(*, prompt: str, json_mode: bool = False) -> str:
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
+def _generate_text_rest(*, prompt: str, model: str, json_mode: bool = False) -> str:
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
     payload: dict[str, Any] = {"contents": [{"parts": [{"text": prompt}]}]}
     if json_mode:
         payload["generationConfig"] = {
@@ -145,35 +188,88 @@ def _generate_text_rest(*, prompt: str, json_mode: bool = False) -> str:
     return text
 
 
-def _generate_text(*, prompt: str, json_mode: bool = False) -> str:
-    """AQ. key icin once resmi SDK; basarisizsa REST fallback."""
+def _try_once(*, prompt: str, model: str, json_mode: bool) -> str:
     errors: list[str] = []
     if genai is not None:
         try:
-            return _generate_text_sdk(prompt=prompt, json_mode=json_mode)
+            return _generate_text_sdk(prompt=prompt, model=model, json_mode=json_mode)
         except Exception as e:
             errors.append(f"SDK: {_format_error(e)}")
+            if _error_kind(e) != "retry":
+                raise RuntimeError(errors[-1]) from e
     try:
-        return _generate_text_rest(prompt=prompt, json_mode=json_mode)
+        return _generate_text_rest(prompt=prompt, model=model, json_mode=json_mode)
     except Exception as e:
         errors.append(f"REST: {_format_error(e)}")
-    raise RuntimeError(" | ".join(errors))
+        raise RuntimeError(" | ".join(errors)) from e
+
+
+def _generate_text(
+    *,
+    prompt: str,
+    json_mode: bool = False,
+    log: LogFn | None = None,
+) -> str:
+    """Model zinciri + gecici 503/429 icin exponential backoff."""
+    global _last_model_used
+    errors: list[str] = []
+
+    for model in _model_chain():
+        for attempt in range(max(1, GEMINI_RETRY_MAX)):
+            try:
+                text = _try_once(prompt=prompt, model=model, json_mode=json_mode)
+                _last_model_used = model
+                if model != GEMINI_MODEL and log:
+                    log(f"Gemini yedek model: {model}")
+                if attempt > 0 and log:
+                    log(f"Gemini yeniden deneme basarili ({model}, deneme {attempt + 1})")
+                return text
+            except Exception as e:
+                kind = _error_kind(e)
+                err = f"{model}: {_format_error(e)}"
+                errors.append(err)
+
+                if kind == "auth":
+                    raise RuntimeError(err) from e
+                if kind == "model":
+                    break
+                if kind == "retry" and attempt < GEMINI_RETRY_MAX - 1:
+                    wait = GEMINI_RETRY_DELAY_SEC * (2 ** attempt)
+                    if log:
+                        log(
+                            f"Gemini gecici yogunluk ({model}) — "
+                            f"{int(wait)}sn sonra yeniden ({attempt + 2}/{GEMINI_RETRY_MAX})"
+                        )
+                    time.sleep(wait)
+                    continue
+                break
+
+    raise RuntimeError(" | ".join(errors[-4:]))
 
 
 def test_gemini_connection(log: LogFn | None = None) -> bool:
     if not gemini_available():
         return False
     try:
-        _generate_text(prompt="OK", json_mode=False)
+        _generate_text(prompt="OK", json_mode=False, log=log)
         if log:
-            log(f"Gemini baglantisi OK ({key_format_hint()}, model {GEMINI_MODEL})")
+            log(
+                f"Gemini baglantisi OK ({key_format_hint()}, model {last_model_used()})"
+            )
         return True
     except Exception as e:
-        msg = f"Gemini test basarisiz ({key_format_hint()}): {_format_error(e)}"
+        kind = _error_kind(e)
+        if kind == "retry":
+            msg = (
+                f"Gemini gecici yogunluk ({key_format_hint()}, model {GEMINI_MODEL}) — "
+                "key gecerli, arastirma sonra tekrar denenecek"
+            )
+        else:
+            msg = f"Gemini test basarisiz ({key_format_hint()}): {_format_error(e)}"
         print(msg, flush=True)
         if log:
             log(msg)
-        return False
+        return kind == "retry"
 
 
 def generate_recipes_from_text(
@@ -200,7 +296,7 @@ Metin:
 En fazla {max_recipes} tarif. JSON array only.
 """
     try:
-        raw_text = _generate_text(prompt=prompt, json_mode=True)
+        raw_text = _generate_text(prompt=prompt, json_mode=True, log=log)
         parsed = _extract_json(raw_text)
         if isinstance(parsed, dict):
             parsed = [parsed]
@@ -208,7 +304,14 @@ En fazla {max_recipes} tarif. JSON array only.
             return []
         return [r for r in parsed if isinstance(r, dict)][:max_recipes]
     except Exception as e:
-        msg = f"Gemini hatasi ({key_format_hint()}): {_format_error(e)}"
+        kind = _error_kind(e)
+        if kind == "retry":
+            msg = (
+                f"Gemini gecici yogunluk — YouTube/haber tarifleri atlandi "
+                f"(combinator devam ediyor, model {GEMINI_MODEL})"
+            )
+        else:
+            msg = f"Gemini hatasi ({key_format_hint()}): {_format_error(e)}"
         print(msg, flush=True)
         if log:
             log(msg)
