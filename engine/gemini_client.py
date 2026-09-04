@@ -3,7 +3,14 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any, Callable, Optional
+from typing import Any, Callable
+
+try:
+    from google import genai
+    from google.genai import types as genai_types
+except Exception:
+    genai = None  # type: ignore[assignment]
+    genai_types = None  # type: ignore[assignment]
 
 try:
     from curl_cffi import requests as http
@@ -37,6 +44,8 @@ Short strateji: short_rules dolu.
 Her tarifte en az 2 long veya 2 short kural. Belirsiz metin varsa bos array don.
 """
 
+_genai_client: Any = None
+
 
 def gemini_available() -> bool:
     key = (GEMINI_API_KEY or "").strip()
@@ -52,11 +61,23 @@ def key_format_hint() -> str:
     return "custom"
 
 
+def _api_key() -> str:
+    return GEMINI_API_KEY.strip()
+
+
+def _sdk_client() -> Any:
+    global _genai_client
+    if genai is None:
+        raise RuntimeError("google-genai paketi yuklu degil")
+    if _genai_client is None:
+        _genai_client = genai.Client(api_key=_api_key())
+    return _genai_client
+
+
 def _gemini_headers() -> dict:
-    """AQ. auth key ve AIza legacy key — native endpoint icin x-goog-api-key."""
     return {
         "Content-Type": "application/json",
-        "x-goog-api-key": GEMINI_API_KEY.strip(),
+        "x-goog-api-key": _api_key(),
     }
 
 
@@ -77,28 +98,78 @@ def _extract_json(text: str) -> Any:
         raise
 
 
+def _format_error(exc: Exception) -> str:
+    msg = str(exc).strip()
+    return msg[:220] if msg else exc.__class__.__name__
+
+
+def _generate_text_sdk(*, prompt: str, json_mode: bool = False) -> str:
+    client = _sdk_client()
+    config = None
+    if json_mode and genai_types is not None:
+        config = genai_types.GenerateContentConfig(
+            temperature=0.2,
+            response_mime_type="application/json",
+        )
+    response = client.models.generate_content(
+        model=GEMINI_MODEL,
+        contents=prompt,
+        config=config,
+    )
+    text = (getattr(response, "text", None) or "").strip()
+    if text:
+        return text
+    raise RuntimeError("Gemini bos yanit dondurdu")
+
+
+def _generate_text_rest(*, prompt: str, json_mode: bool = False) -> str:
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
+    payload: dict[str, Any] = {"contents": [{"parts": [{"text": prompt}]}]}
+    if json_mode:
+        payload["generationConfig"] = {
+            "temperature": 0.2,
+            "responseMimeType": "application/json",
+        }
+    res = http.post(url, headers=_gemini_headers(), json=payload, timeout=60)
+    if res.status_code != 200:
+        raise RuntimeError(f"HTTP {res.status_code}: {res.text[:180]}")
+    data = res.json()
+    parts = (
+        data.get("candidates", [{}])[0]
+        .get("content", {})
+        .get("parts", [{}])
+    )
+    text = parts[0].get("text", "") if parts else ""
+    if not text:
+        raise RuntimeError("Gemini bos yanit dondurdu")
+    return text
+
+
+def _generate_text(*, prompt: str, json_mode: bool = False) -> str:
+    """AQ. key icin once resmi SDK; basarisizsa REST fallback."""
+    errors: list[str] = []
+    if genai is not None:
+        try:
+            return _generate_text_sdk(prompt=prompt, json_mode=json_mode)
+        except Exception as e:
+            errors.append(f"SDK: {_format_error(e)}")
+    try:
+        return _generate_text_rest(prompt=prompt, json_mode=json_mode)
+    except Exception as e:
+        errors.append(f"REST: {_format_error(e)}")
+    raise RuntimeError(" | ".join(errors))
+
+
 def test_gemini_connection(log: LogFn | None = None) -> bool:
     if not gemini_available():
         return False
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
     try:
-        res = http.post(
-            url,
-            headers=_gemini_headers(),
-            json={"contents": [{"parts": [{"text": "OK"}]}]},
-            timeout=20,
-        )
-        ok = res.status_code == 200
-        if not ok:
-            msg = f"Gemini test HTTP {res.status_code} ({key_format_hint()}): {res.text[:180]}"
-            print(msg, flush=True)
-            if log:
-                log(msg)
-        elif log:
+        _generate_text(prompt="OK", json_mode=False)
+        if log:
             log(f"Gemini baglantisi OK ({key_format_hint()}, model {GEMINI_MODEL})")
-        return ok
+        return True
     except Exception as e:
-        msg = f"Gemini test hatasi: {e}"
+        msg = f"Gemini test basarisiz ({key_format_hint()}): {_format_error(e)}"
         print(msg, flush=True)
         if log:
             log(msg)
@@ -128,35 +199,8 @@ Metin:
 
 En fazla {max_recipes} tarif. JSON array only.
 """
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
     try:
-        res = http.post(
-            url,
-            headers=_gemini_headers(),
-            json={
-                "contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": {
-                    "temperature": 0.2,
-                    "responseMimeType": "application/json",
-                },
-            },
-            timeout=60,
-        )
-        if res.status_code != 200:
-            msg = f"Gemini HTTP {res.status_code} ({key_format_hint()}): {res.text[:200]}"
-            print(msg, flush=True)
-            if log:
-                log(msg)
-            return []
-        data = res.json()
-        parts = (
-            data.get("candidates", [{}])[0]
-            .get("content", {})
-            .get("parts", [{}])
-        )
-        raw_text = parts[0].get("text", "") if parts else ""
-        if not raw_text:
-            return []
+        raw_text = _generate_text(prompt=prompt, json_mode=True)
         parsed = _extract_json(raw_text)
         if isinstance(parsed, dict):
             parsed = [parsed]
@@ -164,6 +208,8 @@ En fazla {max_recipes} tarif. JSON array only.
             return []
         return [r for r in parsed if isinstance(r, dict)][:max_recipes]
     except Exception as e:
+        msg = f"Gemini hatasi ({key_format_hint()}): {_format_error(e)}"
+        print(msg, flush=True)
         if log:
-            log(f"Gemini parse hatasi: {e}")
+            log(msg)
         return []

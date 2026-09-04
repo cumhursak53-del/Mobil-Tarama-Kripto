@@ -57,7 +57,14 @@ LAB_MIN_RECIPES = int(os.environ.get("LAB_MIN_RECIPES", "12"))
 ENGINE_URL = os.environ.get("ENGINE_URL", "")
 
 # Gemini + arastirma
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+def _normalize_secret(raw: str) -> str:
+    k = (raw or "").strip()
+    if len(k) >= 2 and k[0] == k[-1] and k[0] in "\"'":
+        k = k[1:-1].strip()
+    return k
+
+
+GEMINI_API_KEY = _normalize_secret(os.environ.get("GEMINI_API_KEY", ""))
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
 RESEARCH_ENABLED = os.environ.get("RESEARCH_ENABLED", "1") == "1"
 YOUTUBE_CHANNEL_IDS = [
