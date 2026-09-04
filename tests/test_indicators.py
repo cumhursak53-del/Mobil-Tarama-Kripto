@@ -247,6 +247,27 @@ def test_lab_promote_respects_cap():
     assert next_lab_ledger(state) is None
 
 
+def test_recipe_validator_accepts_known_rules():
+    from engine.recipe_validator import validate_recipe
+
+    raw = {
+        "name": "TestCCI",
+        "min_votes": 2,
+        "long_rules": [
+            {"type": "stage", "value": "advancing"},
+            {"type": "indicator", "tf": "1h", "field": "cci_cross_up", "extra": "cci_lt_100"},
+        ],
+        "short_rules": [],
+    }
+    out = validate_recipe(raw, "test")
+    assert out is not None
+    assert out["source"] == "test"
+    assert len(out["long_rules"]) == 2
+
+    bad = validate_recipe({"long_rules": [{"type": "magic", "value": 1}]}, "test")
+    assert bad is None
+
+
 def run_all():
     tests = [
         test_sma, test_ema_reacts_faster_than_sma, test_wma_weights_recent,
@@ -255,6 +276,7 @@ def run_all():
         test_risk_sizer, test_rejim_osilator_priority_and_count, test_momentum_scan_smoke,
         test_symbol_lock_caps_and_combo_risk, test_strategy_count_and_smoke,
         test_state_merge_picks_newer, test_recipe_generator_and_eval, test_lab_promote_respects_cap,
+        test_recipe_validator_accepts_known_rules,
     ]
     for t in tests:
         t()

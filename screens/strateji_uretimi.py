@@ -4,7 +4,7 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from engine.config import LAB_AUTO, LAB_AUTO_INTERVAL_SEC, LAB_LEDGER_PREFIX, LAB_MAX_CANDIDATES
+from engine.config import GEMINI_API_KEY, LAB_AUTO, LAB_AUTO_INTERVAL_SEC, LAB_LEDGER_PREFIX, LAB_MAX_CANDIDATES, RESEARCH_ENABLED
 from ui_common import (
     engine_status,
     load_lab_data,
@@ -37,6 +37,7 @@ def render() -> None:
             "recent_backtests": (lab_remote.get("backtests") or [])[-10:],
             "all_candidates": lab_remote.get("candidates") or [],
             "pipeline": lab_remote.get("pipeline") or {},
+            "research": lab_remote.get("research") or {},
         }
         lab_candidates = [c for c in lab_remote.get("candidates") or [] if c.get("status") == "paper"]
 
@@ -70,6 +71,18 @@ def render() -> None:
     else:
         st.caption(f"Pipeline durumu: {pipe_status}. Deploy sonrasi ilk calisma birkaç dakika surebilir.")
 
+    research = lab_summary.get("research") or lab_remote.get("research") or {}
+    if RESEARCH_ENABLED and GEMINI_API_KEY:
+        st.success(
+            f"Gemini arastirma **acik** | YouTube: {research.get('last_youtube_at') or '-'} "
+            f"| Haber: {research.get('last_news_at') or '-'} "
+            f"| Uretilen: YT {research.get('youtube_recipes', 0)} + haber {research.get('news_recipes', 0)}"
+        )
+    elif RESEARCH_ENABLED:
+        st.warning("Arastirma acik ama `GEMINI_API_KEY` Render env'de yok.")
+    else:
+        st.caption("Arastirma kapali (`RESEARCH_ENABLED=0`).")
+
     motor_label, motor_level, motor_note = engine_status(engine_data)
     lab_mins = minutes_since_update(lab_summary.get("updated_at"))
     recipe_n = int(lab_summary.get("recipe_count") or 0)
@@ -100,12 +113,19 @@ def render() -> None:
 
     st.subheader("Uretim hatti adimlari")
     steps = [
-        ("0. Otomasyon motoru", LAB_AUTO and pipe_status in ("ok", "running"), f"Durum: {pipe_status} | Son: {pipe_run}"),
-        ("1. Tarif havuzu", recipe_n > 0, f"{recipe_n} tarif" if recipe_n else "Ilk calismada uretilecek"),
-        ("2. Backtest", bt_n > 0, f"{bt_n} kayit" if bt_n else "Bekleniyor"),
-        ("3. Paper aday", paper_n > 0, f"{paper_n} kasa" if paper_n else "Bekleniyor"),
-        ("4. Lab islem", len(lab_open) > 0 or len(lab_hist) > 0, f"{len(lab_open)} acik, {len(lab_hist)} kapali"),
-        ("5. GitHub sync", lab_mins is not None and lab_mins <= 30, lab_summary.get("updated_at") or "yok"),
+        (
+            "0. Gemini arastirma",
+            RESEARCH_ENABLED and bool(GEMINI_API_KEY) and bool(
+                research.get("last_youtube_at") or research.get("last_news_at")
+            ),
+            f"YT {research.get('youtube_recipes', 0)} + haber {research.get('news_recipes', 0)} tarif",
+        ),
+        ("1. Otomasyon motoru", LAB_AUTO and pipe_status in ("ok", "running"), f"Durum: {pipe_status} | Son: {pipe_run}"),
+        ("2. Tarif havuzu", recipe_n > 0, f"{recipe_n} tarif" if recipe_n else "Ilk calismada uretilecek"),
+        ("3. Backtest", bt_n > 0, f"{bt_n} kayit" if bt_n else "Bekleniyor"),
+        ("4. Paper aday", paper_n > 0, f"{paper_n} kasa" if paper_n else "Bekleniyor"),
+        ("5. Lab islem", len(lab_open) > 0 or len(lab_hist) > 0, f"{len(lab_open)} acik, {len(lab_hist)} kapali"),
+        ("6. GitHub sync", lab_mins is not None and lab_mins <= 30, lab_summary.get("updated_at") or "yok"),
     ]
     for title, ok, detail in steps:
         st.markdown(f"**{'✅' if ok else '⏳'} {title}** — {detail}")

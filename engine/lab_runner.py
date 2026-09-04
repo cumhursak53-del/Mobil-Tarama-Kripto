@@ -5,6 +5,7 @@ import time
 from typing import TYPE_CHECKING, Optional
 
 from engine.config import (
+    GEMINI_API_KEY,
     LAB_AUTO,
     LAB_AUTO_INTERVAL_SEC,
     LAB_BACKTEST_BATCH,
@@ -13,10 +14,12 @@ from engine.config import (
     LAB_GENERATE_LIMIT,
     LAB_MAX_CANDIDATES,
     LAB_MIN_RECIPES,
+    RESEARCH_ENABLED,
 )
 from engine.data import fetch_all_timeframes, fetch_dominance, fetch_symbols
 from engine.lab_backtest import run_lab_backtests
 from engine.lab_state import load_lab_state, now_tr, promote_recipe, sync_lab_state
+from engine.research_runner import run_research
 from engine.strategy_generator import generate_recipes
 
 if TYPE_CHECKING:
@@ -38,6 +41,7 @@ def _pipeline(state: dict) -> dict:
             "last_generated": 0,
             "last_backtested": 0,
             "last_promoted": 0,
+            "last_researched": 0,
         },
     )
 
@@ -82,8 +86,19 @@ def run_lab_pipeline(*, log=None, force: bool = False) -> dict:
         sync_lab_state(state)
 
         generated = 0
+        researched = 0
         recipes = state.get("recipes") or []
-        need_recipes = len(recipes) < LAB_MIN_RECIPES or (
+
+        if RESEARCH_ENABLED and GEMINI_API_KEY:
+            new_research = run_research(state, log=log)
+            if new_research:
+                state.setdefault("recipes", []).extend(new_research)
+                researched = len(new_research)
+                pipe["last_researched"] = researched
+                if log:
+                    log(f"Arastirma: {researched} yeni tarif (YouTube/haber/Gemini)")
+
+        need_recipes = len(state.get("recipes") or []) < LAB_MIN_RECIPES or (
             force and _paper_slots_free(state) > 0 and len(_pending_recipes(state, 1)) == 0
         )
         if need_recipes:
@@ -135,10 +150,11 @@ def run_lab_pipeline(*, log=None, force: bool = False) -> dict:
         pipe["status"] = "ok"
         pipe["last_run_at"] = now_tr()
         pipe["last_message"] = (
-            f"Uretim {generated}, backtest {backtested}, yeni aday {promoted}"
+            f"Arastirma {researched}, uretim {generated}, backtest {backtested}, yeni aday {promoted}"
         )
         sync_lab_state(state)
         return {
+            "researched": researched,
             "generated": generated,
             "backtested": backtested,
             "promoted": promoted,
@@ -188,5 +204,5 @@ def maybe_run_lab_pipeline(pf: "Portfolio", force: bool = False) -> None:
     pf.lab_state = load_lab_state()
     pf._ensure_lab_ledgers()
     pf.save(sync_github=True)
-    if result.get("promoted") or result.get("generated"):
+    if result.get("promoted") or result.get("generated") or result.get("researched"):
         pf.log(f"Lab pipeline tamam: {result}")

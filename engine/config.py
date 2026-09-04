@@ -56,6 +56,26 @@ LAB_BACKTEST_UNIVERSE = int(os.environ.get("LAB_BACKTEST_UNIVERSE", "4"))
 LAB_MIN_RECIPES = int(os.environ.get("LAB_MIN_RECIPES", "12"))
 ENGINE_URL = os.environ.get("ENGINE_URL", "")
 
+# Gemini + arastirma
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
+RESEARCH_ENABLED = os.environ.get("RESEARCH_ENABLED", "1") == "1"
+YOUTUBE_CHANNEL_IDS = [
+    x.strip() for x in os.environ.get(
+        "YOUTUBE_CHANNEL_IDS",
+        "@teknikanalizdersleri",
+    ).split(",") if x.strip()
+]
+YOUTUBE_VIDEO_IDS = [x.strip() for x in os.environ.get("YOUTUBE_VIDEO_IDS", "").split(",") if x.strip()]
+YOUTUBE_MAX_VIDEOS_PER_RUN = int(os.environ.get("YOUTUBE_MAX_VIDEOS_PER_RUN", "2"))
+NEWS_RSS_URLS = [
+    x.strip() for x in os.environ.get(
+        "NEWS_RSS_URLS",
+        "https://cryptopanic.com/news/rss/,https://www.coindesk.com/arc/outboundfeeds/rss/",
+    ).split(",") if x.strip()
+]
+NEWS_MAX_HEADLINES = int(os.environ.get("NEWS_MAX_HEADLINES", "15"))
+
 EXCLUDED_SYMBOLS = {
     "USDCUSDT", "FDUSDUSDT", "USDPUSDT", "BTCDOMUSDT", "DEFIUSDT", "UBERUSDT",
     "BTCSTUSDT", "USDPUSDT",
