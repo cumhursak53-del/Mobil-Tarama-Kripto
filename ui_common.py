@@ -380,6 +380,32 @@ def patlama_rows(scan: dict) -> pd.DataFrame:
     return pd.DataFrame(rows).sort_values("En_iyi_skor", ascending=False)
 
 
+def smc_rows(scan: dict) -> pd.DataFrame:
+    rows = []
+    for sym, s in (scan or {}).items():
+        if not isinstance(s, dict):
+            continue
+        rows.append({
+            "Sembol": sym,
+            "Long_skoru": s.get("long_score", 0),
+            "Short_skoru": s.get("short_score", 0),
+            "En_iyi_skor": s.get("best_score", 0),
+            "Yon": s.get("best_side", "-"),
+            "Trend": s.get("trend", "-"),
+            "Son_olay": s.get("last_event", "-"),
+            "Long_notlari": s.get("long_notes", ""),
+            "Short_notlari": s.get("short_notes", ""),
+            "Bull_OB": s.get("bull_ob_count", 0),
+            "Bear_OB": s.get("bear_ob_count", 0),
+            "Sweep_L": "E" if s.get("sweep_bull") else "-",
+            "Sweep_S": "E" if s.get("sweep_bear") else "-",
+            "Guncelleme": s.get("updated_at", "-"),
+        })
+    if not rows:
+        return pd.DataFrame()
+    return pd.DataFrame(rows).sort_values("En_iyi_skor", ascending=False)
+
+
 def build_excel_bytes(data: dict) -> bytes:
     buf = io.BytesIO()
     ozet = pd.DataFrame([{
@@ -397,6 +423,7 @@ def build_excel_bytes(data: dict) -> bytes:
         "Islem_Gecmisi": _history_rows(data.get("history") or []),
         "Sinyaller": _signal_rows(data.get("signal_log") or {}),
         "Patlama_Selale": patlama_rows(data.get("patlama_selale_scan") or {}),
+        "SMC_Tarama": smc_rows(data.get("smc_scan") or {}),
         "Motor_Log": pd.DataFrame({"Log": data.get("engine_logs") or []}),
     }
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:

@@ -4,10 +4,12 @@ from dataclasses import dataclass, field
 from typing import Any, Optional
 
 from engine.momentum_scan import score_momentum
+from engine.smc_scan import score_smc
 from engine.types import Side
 from strategies.base import MarketContext
 from strategies.helpers import valid_row
 from structure.core import broken_above, broken_below, hh_hl, last_pivots, lh_ll, volume_ok
+from structure.smc import analyze_smc, analyze_smc_mtf
 
 
 @dataclass
@@ -86,6 +88,43 @@ def _eval_rule(ctx: MarketContext, rule: dict) -> bool:
         if kind == "bos_low" and len(lows) >= 2:
             return broken_below(df, lows[-1][1])
         return False
+    if rtype == "smc":
+        kind = str(rule.get("kind", ""))
+        if tf in ("15m", "1h") and len(ctx.frames) > 1:
+            smc = analyze_smc_mtf(ctx.frames)
+        else:
+            smc = analyze_smc(df)
+        notes = " ".join(smc.long_notes + smc.short_notes)
+        price = float(df["close"].iloc[-1])
+        active_bull = [ob for ob in smc.order_blocks if ob.side == "bull" and not ob.mitigated]
+        active_bear = [ob for ob in smc.order_blocks if ob.side == "bear" and not ob.mitigated]
+        in_bull_ob = any(
+            min(ob.top, ob.bottom) * 0.997 <= price <= max(ob.top, ob.bottom) * 1.003
+            for ob in active_bull
+        )
+        in_bear_ob = any(
+            min(ob.top, ob.bottom) * 0.997 <= price <= max(ob.top, ob.bottom) * 1.003
+            for ob in active_bear
+        )
+        mapping = {
+            "bos_bull": smc.last_event == "bos_bull",
+            "bos_bear": smc.last_event == "bos_bear",
+            "choch_bull": smc.last_event == "choch_bull",
+            "choch_bear": smc.last_event == "choch_bear",
+            "ob_bull_retest": in_bull_ob,
+            "ob_bear_retest": in_bear_ob,
+            "sweep_bull": smc.sweep_bull,
+            "sweep_bear": smc.sweep_bear,
+            "discount": smc.in_discount,
+            "premium": smc.in_premium,
+            "trend_bull": smc.trend == "bull",
+            "trend_bear": smc.trend == "bear",
+            "fvg_bull": "FVG" in smc.long_notes,
+            "fvg_bear": "FVG" in smc.short_notes,
+            "smc_score_long": smc.long_score >= int(rule.get("min", 5)),
+            "smc_score_short": smc.short_score >= int(rule.get("min", 5)),
+        }
+        return mapping.get(kind, False)
     if rtype == "indicator":
         field_name = str(rule.get("field", ""))
         if field_name not in df.columns:

@@ -45,6 +45,7 @@ Kural tipleri (SADECE bunlar):
 - {"type":"structure","tf":"4h"|"1h","kind":"bos_high"|"bos_low"|"squeeze"|"hh_hl"|"lh_ll"}
 - {"type":"indicator","tf":"1h"|"4h","field":"macd_cross_up"|"macd_cross_down"|"stoch_cross_up"|"stoch_cross_down"|"stochrsi_cross_up"|"stochrsi_cross_down"|"cci_cross_up"|"cci_cross_down"|"tenkan_cross_up"|"tenkan_cross_down","extra":""|"k_lt_25"|"k_gt_75"|"rsi_lt_45"|"rsi_gt_55"|"hist_pos"|"hist_neg"|"cci_lt_100"|"cci_gt_-100"}
 - {"type":"momentum_score","side":"long"|"short","min":4}
+- {"type":"smc","tf":"4h"|"1h"|"15m","kind":"bos_bull"|"bos_bear"|"choch_bull"|"choch_bear"|"ob_bull_retest"|"ob_bear_retest"|"fvg_bull"|"fvg_bear"|"sweep_bull"|"sweep_bear"|"discount"|"premium"|"trend_bull"|"trend_bear"|"smc_score_long"|"smc_score_short","min":5}
 
 Long strateji: long_rules dolu, short_rules bos veya zayif.
 Short strateji: short_rules dolu.

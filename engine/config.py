@@ -137,4 +137,5 @@ LEDGER_NAMES = [
     "Kasa_FincanCanak",
     "Kasa_Takoz",
     "Kasa_Fib618",
+    "Kasa_SMC",
 ]

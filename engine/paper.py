@@ -29,6 +29,7 @@ from engine.entry_timing import (
 from engine.lab_runner import maybe_run_lab_pipeline
 from engine.lab_state import load_lab_state
 from engine.momentum_scan import score_momentum
+from engine.smc_scan import score_smc
 from engine.portfolio import Portfolio
 from strategies.registry import all_strategies
 
@@ -190,14 +191,18 @@ def _scan_one(pf: Portfolio, cache: FrameCache, sym: str, dominance: dict, force
 
         ctx = build_context(sym, frames, dominance, indicated=False)
         pf.record_patlama_scan(sym, score_momentum(ctx).to_dict())
+        pf.record_smc_scan(sym, score_smc(ctx).to_dict())
 
         priority = [s for s in strats if s.ledger in PRIORITY_LEDGERS]
+        smc_strats = [s for s in strats if s.ledger == "Kasa_SMC"]
         lab = [s for s in strats if s.ledger.startswith("Kasa_Lab_")]
         others = [
             s for s in strats
-            if s.ledger not in PRIORITY_LEDGERS and not s.ledger.startswith("Kasa_Lab_")
+            if s.ledger not in PRIORITY_LEDGERS
+            and s.ledger != "Kasa_SMC"
+            and not s.ledger.startswith("Kasa_Lab_")
         ]
-        for strat in priority + lab + others:
+        for strat in priority + smc_strats + lab + others:
             if not should_evaluate_entry(strat, force=force_entry, bar_closed=bar_closed):
                 continue
             px = _entry_price(strat, sym, frames, live_px)

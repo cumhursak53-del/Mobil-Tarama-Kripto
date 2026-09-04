@@ -20,6 +20,7 @@ from strategies.patlama_selale import PatlamaSelale
 from strategies.pa import MumOnay, PiyasaEvresi, YapiKirilim
 from strategies.rejim_osilator import RejimOsilator
 from strategies.recipe_strategy import RecipeStrategy
+from strategies.smc import SmartMoneyConcepts
 from strategies.patterns import (
     BayrakFlama,
     Dortgen,
@@ -62,6 +63,7 @@ _CLASSES: list[type[Strategy]] = [
     FincanCanak,
     Takoz,
     Fib618,
+    SmartMoneyConcepts,
 ]
 
 

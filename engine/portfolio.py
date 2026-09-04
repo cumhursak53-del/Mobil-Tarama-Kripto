@@ -47,6 +47,7 @@ class Portfolio:
         self.history: list[dict] = []
         self.signal_log: dict = {}
         self.patlama_scan: dict[str, dict] = {}
+        self.smc_scan: dict[str, dict] = {}
         self.lab_state: dict = {}
         self.logs: list[str] = []
         self._equity_curve: list[dict] = []
@@ -112,6 +113,7 @@ class Portfolio:
         self.history = raw.get("history") or []
         self.signal_log = raw.get("signal_log") or {}
         self.patlama_scan = raw.get("patlama_selale_scan") or {}
+        self.smc_scan = raw.get("smc_scan") or {}
         self.logs = raw.get("engine_logs") or []
         self._equity_curve = raw.get("equity_curve") or []
         self.positions = {}
@@ -322,6 +324,18 @@ class Portfolio:
             )
             self.patlama_scan = dict(ranked[:500])
 
+    def record_smc_scan(self, symbol: str, payload: dict) -> None:
+        payload = dict(payload)
+        payload["updated_at"] = now_tr()
+        self.smc_scan[symbol] = payload
+        if len(self.smc_scan) > 600:
+            ranked = sorted(
+                self.smc_scan.items(),
+                key=lambda kv: float(kv[1].get("best_score") or 0),
+                reverse=True,
+            )
+            self.smc_scan = dict(ranked[:500])
+
     def record_signal(self, symbol: str, sig: Signal) -> None:
         rec = self.signal_log.setdefault(symbol, {"count": 0, "strategies": [], "last_side": "", "last_time": ""})
         rec["count"] += 1
@@ -357,6 +371,7 @@ class Portfolio:
             "history": self.history[-200:],
             "signal_log": {k: v for k, v in self.signal_log.items() if not str(k).startswith("_")},
             "patlama_selale_scan": self.patlama_scan,
+            "smc_scan": self.smc_scan,
             "engine_logs": self.logs[-100:],
             "equity_curve": self._equity_curve[-300:],
             "kasa_count": len(LEDGER_NAMES) + len(self.active_lab_ledgers()),

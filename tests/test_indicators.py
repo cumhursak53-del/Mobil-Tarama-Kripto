@@ -101,7 +101,7 @@ def test_rejim_osilator_priority_and_count():
     assert COMBO_LEDGER in LEDGER_NAMES
     assert PATLAMA_LEDGER in LEDGER_NAMES
     assert len(strats) == len(LEDGER_NAMES)
-    assert len(strats) == 30
+    assert len(strats) == 31
 
 
 def test_momentum_scan_smoke():
@@ -132,6 +132,42 @@ def test_momentum_scan_smoke():
     assert 0 <= scored.long_score <= 8
     assert 0 <= scored.short_score <= 8
     assert trade_signal_from_score(scored) is None or scored.best_score >= 4
+
+
+def test_smc_scan_smoke():
+    import numpy as np
+    import pandas as pd
+    from engine.context import build_context
+    from engine.config import TIMEFRAMES
+    from engine.smc_scan import score_smc, smc_trade_side
+    from structure.smc import analyze_smc_mtf
+
+    rng = np.random.default_rng(4)
+    n = 260
+    frames = {}
+    for tf in TIMEFRAMES:
+        close = 100 + np.cumsum(rng.normal(0, 0.5, n))
+        idx = pd.date_range("2024-01-01", periods=n, freq="h", tz="UTC")
+        df = pd.DataFrame({
+            "open": close,
+            "high": close + 0.8,
+            "low": close - 0.8,
+            "close": close,
+            "volume": rng.random(n) * 1000 + 50,
+        }, index=idx)
+        df["close_time"] = idx + pd.Timedelta(hours=1)
+        frames[tf] = df
+    ctx = build_context("TESTUSDT", frames, indicated=False)
+    scored = score_smc(ctx)
+    assert scored.best_score >= 0
+    assert scored.trend in ("bull", "bear", "range")
+    d = scored.to_dict()
+    assert "long_score" in d and "short_score" in d
+    assert analyze_smc_mtf(frames).best_side in (
+        "BUY", "SELL", "WATCH_LONG", "WATCH_SHORT", "NONE"
+    )
+    side = smc_trade_side(scored)
+    assert side is None or scored.best_score >= 5
 
 
 def test_symbol_lock_caps_and_combo_risk():
@@ -295,6 +331,7 @@ def run_all():
         test_rsi_bounds_and_wilder, test_macd_cross_identity,
         test_bollinger_contains_price_mostly, test_no_lookahead_sma,
         test_risk_sizer, test_rejim_osilator_priority_and_count, test_momentum_scan_smoke,
+        test_smc_scan_smoke,
         test_symbol_lock_caps_and_combo_risk, test_strategy_count_and_smoke,
         test_state_merge_picks_newer, test_pick_best_state_prefers_github_on_deploy_empty, test_recipe_generator_and_eval, test_lab_promote_respects_cap,
         test_recipe_validator_accepts_known_rules,

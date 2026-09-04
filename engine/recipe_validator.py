@@ -13,6 +13,14 @@ ALLOWED_FIELDS = {
     "tenkan_cross_up", "tenkan_cross_down", "sma9_cross_up", "sma9_cross_down",
     "ema21_cross_up", "ema21_cross_down",
 }
+ALLOWED_SMC = {
+    "bos_bull", "bos_bear", "choch_bull", "choch_bear",
+    "ob_bull_retest", "ob_bear_retest",
+    "fvg_bull", "fvg_bear",
+    "sweep_bull", "sweep_bear",
+    "discount", "premium", "trend_bull", "trend_bear",
+    "smc_score_long", "smc_score_short",
+}
 ALLOWED_EXTRA = {
     "", "k_lt_25", "k_gt_75", "rsi_lt_45", "rsi_gt_55",
     "hist_pos", "hist_neg", "cci_lt_100", "cci_gt_-100",
@@ -56,6 +64,18 @@ def _clean_rule(rule: dict) -> dict | None:
         if extra not in ALLOWED_EXTRA:
             extra = ""
         return {"type": "indicator", "tf": tf, "field": field, "extra": extra}
+    if rtype == "smc":
+        tf = str(rule.get("tf") or "4h")
+        kind = str(rule.get("kind") or "")
+        if tf not in ALLOWED_TF or kind not in ALLOWED_SMC:
+            return None
+        out: dict = {"type": "smc", "tf": tf, "kind": kind}
+        if kind in ("smc_score_long", "smc_score_short"):
+            try:
+                out["min"] = max(3, min(10, int(rule.get("min", 5))))
+            except (TypeError, ValueError):
+                out["min"] = 5
+        return out
     if rtype == "momentum_score":
         side = str(rule.get("side", "long")).lower()
         if side not in ("long", "short"):
