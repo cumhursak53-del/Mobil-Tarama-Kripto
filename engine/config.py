@@ -12,11 +12,13 @@ TIMEFRAMES = ("15m", "1h", "4h", "1d", "1w")
 KLINE_LIMITS = {"15m": 500, "1h": 500, "4h": 400, "1d": 400, "1w": 200}
 
 # Signal evaluation TF / HTF bias
-ENTRY_TF = "1h"
-SETUP_TF = "4h"
-DAILY_TF = "1d"
-WEEKLY_TF = "1w"
-TRIGGER_TF = "15m"
+ENTRY_TF = os.environ.get("ENTRY_TF", "1h")
+SETUP_TF = os.environ.get("SETUP_TF", "4h")
+DAILY_TF = os.environ.get("DAILY_TF", "1d")
+WEEKLY_TF = os.environ.get("WEEKLY_TF", "1w")
+TRIGGER_TF = os.environ.get("TRIGGER_TF", "15m")
+# bar_close = sadece mum kapanisinda; live = tarama dongusunde anlik fiyat
+ENTRY_MODE_DEFAULT = os.environ.get("ENTRY_MODE_DEFAULT", "bar_close")
 
 KASA_START_USD = 100.0
 CASH_RESERVE_PCT = 0.20
@@ -24,6 +26,14 @@ RISK_PCT = 0.02
 COMBO_LEDGER = "Kasa_RejimOsilator"
 COMBO_RISK_PCT = 0.03
 PATLAMA_LEDGER = "Kasa_PatlamaSelale"
+LIVE_ENTRY_LEDGERS = tuple(
+    x.strip()
+    for x in os.environ.get(
+        "LIVE_ENTRY_LEDGERS",
+        f"{PATLAMA_LEDGER},Kasa_SMC",
+    ).split(",")
+    if x.strip()
+)
 PRIORITY_LEDGERS = (COMBO_LEDGER, PATLAMA_LEDGER)
 MIN_SURVIVAL_USD = 20.0
 LIQ_ADVERSE_PCT = 0.08  # 10x korelasyonlu dump tamponu

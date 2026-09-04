@@ -11,6 +11,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from engine.config import (
     LAB_AUTO,
     LAB_AUTO_INTERVAL_SEC,
+    ENTRY_TF,
     PATLAMA_LEDGER,
     PRIORITY_LEDGERS,
     LEDGER_NAMES,
@@ -20,6 +21,11 @@ from engine.config import (
 )
 from engine.context import build_context
 from engine.data import fetch_dominance, fetch_klines, fetch_symbols, last_prices
+from engine.entry_timing import (
+    collect_bar_closes,
+    refresh_tfs_for_scan,
+    should_evaluate_entry,
+)
 from engine.lab_runner import maybe_run_lab_pipeline
 from engine.lab_state import load_lab_state
 from engine.momentum_scan import score_momentum
@@ -29,7 +35,7 @@ from strategies.registry import all_strategies
 _STRATS = all_strategies()
 
 # How often each TF is refreshed while rotating the universe
-_TF_TTL_SEC = {"15m": 90, "1h": 180, "4h": 900, "1d": 3600, "1w": 7200}
+_TF_TTL_SEC = {"15m": 45, "1h": 180, "4h": 900, "1d": 3600, "1w": 7200}
 
 
 class _Handler(BaseHTTPRequestHandler):
@@ -130,22 +136,61 @@ def _refresh_strats(pf: Portfolio) -> list:
     return _STRATS
 
 
-def _scan_one(pf: Portfolio, cache: FrameCache, sym: str, dominance: dict, force_entry: bool) -> None:
-    try:
-        frames = cache.refresh(sym)
-        if "1h" not in frames or "1d" not in frames:
-            return
+def _mark_price(pf: Portfolio, sym: str, frames: dict, live_px: float | None) -> float:
+    if live_px is not None and live_px > 0:
+        pf.mark(sym, live_px)
+        return live_px
+    if "1h" in frames:
         last = float(frames["1h"]["close"].iloc[-1])
         pf.mark(sym, last)
-        closed = pf.check_exits(sym, last)
+        return last
+    return 0.0
+
+
+def _entry_price(strat, sym: str, frames: dict, live_px: float | None) -> float:
+    if strat.uses_live_entry() and live_px is not None and live_px > 0:
+        return float(live_px)
+    tf = strat.entry_timeframe()
+    df = frames.get(tf) or frames.get("1h")
+    if df is not None and not df.empty:
+        return float(df["close"].iloc[-1])
+    if live_px is not None and live_px > 0:
+        return float(live_px)
+    return 0.0
+
+
+def _scan_one(pf: Portfolio, cache: FrameCache, sym: str, dominance: dict, force_entry: bool) -> None:
+    try:
+        strats = _refresh_strats(pf)
+        scan_tfs = refresh_tfs_for_scan(strats)
+        frames = cache.refresh(sym, scan_tfs)
+        if "1h" not in frames or "1d" not in frames:
+            return
+
+        live_px: float | None = None
+        if any(s.uses_live_entry() for s in strats):
+            try:
+                live_px = last_prices([sym]).get(sym)
+            except Exception:
+                live_px = None
+
+        mark = _mark_price(pf, sym, frames, live_px)
+        if mark <= 0:
+            return
+
+        closed = pf.check_exits(sym, mark)
         if closed:
             pf.save(sync_github=True)
-        if not force_entry and not cache.new_closed_bar(sym, "1h"):
+
+        bar_closed = collect_bar_closes(cache, sym, strats, force=force_entry)
+        if not force_entry and not any(bar_closed.values()) and not any(
+            s.uses_live_entry() for s in strats
+        ):
             return
+
         ctx = build_context(sym, frames, dominance, indicated=False)
         pf.record_patlama_scan(sym, score_momentum(ctx).to_dict())
-        opened = False
-        strats = _refresh_strats(pf)
+
         priority = [s for s in strats if s.ledger in PRIORITY_LEDGERS]
         lab = [s for s in strats if s.ledger.startswith("Kasa_Lab_")]
         others = [
@@ -153,11 +198,14 @@ def _scan_one(pf: Portfolio, cache: FrameCache, sym: str, dominance: dict, force
             if s.ledger not in PRIORITY_LEDGERS and not s.ledger.startswith("Kasa_Lab_")
         ]
         for strat in priority + lab + others:
-            if _try_entry(pf, strat, ctx, sym, last):
-                opened = True
+            if not should_evaluate_entry(strat, force=force_entry, bar_closed=bar_closed):
+                continue
+            px = _entry_price(strat, sym, frames, live_px)
+            if px <= 0:
+                continue
+            if _try_entry(pf, strat, ctx, sym, px):
+                pf.save(sync_github=True)
                 break
-        if opened:
-            pf.save(sync_github=True)
     except Exception as e:
         pf.log(f"{sym} hata: {e}")
 
@@ -172,7 +220,12 @@ def _try_entry(pf: Portfolio, strat, ctx, sym: str, last: float) -> bool:
     pf.record_signal(sym, sig)
     if not ctx.aligned(sig.side):
         return False
-    return pf.try_open(sym, sig, last)
+    opened = pf.try_open(sym, sig, last)
+    if opened and sig.entry_tf:
+        key = pf.pos_key(sig.ledger, sym)
+        if key in pf.positions:
+            pf.positions[key].entry_tf = sig.entry_tf
+    return opened
 
 
 def run_price_pass(pf: Portfolio) -> bool:
@@ -209,7 +262,11 @@ def run_paper(scan_limit: int = SCAN_SYMBOLS) -> None:
     except Exception:
         pass
     start_http(pf)
-    pf.log(f"Canli piyasa simulasyonu: tum USDT perpetual, {len(LEDGER_NAMES)} kasa, mum kapanisi giris")
+    pf.log(
+        "Canli piyasa simulasyonu: tum USDT perpetual, "
+        f"{len(LEDGER_NAMES)} kasa | klasik={ENTRY_TF} kapanis, "
+        f"Patlama/SMC=anlik (~{PRICE_POLL_SEC}sn)"
+    )
     if LAB_AUTO:
         pf.log("Lab otomasyon acik: tarif uretimi/backtest arka planda calisacak")
         threading.Thread(target=lambda: maybe_run_lab_pipeline(pf, force=True), daemon=True).start()

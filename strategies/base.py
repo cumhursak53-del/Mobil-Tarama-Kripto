@@ -48,6 +48,20 @@ class MarketContext:
 class Strategy(ABC):
     name: str
     ledger: str
+    entry_mode: str = "bar_close"  # bar_close | live
+    entry_tf: str = "1h"
+
+    def uses_live_entry(self) -> bool:
+        from engine.config import LIVE_ENTRY_LEDGERS
+
+        if self.entry_mode == "live":
+            return True
+        return self.ledger in LIVE_ENTRY_LEDGERS
+
+    def entry_timeframe(self) -> str:
+        from engine.config import ENTRY_TF
+
+        return self.entry_tf or ENTRY_TF
 
     @abstractmethod
     def signal(self, ctx: MarketContext) -> Optional[Signal]:

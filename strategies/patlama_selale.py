@@ -10,12 +10,20 @@ from strategies.helpers import make_signal, valid_row
 
 
 class PatlamaSelale(Strategy):
-    """MTF patlama / selale skoru >= 4 ise islem."""
+    """MTF patlama / selale skoru >= 4 ise islem — anlik giris (15m tetik)."""
 
     name = ledger = PATLAMA_LEDGER
+    entry_mode = "live"
+    entry_tf = "15m"
 
     def signal(self, ctx: MarketContext) -> Optional[Signal]:
-        df = ctx.tf("1h")
+        from engine.config import TRIGGER_TF
+
+        df = ctx.tf(TRIGGER_TF)
+        if df is None or df.empty:
+            df = ctx.tf("15m")
+        if df is None or df.empty:
+            df = ctx.tf("1h")
         if not valid_row(df, ("close",)):
             return None
         scored = score_momentum(ctx)
@@ -29,10 +37,13 @@ class PatlamaSelale(Strategy):
             "short_score": scored.short_score,
             "notes": " | ".join(notes[-4:]),
         }
-        return make_signal(
+        sig = make_signal(
             self.ledger,
             f"[STRAT: {tag}]",
             df,
             side,
             extra=extra,
         )
+        if sig:
+            sig.entry_tf = self.entry_tf
+        return sig
