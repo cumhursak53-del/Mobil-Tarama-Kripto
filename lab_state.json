@@ -101,24 +101,24 @@
     "lab_auto": true,
     "github_token": false
   },
-  "updated_at": "2026-09-04 18:41:46",
+  "updated_at": "2026-09-04 18:53:59",
   "pipeline": {
     "status": "ok",
-    "last_run_at": "2026-09-04 18:38:02",
+    "last_run_at": "2026-09-04 18:52:36",
     "last_generate_at": "2026-09-04 18:28:14",
-    "last_backtest_at": "2026-09-04 18:38:02",
-    "last_message": "Arastirma 0, uretim 24, backtest 8, yeni aday 0",
+    "last_backtest_at": "2026-09-04 18:52:36",
+    "last_message": "Arastirma 0, uretim 0, backtest 8, yeni aday 2",
     "last_generated": 24,
     "last_backtested": 8,
-    "last_promoted": 0,
+    "last_promoted": 2,
     "last_researched": 0
   },
   "research": {
     "gemini_configured": true,
     "research_enabled": true,
     "processed_videos": [
-      "DHqGzh5PN0s",
-      "Nmu5Rkt7Mjw"
+      "Nmu5Rkt7Mjw",
+      "DHqGzh5PN0s"
     ],
     "last_youtube_at": "2026-09-04 17:39:23",
     "youtube_recipes": 0,
@@ -1895,6 +1895,150 @@
         "BONKUSDT"
       ],
       "run_at": "2026-09-04 18:38:02"
+    },
+    {
+      "recipe_id": "4272f68c",
+      "metrics": {
+        "n": 0,
+        "win_rate": 0.0,
+        "pnl": 0,
+        "profit_factor": null,
+        "passed": false,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 18:52:36"
+    },
+    {
+      "recipe_id": "243e82ce",
+      "metrics": {
+        "n": 1,
+        "win_rate": 0.0,
+        "pnl": -2.148493047832333,
+        "profit_factor": 0.0,
+        "passed": false,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 18:52:36"
+    },
+    {
+      "recipe_id": "8dbbffe9",
+      "metrics": {
+        "n": 0,
+        "win_rate": 0.0,
+        "pnl": 0,
+        "profit_factor": null,
+        "passed": false,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 18:52:36"
+    },
+    {
+      "recipe_id": "025d56c9",
+      "metrics": {
+        "n": 0,
+        "win_rate": 0.0,
+        "pnl": 0,
+        "profit_factor": null,
+        "passed": false,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 18:52:36"
+    },
+    {
+      "recipe_id": "599c60fd",
+      "metrics": {
+        "n": 16,
+        "win_rate": 0.4375,
+        "pnl": 4.503588455137114,
+        "profit_factor": 1.2388856232063055,
+        "passed": false,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 18:52:36"
+    },
+    {
+      "recipe_id": "b910520b",
+      "metrics": {
+        "n": 21,
+        "win_rate": 0.42857142857142855,
+        "pnl": 6.094610149893629,
+        "profit_factor": 1.2386914308069465,
+        "passed": true,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 18:52:36"
+    },
+    {
+      "recipe_id": "46e34292",
+      "metrics": {
+        "n": 21,
+        "win_rate": 0.47619047619047616,
+        "pnl": 10.852683637329775,
+        "profit_factor": 1.457900379703769,
+        "passed": true,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 18:52:36"
+    },
+    {
+      "recipe_id": "05fadcad",
+      "metrics": {
+        "n": 17,
+        "win_rate": 0.4117647058823529,
+        "pnl": 1.9592069970706734,
+        "profit_factor": 1.0919748692525428,
+        "passed": false,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 18:52:36"
     }
   ],
   "candidates": [
@@ -1954,6 +2098,46 @@
         "win_rate": 0.46153846153846156,
         "pnl": 10.50660684587,
         "profit_factor": 1.3370528502714738,
+        "passed": true,
+        "symbols": 4
+      }
+    },
+    {
+      "recipe_id": "b910520b",
+      "ledger": "Kasa_Lab_004",
+      "status": "paper",
+      "paper_started_at": "2026-09-04 18:52:36",
+      "metrics": {
+        "n": 0,
+        "wins": 0,
+        "pnl": 0.0,
+        "wr": 0.0
+      },
+      "backtest": {
+        "n": 21,
+        "win_rate": 0.42857142857142855,
+        "pnl": 6.094610149893629,
+        "profit_factor": 1.2386914308069465,
+        "passed": true,
+        "symbols": 4
+      }
+    },
+    {
+      "recipe_id": "46e34292",
+      "ledger": "Kasa_Lab_005",
+      "status": "paper",
+      "paper_started_at": "2026-09-04 18:52:36",
+      "metrics": {
+        "n": 0,
+        "wins": 0,
+        "pnl": 0.0,
+        "wr": 0.0
+      },
+      "backtest": {
+        "n": 21,
+        "win_rate": 0.47619047619047616,
+        "pnl": 10.852683637329775,
+        "profit_factor": 1.457900379703769,
         "passed": true,
         "symbols": 4
       }
