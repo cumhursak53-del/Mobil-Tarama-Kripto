@@ -101,16 +101,16 @@
     "lab_auto": true,
     "github_token": false
   },
-  "updated_at": "2026-09-04 17:52:14",
+  "updated_at": "2026-09-04 18:05:47",
   "pipeline": {
     "status": "ok",
-    "last_run_at": "2026-09-04 17:50:24",
+    "last_run_at": "2026-09-04 18:01:56",
     "last_generate_at": "2026-09-04 17:39:39",
-    "last_backtest_at": "2026-09-04 17:50:24",
-    "last_message": "Arastirma 0, uretim 24, backtest 8, yeni aday 0",
+    "last_backtest_at": "2026-09-04 18:01:56",
+    "last_message": "Arastirma 0, uretim 0, backtest 8, yeni aday 2",
     "last_generated": 24,
     "last_backtested": 8,
-    "last_promoted": 0,
+    "last_promoted": 2,
     "last_researched": 0
   },
   "research": {
@@ -868,6 +868,192 @@
         "BONKUSDT"
       ],
       "run_at": "2026-09-04 17:50:24"
+    },
+    {
+      "recipe_id": "c4e38844",
+      "metrics": {
+        "n": 0,
+        "win_rate": 0.0,
+        "pnl": 0,
+        "profit_factor": null,
+        "passed": false,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 18:01:56"
+    },
+    {
+      "recipe_id": "8d6a3b42",
+      "metrics": {
+        "n": 1,
+        "win_rate": 0.0,
+        "pnl": -2.1484934109246954,
+        "profit_factor": 0.0,
+        "passed": false,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 18:01:56"
+    },
+    {
+      "recipe_id": "e1b86ea8",
+      "metrics": {
+        "n": 0,
+        "win_rate": 0.0,
+        "pnl": 0,
+        "profit_factor": null,
+        "passed": false,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 18:01:56"
+    },
+    {
+      "recipe_id": "500a4de6",
+      "metrics": {
+        "n": 0,
+        "win_rate": 0.0,
+        "pnl": 0,
+        "profit_factor": null,
+        "passed": false,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 18:01:56"
+    },
+    {
+      "recipe_id": "2c5fcef0",
+      "metrics": {
+        "n": 16,
+        "win_rate": 0.375,
+        "pnl": 3.7606739790261154,
+        "profit_factor": 1.1937833838294658,
+        "passed": false,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 18:01:56"
+    },
+    {
+      "recipe_id": "8523ebfe",
+      "metrics": {
+        "n": 21,
+        "win_rate": 0.38095238095238093,
+        "pnl": 5.3533169246386665,
+        "profit_factor": 1.2052202831864185,
+        "passed": true,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 18:01:56"
+    },
+    {
+      "recipe_id": "d763d377",
+      "metrics": {
+        "n": 21,
+        "win_rate": 0.42857142857142855,
+        "pnl": 10.135657705474664,
+        "profit_factor": 1.4214610579684759,
+        "passed": true,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 18:01:56"
+    },
+    {
+      "recipe_id": "59eaad1c",
+      "metrics": {
+        "n": 17,
+        "win_rate": 0.35294117647058826,
+        "pnl": 1.216292512262474,
+        "profit_factor": 1.055651183834112,
+        "passed": false,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 18:01:56"
+    }
+  ],
+  "candidates": [
+    {
+      "recipe_id": "8523ebfe",
+      "ledger": "Kasa_Lab_001",
+      "status": "paper",
+      "paper_started_at": "2026-09-04 18:01:56",
+      "metrics": {
+        "n": 0,
+        "wins": 0,
+        "pnl": 0.0,
+        "wr": 0.0
+      },
+      "backtest": {
+        "n": 21,
+        "win_rate": 0.38095238095238093,
+        "pnl": 5.3533169246386665,
+        "profit_factor": 1.2052202831864185,
+        "passed": true,
+        "symbols": 4
+      }
+    },
+    {
+      "recipe_id": "d763d377",
+      "ledger": "Kasa_Lab_002",
+      "status": "paper",
+      "paper_started_at": "2026-09-04 18:01:56",
+      "metrics": {
+        "n": 0,
+        "wins": 0,
+        "pnl": 0.0,
+        "wr": 0.0
+      },
+      "backtest": {
+        "n": 21,
+        "win_rate": 0.42857142857142855,
+        "pnl": 10.135657705474664,
+        "profit_factor": 1.4214610579684759,
+        "passed": true,
+        "symbols": 4
+      }
     }
   ]
 }
