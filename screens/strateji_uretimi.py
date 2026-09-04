@@ -90,12 +90,11 @@ def render() -> None:
         st.success("Gemini arastirma calismis (motor log / lab_state kaniti var).")
     elif research_on:
         st.warning(
-            "Arastirma acik ama motor **Worker** servisinde `GEMINI_API_KEY` yok. "
-            "Streamlit degil — Render'da paper motoru calisan servise key ekle."
+            "Arastirma acik ama motor **Worker** servisinde `GEMINI_API_KEY` yok veya baglanti basarisiz."
         )
         st.caption(
-            "Render Dashboard → **Worker** (mobil-tarama-kripto.onrender.com) → Environment → "
-            "`GEMINI_API_KEY` = Google AI Studio key → Save → redeploy."
+            "Google AI Studio artik **AQ.** ile baslayan key verir — bu normal ve gecerlidir. "
+            "Render Worker → Environment → `GEMINI_API_KEY` = AQ.... key → Save → redeploy."
         )
     else:
         st.caption("Arastirma kapali (`RESEARCH_ENABLED=0`).")

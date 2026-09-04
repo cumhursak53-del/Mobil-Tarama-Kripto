@@ -129,6 +129,7 @@ def collect_youtube_recipes(state: dict, *, log=None) -> list[dict]:
             title=title,
             body=text,
             max_recipes=2,
+            log=log,
         )
         valid = validate_recipes(raw, source=f"youtube:{vid}")
         if valid:

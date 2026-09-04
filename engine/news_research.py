@@ -89,6 +89,7 @@ def collect_news_recipes(state: dict, *, log=None) -> list[dict]:
         title="Son kripto haberleri",
         body=body,
         max_recipes=3,
+        log=log,
     )
     valid = validate_recipes(raw, source=f"news:{batch_key}")
     if valid and log:

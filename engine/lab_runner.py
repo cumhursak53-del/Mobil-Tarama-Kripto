@@ -93,6 +93,8 @@ def run_lab_pipeline(*, log=None, force: bool = False) -> dict:
         recipes = state.get("recipes") or []
 
         if RESEARCH_ENABLED and GEMINI_API_KEY:
+            from engine.gemini_client import test_gemini_connection
+            test_gemini_connection(log=log)
             new_research = run_research(state, log=log)
         elif RESEARCH_ENABLED and log:
             log("Arastirma atlandi: GEMINI_API_KEY worker env'de tanimli degil")
