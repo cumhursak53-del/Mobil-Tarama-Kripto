@@ -101,5 +101,773 @@
     "lab_auto": true,
     "github_token": false
   },
-  "updated_at": "2026-09-04 17:37:03"
+  "updated_at": "2026-09-04 17:52:14",
+  "pipeline": {
+    "status": "ok",
+    "last_run_at": "2026-09-04 17:50:24",
+    "last_generate_at": "2026-09-04 17:39:39",
+    "last_backtest_at": "2026-09-04 17:50:24",
+    "last_message": "Arastirma 0, uretim 24, backtest 8, yeni aday 0",
+    "last_generated": 24,
+    "last_backtested": 8,
+    "last_promoted": 0,
+    "last_researched": 0
+  },
+  "research": {
+    "gemini_configured": true,
+    "research_enabled": true,
+    "processed_videos": [
+      "Nmu5Rkt7Mjw",
+      "DHqGzh5PN0s"
+    ],
+    "last_youtube_at": "2026-09-04 17:39:23",
+    "youtube_recipes": 0,
+    "processed_news_batches": [
+      "385fdab4931f0c1e"
+    ],
+    "last_news_at": "2026-09-04 17:39:39",
+    "news_recipes": 0
+  },
+  "recipes": [
+    {
+      "id": "24199635",
+      "name": "LabLong_24199635",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "cci_cross_up",
+          "extra": "cci_lt_100"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "bos_high"
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "bb029663",
+      "name": "LabLong_bb029663",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "cci_cross_up",
+          "extra": "cci_lt_100"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "squeeze"
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "e60114fd",
+      "name": "LabLong_e60114fd",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "cci_cross_up",
+          "extra": "cci_lt_100"
+        },
+        {
+          "type": "volume",
+          "tf": "1h"
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "dd10959b",
+      "name": "LabLong_dd10959b",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "cci_cross_up",
+          "extra": "cci_lt_100"
+        },
+        {
+          "type": "momentum_score",
+          "side": "long",
+          "min": 4
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "d1284f25",
+      "name": "LabLong_d1284f25",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "macd_cross_up",
+          "extra": "hist_pos"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "bos_high"
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "87627ea1",
+      "name": "LabLong_87627ea1",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "macd_cross_up",
+          "extra": "hist_pos"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "squeeze"
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "d09b1ab8",
+      "name": "LabLong_d09b1ab8",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "macd_cross_up",
+          "extra": "hist_pos"
+        },
+        {
+          "type": "volume",
+          "tf": "1h"
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "03be815d",
+      "name": "LabLong_03be815d",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "macd_cross_up",
+          "extra": "hist_pos"
+        },
+        {
+          "type": "momentum_score",
+          "side": "long",
+          "min": 4
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "c4e38844",
+      "name": "LabLong_c4e38844",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "stoch_cross_up",
+          "extra": "k_lt_25"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "bos_high"
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "8d6a3b42",
+      "name": "LabLong_8d6a3b42",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "stoch_cross_up",
+          "extra": "k_lt_25"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "squeeze"
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "e1b86ea8",
+      "name": "LabLong_e1b86ea8",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "stoch_cross_up",
+          "extra": "k_lt_25"
+        },
+        {
+          "type": "volume",
+          "tf": "1h"
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "500a4de6",
+      "name": "LabLong_500a4de6",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "stoch_cross_up",
+          "extra": "k_lt_25"
+        },
+        {
+          "type": "momentum_score",
+          "side": "long",
+          "min": 4
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "2c5fcef0",
+      "name": "LabShort_2c5fcef0",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "cci_cross_down",
+          "extra": "cci_gt_-100"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "bos_low"
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "8523ebfe",
+      "name": "LabShort_8523ebfe",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "cci_cross_down",
+          "extra": "cci_gt_-100"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "squeeze"
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "d763d377",
+      "name": "LabShort_d763d377",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "cci_cross_down",
+          "extra": "cci_gt_-100"
+        },
+        {
+          "type": "volume",
+          "tf": "1h"
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "59eaad1c",
+      "name": "LabShort_59eaad1c",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "cci_cross_down",
+          "extra": "cci_gt_-100"
+        },
+        {
+          "type": "momentum_score",
+          "side": "short",
+          "min": 4
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "48ba69c3",
+      "name": "LabShort_48ba69c3",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "macd_cross_down",
+          "extra": "hist_neg"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "bos_low"
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "65f1ecd2",
+      "name": "LabShort_65f1ecd2",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "macd_cross_down",
+          "extra": "hist_neg"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "squeeze"
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "5dfb57a8",
+      "name": "LabShort_5dfb57a8",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "macd_cross_down",
+          "extra": "hist_neg"
+        },
+        {
+          "type": "volume",
+          "tf": "1h"
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "64537d55",
+      "name": "LabShort_64537d55",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "macd_cross_down",
+          "extra": "hist_neg"
+        },
+        {
+          "type": "momentum_score",
+          "side": "short",
+          "min": 4
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "a6eeaca4",
+      "name": "LabShort_a6eeaca4",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "stoch_cross_down",
+          "extra": "k_gt_75"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "bos_low"
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "18c5a0b9",
+      "name": "LabShort_18c5a0b9",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "stoch_cross_down",
+          "extra": "k_gt_75"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "squeeze"
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "5c14fc67",
+      "name": "LabShort_5c14fc67",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "stoch_cross_down",
+          "extra": "k_gt_75"
+        },
+        {
+          "type": "volume",
+          "tf": "1h"
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator"
+    },
+    {
+      "id": "f24274eb",
+      "name": "LabShort_f24274eb",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "stoch_cross_down",
+          "extra": "k_gt_75"
+        },
+        {
+          "type": "momentum_score",
+          "side": "short",
+          "min": 4
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator"
+    }
+  ],
+  "backtests": [
+    {
+      "recipe_id": "24199635",
+      "metrics": {
+        "n": 1,
+        "win_rate": 0.0,
+        "pnl": -2.083377399839464,
+        "profit_factor": 0.0,
+        "passed": false,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 17:50:24"
+    },
+    {
+      "recipe_id": "bb029663",
+      "metrics": {
+        "n": 2,
+        "win_rate": 0.5,
+        "pnl": 1.5991338447697419,
+        "profit_factor": 1.7443047470559785,
+        "passed": false,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 17:50:24"
+    },
+    {
+      "recipe_id": "e60114fd",
+      "metrics": {
+        "n": 0,
+        "win_rate": 0.0,
+        "pnl": 0,
+        "profit_factor": null,
+        "passed": false,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 17:50:24"
+    },
+    {
+      "recipe_id": "dd10959b",
+      "metrics": {
+        "n": 0,
+        "win_rate": 0.0,
+        "pnl": 0,
+        "profit_factor": null,
+        "passed": false,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 17:50:24"
+    },
+    {
+      "recipe_id": "d1284f25",
+      "metrics": {
+        "n": 0,
+        "win_rate": 0.0,
+        "pnl": 0,
+        "profit_factor": null,
+        "passed": false,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 17:50:24"
+    },
+    {
+      "recipe_id": "87627ea1",
+      "metrics": {
+        "n": 2,
+        "win_rate": 0.0,
+        "pnl": -4.098462762943697,
+        "profit_factor": 0.0,
+        "passed": false,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 17:50:24"
+    },
+    {
+      "recipe_id": "d09b1ab8",
+      "metrics": {
+        "n": 0,
+        "win_rate": 0.0,
+        "pnl": 0,
+        "profit_factor": null,
+        "passed": false,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 17:50:24"
+    },
+    {
+      "recipe_id": "03be815d",
+      "metrics": {
+        "n": 0,
+        "win_rate": 0.0,
+        "pnl": 0,
+        "profit_factor": null,
+        "passed": false,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-04 17:50:24"
+    }
+  ]
 }
