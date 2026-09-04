@@ -36,11 +36,15 @@ class _Handler(BaseHTTPRequestHandler):
     portfolio: Portfolio
 
     def do_GET(self):
+        path = (self.path or "/").split("?", 1)[0]
+        if path in ("/export/lab", "/export/lab_state"):
+            body = self.portfolio.lab_state
+        else:
+            body = self.portfolio.snapshot()
         self.send_response(200)
         self.send_header("Content-type", "application/json")
         self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
-        body = self.portfolio.snapshot()
         self.wfile.write(json.dumps(body, default=str).encode("utf-8"))
 
     def log_message(self, format, *args):

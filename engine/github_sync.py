@@ -25,21 +25,35 @@ def _contents_url(path: str) -> str:
     return f"https://api.github.com/repos/{GITHUB_REPO}/contents/{path}"
 
 
-def pull_json(path: str = GITHUB_STATE_PATH) -> Optional[dict]:
-    if not GITHUB_TOKEN:
-        return None
+def _raw_github_url(path: str) -> str:
+    return f"https://raw.githubusercontent.com/{GITHUB_REPO}/{GITHUB_BRANCH}/{path}"
+
+
+def pull_json_public(path: str) -> Optional[dict]:
+    """Public repo: token olmadan raw.githubusercontent.com uzerinden oku."""
     try:
-        res = http.get(_contents_url(path) + f"?ref={GITHUB_BRANCH}", headers=_headers(), timeout=15)
+        res = http.get(_raw_github_url(path), timeout=15)
         if res.status_code != 200:
-            print(f"GitHub pull {path}: HTTP {res.status_code}", flush=True)
             return None
-        content = res.json().get("content") or ""
-        if not content:
-            return None
-        return json.loads(base64.b64decode(content).decode("utf-8"))
+        return res.json()
     except Exception as e:
-        print(f"GitHub pull hatasi ({path}): {e}", flush=True)
+        print(f"GitHub public pull {path}: {e}", flush=True)
         return None
+
+
+def pull_json(path: str = GITHUB_STATE_PATH) -> Optional[dict]:
+    if GITHUB_TOKEN:
+        try:
+            res = http.get(_contents_url(path) + f"?ref={GITHUB_BRANCH}", headers=_headers(), timeout=15)
+            if res.status_code != 200:
+                print(f"GitHub pull {path}: HTTP {res.status_code}", flush=True)
+            else:
+                content = res.json().get("content") or ""
+                if content:
+                    return json.loads(base64.b64decode(content).decode("utf-8"))
+        except Exception as e:
+            print(f"GitHub pull hatasi ({path}): {e}", flush=True)
+    return pull_json_public(path)
 
 
 def push_json(

@@ -68,9 +68,10 @@ class Portfolio:
         self._ensure_lab_ledgers()
         n_pos = len(self.positions)
         n_hist = len(self.history)
+        sync_mode = "token" if GITHUB_TOKEN else "actions"
         self.log(
             f"State yuklendi [{self.state_source}] | acik {n_pos} | kapanan {n_hist} | "
-            f"github={'ok' if remote else 'yok'} | token={'var' if GITHUB_TOKEN else 'YOK'}"
+            f"github={'ok' if remote else 'yok'} | sync={sync_mode}"
         )
         if n_pos or n_hist:
             self.save(sync_github=bool(GITHUB_TOKEN))
@@ -145,7 +146,14 @@ class Portfolio:
             ok = push_state(payload)
             sync_lab_state(self.lab_state)
             if not ok:
-                self.log("UYARI: GitHub state push basarisiz — deploy'da veri kaybi riski")
+                if GITHUB_TOKEN:
+                    self.log("UYARI: GitHub state push basarisiz — deploy'da veri kaybi riski")
+                elif not getattr(self, "_sync_info_logged", False):
+                    self._sync_info_logged = True
+                    self.log(
+                        "GitHub yedek: Actions otomatik senkron (token gerekmez) — "
+                        "public pull acik"
+                    )
 
     def _pos_dict(self, p: Position) -> dict:
         return {

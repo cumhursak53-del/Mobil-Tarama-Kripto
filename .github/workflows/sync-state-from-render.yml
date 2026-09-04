@@ -1,0 +1,34 @@
+name: Sync state from Render
+
+on:
+  schedule:
+    - cron: "*/3 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-state-from-render
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch Render worker state
+        run: python scripts/sync_state_from_render.py
+
+      - name: Commit state if changed
+        run: |
+          git config user.name "Krpito Bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add state.json lab_state.json
+          if git diff --staged --quiet; then
+            echo "Degisiklik yok"
+            exit 0
+          fi
+          git commit -m "Auto sync state from Render worker [skip ci]"
+          git push
