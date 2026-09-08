@@ -64,9 +64,9 @@
       "entry_tf": "15m",
       "peak_price": 2.235,
       "partial_tp_taken": false,
-      "current_price": 2.313,
-      "unrealized_pnl": 0.8251565056488599,
-      "roe_pct": 31.81247383842596
+      "current_price": 2.326,
+      "unrealized_pnl": 0.6840113138931343,
+      "roe_pct": 26.3708664713268
     },
     "Kasa_SMC|HMSTRUSDT": {
       "symbol": "HMSTRUSDT",
@@ -84,9 +84,9 @@
       "entry_tf": "15m",
       "peak_price": 0.0001833,
       "partial_tp_taken": false,
-      "current_price": 0.0001776,
-      "unrealized_pnl": -0.8220402285231995,
-      "roe_pct": -13.333333333333355
+      "current_price": 0.0001778,
+      "unrealized_pnl": -0.7535368761462646,
+      "roe_pct": -12.222222222222218
     },
     "Kasa_SMC|XLMUSDT": {
       "symbol": "XLMUSDT",
@@ -104,9 +104,9 @@
       "entry_tf": "15m",
       "peak_price": 0.19583,
       "partial_tp_taken": false,
-      "current_price": 0.19278,
-      "unrealized_pnl": 1.6066300844258674,
-      "roe_pct": 40.030211480362595
+      "current_price": 0.19308,
+      "unrealized_pnl": 1.6715881740926801,
+      "roe_pct": 41.64868364264137
     },
     "Kasa_PatlamaSelale|BOMEUSDT": {
       "symbol": "BOMEUSDT",
@@ -124,9 +124,9 @@
       "entry_tf": "15m",
       "peak_price": 0.00094,
       "partial_tp_taken": false,
-      "current_price": 0.0009335,
-      "unrealized_pnl": 2.9827121418461564,
-      "roe_pct": 28.763500110204905
+      "current_price": 0.0009331,
+      "unrealized_pnl": 2.9370000783695858,
+      "roe_pct": 28.32268018514428
     }
   },
   "history": [
@@ -587,13 +587,13 @@
       "last_ledger": "Kasa_PatlamaSelale"
     },
     "ATHUSDT": {
-      "count": 429,
+      "count": 430,
       "strategies": [
         "[STRAT: Selale_Short]",
         "[STRAT: SMC_Short]"
       ],
       "last_side": "SELL",
-      "last_time": "2026-09-08 05:00:55",
+      "last_time": "2026-09-08 05:16:38",
       "last_ledger": "Kasa_SMC"
     },
     "BEATUSDT": {
@@ -676,13 +676,13 @@
       "last_ledger": "Kasa_SMC"
     },
     "ENAUSDT": {
-      "count": 104,
+      "count": 105,
       "strategies": [
         "[STRAT: SMC_Long]",
         "[STRAT: Patlama_Long]"
       ],
       "last_side": "BUY",
-      "last_time": "2026-09-08 04:57:22",
+      "last_time": "2026-09-08 05:13:10",
       "last_ledger": "Kasa_SMC"
     },
     "PLUMEUSDT": {
@@ -753,7 +753,7 @@
       "last_ledger": "Kasa_PatlamaSelale"
     },
     "BICOUSDT": {
-      "count": 144,
+      "count": 145,
       "strategies": [
         "[STRAT: Selale_Short]",
         "[STRAT: SMC_Short]",
@@ -761,7 +761,7 @@
         "[STRAT: SMC_Long]"
       ],
       "last_side": "BUY",
-      "last_time": "2026-09-08 04:58:03",
+      "last_time": "2026-09-08 05:13:52",
       "last_ledger": "Kasa_SMC"
     },
     "BILLUSDT": {
@@ -1574,7 +1574,7 @@
       "best_score": 1,
       "long_notes": "1D:birikim",
       "short_notes": "",
-      "updated_at": "2026-09-08 04:53:48"
+      "updated_at": "2026-09-08 05:09:33"
     },
     "PEPEUSDT": {
       "symbol": "PEPEUSDT",
@@ -1584,7 +1584,7 @@
       "best_score": 2,
       "long_notes": "1D:birikim | 4H:sikisma",
       "short_notes": "1W:ayı | 4H:sikisma",
-      "updated_at": "2026-09-08 04:53:56"
+      "updated_at": "2026-09-08 05:09:41"
     },
     "SHIBUSDT": {
       "symbol": "SHIBUSDT",
@@ -1594,7 +1594,7 @@
       "best_score": 1,
       "long_notes": "1D:birikim",
       "short_notes": "1W:ayı",
-      "updated_at": "2026-09-08 04:54:05"
+      "updated_at": "2026-09-08 05:09:50"
     },
     "BONKUSDT": {
       "symbol": "BONKUSDT",
@@ -1604,7 +1604,7 @@
       "best_score": 1,
       "long_notes": "4H:HH-HL",
       "short_notes": "1D:dusus",
-      "updated_at": "2026-09-08 04:54:12"
+      "updated_at": "2026-09-08 05:09:59"
     },
     "FLOKIUSDT": {
       "symbol": "FLOKIUSDT",
@@ -1614,17 +1614,17 @@
       "best_score": 2,
       "long_notes": "4H:HH-HL | 4H:sikisma",
       "short_notes": "1D:dusus | 4H:sikisma",
-      "updated_at": "2026-09-08 04:54:34"
+      "updated_at": "2026-09-08 05:10:21"
     },
     "PUMPUSDT": {
       "symbol": "PUMPUSDT",
-      "long_score": 1,
+      "long_score": 2,
       "short_score": 1,
       "best_side": "NONE",
-      "best_score": 1,
-      "long_notes": "1D:yukselis",
+      "best_score": 2,
+      "long_notes": "1D:yukselis | 1H:kirilim+hacim",
       "short_notes": "4H:LH-LL",
-      "updated_at": "2026-09-08 04:54:20"
+      "updated_at": "2026-09-08 05:10:07"
     },
     "NEIROUSDT": {
       "symbol": "NEIROUSDT",
@@ -1634,17 +1634,17 @@
       "best_score": 1,
       "long_notes": "1D:yukselis",
       "short_notes": "",
-      "updated_at": "2026-09-08 04:54:48"
+      "updated_at": "2026-09-08 05:10:36"
     },
     "TRIAUSDT": {
       "symbol": "TRIAUSDT",
       "long_score": 2,
-      "short_score": 1,
+      "short_score": 2,
       "best_side": "NONE",
       "best_score": 2,
       "long_notes": "4H:HH-HL | 4H:sikisma",
-      "short_notes": "4H:sikisma",
-      "updated_at": "2026-09-08 04:56:36"
+      "short_notes": "4H:sikisma | 1H:stoch_OB",
+      "updated_at": "2026-09-08 05:12:26"
     },
     "BOMEUSDT": {
       "symbol": "BOMEUSDT",
@@ -1654,7 +1654,7 @@
       "best_score": 2,
       "long_notes": "1D:yukselis | 1W:boğa",
       "short_notes": "",
-      "updated_at": "2026-09-08 04:55:03"
+      "updated_at": "2026-09-08 05:10:51"
     },
     "DOGEUSDT": {
       "symbol": "DOGEUSDT",
@@ -1664,7 +1664,7 @@
       "best_score": 2,
       "long_notes": "1D:birikim | 4H:HH-HL",
       "short_notes": "1W:ayı",
-      "updated_at": "2026-09-08 04:55:11"
+      "updated_at": "2026-09-08 05:10:59"
     },
     "HMSTRUSDT": {
       "symbol": "HMSTRUSDT",
@@ -1674,7 +1674,7 @@
       "best_score": 3,
       "long_notes": "1D:birikim | 4H:HH-HL | 4H:sikisma",
       "short_notes": "4H:sikisma",
-      "updated_at": "2026-09-08 04:55:19"
+      "updated_at": "2026-09-08 05:11:07"
     },
     "PENGUUSDT": {
       "symbol": "PENGUUSDT",
@@ -1684,7 +1684,7 @@
       "best_score": 2,
       "long_notes": "1D:yukselis | 4H:sikisma",
       "short_notes": "1W:ayı | 4H:sikisma",
-      "updated_at": "2026-09-08 04:55:27"
+      "updated_at": "2026-09-08 05:11:15"
     },
     "USELESSUSDT": {
       "symbol": "USELESSUSDT",
@@ -1694,7 +1694,7 @@
       "best_score": 3,
       "long_notes": "1D:yukselis | 4H:HH-HL | 4H:sikisma",
       "short_notes": "4H:sikisma",
-      "updated_at": "2026-09-08 04:56:29"
+      "updated_at": "2026-09-08 05:12:18"
     },
     "NOTUSDT": {
       "symbol": "NOTUSDT",
@@ -1704,7 +1704,7 @@
       "best_score": 2,
       "long_notes": "1D:yukselis | 4H:sikisma",
       "short_notes": "4H:sikisma",
-      "updated_at": "2026-09-08 04:55:50"
+      "updated_at": "2026-09-08 05:11:39"
     },
     "MEMEUSDT": {
       "symbol": "MEMEUSDT",
@@ -1714,7 +1714,7 @@
       "best_score": 3,
       "long_notes": "1D:birikim | 4H:HH-HL | 4H:sikisma",
       "short_notes": "1W:ayı | 4H:sikisma",
-      "updated_at": "2026-09-08 04:56:21"
+      "updated_at": "2026-09-08 05:12:10"
     },
     "GALAUSDT": {
       "symbol": "GALAUSDT",
@@ -1724,7 +1724,7 @@
       "best_score": 1,
       "long_notes": "4H:HH-HL",
       "short_notes": "1D:dusus",
-      "updated_at": "2026-09-08 04:55:59"
+      "updated_at": "2026-09-08 05:11:55"
     },
     "TURBOUSDT": {
       "symbol": "TURBOUSDT",
@@ -1734,7 +1734,7 @@
       "best_score": 3,
       "long_notes": "1D:birikim | 4H:HH-HL | 4H:sikisma",
       "short_notes": "1W:ayı | 4H:sikisma",
-      "updated_at": "2026-09-08 04:56:44"
+      "updated_at": "2026-09-08 05:12:34"
     },
     "CHIPUSDT": {
       "symbol": "CHIPUSDT",
@@ -1744,17 +1744,17 @@
       "best_score": 1,
       "long_notes": "4H:sikisma",
       "short_notes": "4H:sikisma",
-      "updated_at": "2026-09-08 04:58:35"
+      "updated_at": "2026-09-08 05:14:26"
     },
     "ARBUSDT": {
       "symbol": "ARBUSDT",
       "long_score": 1,
-      "short_score": 2,
+      "short_score": 1,
       "best_side": "NONE",
-      "best_score": 2,
+      "best_score": 1,
       "long_notes": "4H:HH-HL",
-      "short_notes": "1D:dagitim | 15M:macd_down",
-      "updated_at": "2026-09-08 04:56:06"
+      "short_notes": "1D:dagitim",
+      "updated_at": "2026-09-08 05:11:47"
     },
     "CPUSDT": {
       "symbol": "CPUSDT",
@@ -1764,7 +1764,7 @@
       "best_score": 0,
       "long_notes": "",
       "short_notes": "",
-      "updated_at": "2026-09-08 04:55:34"
+      "updated_at": "2026-09-08 05:11:23"
     },
     "MEWUSDT": {
       "symbol": "MEWUSDT",
@@ -1774,7 +1774,7 @@
       "best_score": 1,
       "long_notes": "4H:HH-HL",
       "short_notes": "1D:dusus",
-      "updated_at": "2026-09-08 04:55:42"
+      "updated_at": "2026-09-08 05:11:31"
     },
     "PEOPLEUSDT": {
       "symbol": "PEOPLEUSDT",
@@ -1784,7 +1784,7 @@
       "best_score": 1,
       "long_notes": "1D:yukselis",
       "short_notes": "1W:ayı",
-      "updated_at": "2026-09-08 04:57:09"
+      "updated_at": "2026-09-08 05:12:57"
     },
     "ZORAUSDT": {
       "symbol": "ZORAUSDT",
@@ -1794,7 +1794,7 @@
       "best_score": 2,
       "long_notes": "4H:HH-HL | 4H:sikisma",
       "short_notes": "1D:dusus | 4H:sikisma",
-      "updated_at": "2026-09-08 04:57:25"
+      "updated_at": "2026-09-08 05:13:13"
     },
     "ENAUSDT": {
       "symbol": "ENAUSDT",
@@ -1804,17 +1804,17 @@
       "best_score": 2,
       "long_notes": "1D:yukselis | 4H:HH-HL",
       "short_notes": "",
-      "updated_at": "2026-09-08 04:57:17"
+      "updated_at": "2026-09-08 05:13:05"
     },
     "ONEUSDT": {
       "symbol": "ONEUSDT",
-      "long_score": 0,
+      "long_score": 1,
       "short_score": 2,
       "best_side": "NONE",
       "best_score": 2,
-      "long_notes": "",
+      "long_notes": "1H:kirilim+hacim",
       "short_notes": "1D:dusus | 1W:ayı",
-      "updated_at": "2026-09-08 04:56:52"
+      "updated_at": "2026-09-08 05:12:49"
     },
     "CAPUSDT": {
       "symbol": "CAPUSDT",
@@ -1824,7 +1824,7 @@
       "best_score": 0,
       "long_notes": "",
       "short_notes": "",
-      "updated_at": "2026-09-08 04:58:12"
+      "updated_at": "2026-09-08 05:14:02"
     },
     "XRPUSDT": {
       "symbol": "XRPUSDT",
@@ -1834,7 +1834,7 @@
       "best_score": 3,
       "long_notes": "1D:birikim | 4H:HH-HL | 4H:sikisma",
       "short_notes": "1W:ayı | 4H:sikisma",
-      "updated_at": "2026-09-08 04:58:05"
+      "updated_at": "2026-09-08 05:13:54"
     },
     "XPLUSDT": {
       "symbol": "XPLUSDT",
@@ -1844,7 +1844,7 @@
       "best_score": 2,
       "long_notes": "1D:birikim | 4H:HH-HL",
       "short_notes": "1W:ayı",
-      "updated_at": "2026-09-08 04:57:51"
+      "updated_at": "2026-09-08 05:13:38"
     },
     "MUBARAKUSDT": {
       "symbol": "MUBARAKUSDT",
@@ -1854,7 +1854,7 @@
       "best_score": 2,
       "long_notes": "1D:yukselis | 4H:HH-HL",
       "short_notes": "",
-      "updated_at": "2026-09-08 05:02:20"
+      "updated_at": "2026-09-08 05:18:03"
     },
     "AZTECUSDT": {
       "symbol": "AZTECUSDT",
@@ -1864,7 +1864,7 @@
       "best_score": 2,
       "long_notes": "4H:sikisma",
       "short_notes": "4H:LH-LL | 4H:sikisma",
-      "updated_at": "2026-09-08 05:04:23"
+      "updated_at": "2026-09-08 05:20:16"
     },
     "BICOUSDT": {
       "symbol": "BICOUSDT",
@@ -1874,17 +1874,17 @@
       "best_score": 3,
       "long_notes": "1D:birikim | 4H:HH-HL | 4H:sikisma",
       "short_notes": "4H:sikisma",
-      "updated_at": "2026-09-08 04:57:57"
+      "updated_at": "2026-09-08 05:13:45"
     },
     "HOMEUSDT": {
       "symbol": "HOMEUSDT",
-      "long_score": 1,
+      "long_score": 2,
       "short_score": 1,
       "best_side": "NONE",
-      "best_score": 1,
-      "long_notes": "4H:HH-HL",
+      "best_score": 2,
+      "long_notes": "4H:HH-HL | 15M:macd_up",
       "short_notes": "1D:dusus",
-      "updated_at": "2026-09-08 04:58:20"
+      "updated_at": "2026-09-08 05:14:11"
     },
     "IOSTUSDT": {
       "symbol": "IOSTUSDT",
@@ -1894,7 +1894,7 @@
       "best_score": 3,
       "long_notes": "1D:birikim | 4H:HH-HL | 4H:hacimli_yukari",
       "short_notes": "1W:ayı",
-      "updated_at": "2026-09-08 04:54:27"
+      "updated_at": "2026-09-08 05:10:14"
     },
     "MERLUSDT": {
       "symbol": "MERLUSDT",
@@ -1904,7 +1904,7 @@
       "best_score": 3,
       "long_notes": "4H:sikisma",
       "short_notes": "1D:dusus | 1W:ayı | 4H:sikisma",
-      "updated_at": "2026-09-08 05:03:03"
+      "updated_at": "2026-09-08 05:18:54"
     },
     "LINEAUSDT": {
       "symbol": "LINEAUSDT",
@@ -1914,7 +1914,7 @@
       "best_score": 1,
       "long_notes": "4H:HH-HL",
       "short_notes": "1D:dusus",
-      "updated_at": "2026-09-08 04:57:33"
+      "updated_at": "2026-09-08 05:13:20"
     },
     "ADAUSDT": {
       "symbol": "ADAUSDT",
@@ -1924,7 +1924,7 @@
       "best_score": 2,
       "long_notes": "1D:birikim | 4H:HH-HL",
       "short_notes": "1W:ayı",
-      "updated_at": "2026-09-08 04:58:27"
+      "updated_at": "2026-09-08 05:14:19"
     },
     "MOVEUSDT": {
       "symbol": "MOVEUSDT",
@@ -1934,7 +1934,7 @@
       "best_score": 3,
       "long_notes": "4H:sikisma",
       "short_notes": "1D:dusus | 1W:ayı | 4H:sikisma",
-      "updated_at": "2026-09-08 05:01:56"
+      "updated_at": "2026-09-08 05:17:22"
     },
     "MONUSDT": {
       "symbol": "MONUSDT",
@@ -1944,7 +1944,7 @@
       "best_score": 1,
       "long_notes": "1D:yukselis",
       "short_notes": "",
-      "updated_at": "2026-09-08 04:57:44"
+      "updated_at": "2026-09-08 05:13:31"
     },
     "GPSUSDT": {
       "symbol": "GPSUSDT",
@@ -1954,7 +1954,7 @@
       "best_score": 3,
       "long_notes": "1D:yukselis | 1W:boğa | 4H:sikisma",
       "short_notes": "4H:sikisma",
-      "updated_at": "2026-09-08 05:02:28"
+      "updated_at": "2026-09-08 05:18:27"
     },
     "ROBOUSDT": {
       "symbol": "ROBOUSDT",
@@ -1964,7 +1964,7 @@
       "best_score": 1,
       "long_notes": "4H:sikisma",
       "short_notes": "4H:sikisma",
-      "updated_at": "2026-09-08 05:04:32"
+      "updated_at": "2026-09-08 05:20:38"
     },
     "RSRUSDT": {
       "symbol": "RSRUSDT",
@@ -1974,17 +1974,17 @@
       "best_score": 2,
       "long_notes": "4H:HH-HL",
       "short_notes": "1D:dusus | 1W:ayı",
-      "updated_at": "2026-09-08 04:59:29"
+      "updated_at": "2026-09-08 05:15:20"
     },
     "SIGNUSDT": {
       "symbol": "SIGNUSDT",
       "long_score": 1,
-      "short_score": 2,
+      "short_score": 1,
       "best_side": "NONE",
-      "best_score": 2,
+      "best_score": 1,
       "long_notes": "4H:HH-HL",
-      "short_notes": "1D:dusus | 1H:stoch_OB",
-      "updated_at": "2026-09-08 04:17:06"
+      "short_notes": "1D:dusus",
+      "updated_at": "2026-09-08 05:24:35"
     },
     "PIPPINUSDT": {
       "symbol": "PIPPINUSDT",
@@ -1994,7 +1994,7 @@
       "best_score": 3,
       "long_notes": "4H:sikisma",
       "short_notes": "1D:dusus | 1W:ayı | 4H:sikisma",
-      "updated_at": "2026-09-08 05:02:36"
+      "updated_at": "2026-09-08 05:18:35"
     },
     "ZILUSDT": {
       "symbol": "ZILUSDT",
@@ -2004,17 +2004,17 @@
       "best_score": 1,
       "long_notes": "4H:HH-HL",
       "short_notes": "1D:dusus",
-      "updated_at": "2026-09-08 05:01:06"
+      "updated_at": "2026-09-08 05:16:56"
     },
     "WLDUSDT": {
       "symbol": "WLDUSDT",
-      "long_score": 2,
-      "short_score": 2,
-      "best_side": "NONE",
-      "best_score": 2,
-      "long_notes": "4H:hacimli_yukari | 1H:kirilim+hacim",
-      "short_notes": "1D:dagitim | 1W:ayı",
-      "updated_at": "2026-09-08 04:57:01"
+      "long_score": 1,
+      "short_score": 3,
+      "best_side": "WATCH_SHORT",
+      "best_score": 3,
+      "long_notes": "4H:hacimli_yukari",
+      "short_notes": "1D:dagitim | 1W:ayı | 1H:stoch_OB",
+      "updated_at": "2026-09-08 05:12:41"
     },
     "COREUSDT": {
       "symbol": "COREUSDT",
@@ -2024,7 +2024,7 @@
       "best_score": 3,
       "long_notes": "4H:sikisma",
       "short_notes": "1D:dusus | 1W:ayı | 4H:sikisma",
-      "updated_at": "2026-09-08 05:04:07"
+      "updated_at": "2026-09-08 05:20:00"
     },
     "SAHARAUSDT": {
       "symbol": "SAHARAUSDT",
@@ -2034,17 +2034,17 @@
       "best_score": 2,
       "long_notes": "4H:HH-HL | 4H:sikisma",
       "short_notes": "1D:dusus | 4H:sikisma",
-      "updated_at": "2026-09-08 04:59:55"
+      "updated_at": "2026-09-08 05:15:47"
     },
     "SOPHUSDT": {
       "symbol": "SOPHUSDT",
       "long_score": 2,
-      "short_score": 3,
-      "best_side": "WATCH_SHORT",
-      "best_score": 3,
+      "short_score": 2,
+      "best_side": "NONE",
+      "best_score": 2,
       "long_notes": "4H:HH-HL | 4H:hacimli_yukari",
-      "short_notes": "1D:dusus | 1W:ayı | 1H:stoch_OB",
-      "updated_at": "2026-09-08 04:54:56"
+      "short_notes": "1D:dusus | 1W:ayı",
+      "updated_at": "2026-09-08 05:10:44"
     },
     "ANIMEUSDT": {
       "symbol": "ANIMEUSDT",
@@ -2054,7 +2054,7 @@
       "best_score": 3,
       "long_notes": "4H:HH-HL | 4H:sikisma",
       "short_notes": "1D:dusus | 1W:ayı | 4H:sikisma",
-      "updated_at": "2026-09-08 04:59:06"
+      "updated_at": "2026-09-08 05:14:55"
     },
     "WLFIUSDT": {
       "symbol": "WLFIUSDT",
@@ -2064,7 +2064,7 @@
       "best_score": 2,
       "long_notes": "4H:sikisma",
       "short_notes": "1D:dusus | 4H:sikisma",
-      "updated_at": "2026-09-08 05:00:18"
+      "updated_at": "2026-09-08 05:16:10"
     },
     "SPACEUSDT": {
       "symbol": "SPACEUSDT",
@@ -2074,7 +2074,7 @@
       "best_score": 2,
       "long_notes": "4H:HH-HL | 4H:sikisma",
       "short_notes": "1D:dusus | 4H:sikisma",
-      "updated_at": "2026-09-08 05:02:12"
+      "updated_at": "2026-09-08 05:17:55"
     },
     "EDGEUSDT": {
       "symbol": "EDGEUSDT",
@@ -2094,17 +2094,17 @@
       "best_score": 1,
       "long_notes": "",
       "short_notes": "1D:dusus",
-      "updated_at": "2026-09-08 05:03:51"
+      "updated_at": "2026-09-08 05:19:44"
     },
     "DOODUSDT": {
       "symbol": "DOODUSDT",
-      "long_score": 1,
+      "long_score": 0,
       "short_score": 2,
       "best_side": "NONE",
       "best_score": 2,
-      "long_notes": "1H:stoch_OS",
+      "long_notes": "",
       "short_notes": "1D:dusus | 1W:ayı",
-      "updated_at": "2026-09-08 04:54:41"
+      "updated_at": "2026-09-08 05:10:29"
     },
     "ZKUSDT": {
       "symbol": "ZKUSDT",
@@ -2114,7 +2114,7 @@
       "best_score": 2,
       "long_notes": "4H:HH-HL",
       "short_notes": "1D:dusus | 1W:ayı",
-      "updated_at": "2026-09-08 04:58:57"
+      "updated_at": "2026-09-08 05:14:47"
     },
     "STRKUSDT": {
       "symbol": "STRKUSDT",
@@ -2124,7 +2124,7 @@
       "best_score": 2,
       "long_notes": "",
       "short_notes": "1D:dusus | 1W:ayı",
-      "updated_at": "2026-09-08 04:59:47"
+      "updated_at": "2026-09-08 05:15:38"
     },
     "NIGHTUSDT": {
       "symbol": "NIGHTUSDT",
@@ -2134,7 +2134,7 @@
       "best_score": 1,
       "long_notes": "4H:HH-HL",
       "short_notes": "1D:dusus",
-      "updated_at": "2026-09-08 05:07:24"
+      "updated_at": "2026-09-08 05:23:30"
     },
     "APRUSDT": {
       "symbol": "APRUSDT",
@@ -2144,7 +2144,7 @@
       "best_score": 2,
       "long_notes": "1D:yukselis",
       "short_notes": "1W:ayı | 4H:LH-LL",
-      "updated_at": "2026-09-08 05:07:07"
+      "updated_at": "2026-09-08 05:23:05"
     },
     "LAUSDT": {
       "symbol": "LAUSDT",
@@ -2154,7 +2154,7 @@
       "best_score": 3,
       "long_notes": "4H:HH-HL | 4H:sikisma",
       "short_notes": "1D:dusus | 1W:ayı | 4H:sikisma",
-      "updated_at": "2026-09-08 04:17:31"
+      "updated_at": "2026-09-08 05:24:59"
     },
     "KATUSDT": {
       "symbol": "KATUSDT",
@@ -2164,7 +2164,7 @@
       "best_score": 2,
       "long_notes": "4H:HH-HL | 4H:sikisma",
       "short_notes": "4H:sikisma",
-      "updated_at": "2026-09-08 05:01:14"
+      "updated_at": "2026-09-08 05:17:05"
     },
     "ATHUSDT": {
       "symbol": "ATHUSDT",
@@ -2174,7 +2174,7 @@
       "best_score": 3,
       "long_notes": "",
       "short_notes": "1D:dusus | 1W:ayı | 4H:LH-LL",
-      "updated_at": "2026-09-08 05:00:49"
+      "updated_at": "2026-09-08 05:16:33"
     },
     "BEATUSDT": {
       "symbol": "BEATUSDT",
@@ -2184,7 +2184,7 @@
       "best_score": 2,
       "long_notes": "4H:sikisma",
       "short_notes": "1D:dusus | 4H:sikisma",
-      "updated_at": "2026-09-08 05:00:26"
+      "updated_at": "2026-09-08 05:16:18"
     },
     "OPUSDT": {
       "symbol": "OPUSDT",
@@ -2194,7 +2194,7 @@
       "best_score": 2,
       "long_notes": "4H:HH-HL",
       "short_notes": "1D:dusus | 1W:ayı",
-      "updated_at": "2026-09-08 04:59:22"
+      "updated_at": "2026-09-08 05:15:31"
     },
     "SUIUSDT": {
       "symbol": "SUIUSDT",
@@ -2204,7 +2204,7 @@
       "best_score": 1,
       "long_notes": "4H:HH-HL",
       "short_notes": "1D:dusus",
-      "updated_at": "2026-09-08 04:58:43"
+      "updated_at": "2026-09-08 05:14:35"
     },
     "BILLUSDT": {
       "symbol": "BILLUSDT",
@@ -2214,7 +2214,7 @@
       "best_score": 2,
       "long_notes": "4H:sikisma",
       "short_notes": "4H:LH-LL | 4H:sikisma",
-      "updated_at": "2026-09-08 05:01:23"
+      "updated_at": "2026-09-08 05:17:14"
     },
     "CHZUSDT": {
       "symbol": "CHZUSDT",
@@ -2224,7 +2224,7 @@
       "best_score": 2,
       "long_notes": "4H:HH-HL | 4H:hacimli_yukari",
       "short_notes": "1D:dusus",
-      "updated_at": "2026-09-08 05:01:41"
+      "updated_at": "2026-09-08 05:17:40"
     },
     "TRUMPUSDT": {
       "symbol": "TRUMPUSDT",
@@ -2234,7 +2234,7 @@
       "best_score": 2,
       "long_notes": "1D:birikim | 4H:sikisma",
       "short_notes": "1W:ayı | 4H:sikisma",
-      "updated_at": "2026-09-08 05:06:05"
+      "updated_at": "2026-09-08 05:22:01"
     },
     "WUSDT": {
       "symbol": "WUSDT",
@@ -2244,7 +2244,7 @@
       "best_score": 2,
       "long_notes": "",
       "short_notes": "1D:dusus | 1W:ayı",
-      "updated_at": "2026-09-08 05:00:57"
+      "updated_at": "2026-09-08 05:16:48"
     },
     "ACTUSDT": {
       "symbol": "ACTUSDT",
@@ -2254,7 +2254,7 @@
       "best_score": 3,
       "long_notes": "4H:sikisma",
       "short_notes": "1D:dusus | 1W:ayı | 4H:sikisma",
-      "updated_at": "2026-09-08 05:02:44"
+      "updated_at": "2026-09-08 05:18:19"
     },
     "FOGOUSDT": {
       "symbol": "FOGOUSDT",
@@ -2264,7 +2264,7 @@
       "best_score": 2,
       "long_notes": "4H:HH-HL | 4H:sikisma",
       "short_notes": "1D:dusus | 4H:sikisma",
-      "updated_at": "2026-09-08 05:03:18"
+      "updated_at": "2026-09-08 05:19:10"
     },
     "RLSUSDT": {
       "symbol": "RLSUSDT",
@@ -2274,7 +2274,7 @@
       "best_score": 1,
       "long_notes": "",
       "short_notes": "1D:dusus",
-      "updated_at": "2026-09-08 04:56:14"
+      "updated_at": "2026-09-08 05:12:03"
     },
     "RVNUSDT": {
       "symbol": "RVNUSDT",
@@ -2284,7 +2284,7 @@
       "best_score": 3,
       "long_notes": "4H:HH-HL | 4H:sikisma",
       "short_notes": "1D:dusus | 1W:ayı | 4H:sikisma",
-      "updated_at": "2026-09-08 05:01:31"
+      "updated_at": "2026-09-08 05:18:11"
     },
     "ZAMAUSDT": {
       "symbol": "ZAMAUSDT",
@@ -2294,7 +2294,7 @@
       "best_score": 1,
       "long_notes": "1D:yukselis",
       "short_notes": "",
-      "updated_at": "2026-09-08 05:00:10"
+      "updated_at": "2026-09-08 05:16:02"
     },
     "ACHUSDT": {
       "symbol": "ACHUSDT",
@@ -2304,7 +2304,7 @@
       "best_score": 2,
       "long_notes": "4H:HH-HL",
       "short_notes": "1D:dusus | 1W:ayı",
-      "updated_at": "2026-09-08 05:07:50"
+      "updated_at": "2026-09-08 05:23:54"
     },
     "CASHCATUSDT": {
       "symbol": "CASHCATUSDT",
@@ -2314,17 +2314,17 @@
       "best_score": 0,
       "long_notes": "",
       "short_notes": "",
-      "updated_at": "2026-09-08 05:04:47"
+      "updated_at": "2026-09-08 05:20:24"
     },
     "XLMUSDT": {
       "symbol": "XLMUSDT",
       "long_score": 3,
-      "short_score": 0,
+      "short_score": 1,
       "best_side": "WATCH_LONG",
       "best_score": 3,
       "long_notes": "1D:yukselis | 4H:HH-HL | 4H:hacimli_yukari",
-      "short_notes": "",
-      "updated_at": "2026-09-08 05:00:34"
+      "short_notes": "15M:macd_down",
+      "updated_at": "2026-09-08 05:16:26"
     },
     "ONDOUSDT": {
       "symbol": "ONDOUSDT",
@@ -2334,7 +2334,7 @@
       "best_score": 2,
       "long_notes": "1D:yukselis | 4H:HH-HL",
       "short_notes": "",
-      "updated_at": "2026-09-08 05:01:49"
+      "updated_at": "2026-09-08 05:17:33"
     },
     "LABUSDT": {
       "symbol": "LABUSDT",
@@ -2344,7 +2344,7 @@
       "best_score": 3,
       "long_notes": "1W:boğa | 4H:HH-HL | 4H:sikisma",
       "short_notes": "1D:dusus | 4H:sikisma",
-      "updated_at": "2026-09-08 05:05:15"
+      "updated_at": "2026-09-08 05:21:11"
     },
     "SANDUSDT": {
       "symbol": "SANDUSDT",
@@ -2354,7 +2354,7 @@
       "best_score": 2,
       "long_notes": "4H:HH-HL | 4H:sikisma",
       "short_notes": "1D:dusus | 4H:sikisma",
-      "updated_at": "2026-09-08 05:05:33"
+      "updated_at": "2026-09-08 05:21:30"
     },
     "BIOUSDT": {
       "symbol": "BIOUSDT",
@@ -2364,7 +2364,7 @@
       "best_score": 2,
       "long_notes": "4H:sikisma",
       "short_notes": "1D:dagitim | 4H:sikisma",
-      "updated_at": "2026-09-08 04:17:39"
+      "updated_at": "2026-09-08 05:25:07"
     },
     "EDENUSDT": {
       "symbol": "EDENUSDT",
@@ -2374,7 +2374,7 @@
       "best_score": 3,
       "long_notes": "1D:yukselis | 1W:boğa | 4H:sikisma",
       "short_notes": "4H:LH-LL | 4H:sikisma",
-      "updated_at": "2026-09-08 04:17:22"
+      "updated_at": "2026-09-08 05:24:26"
     },
     "FILUSDT": {
       "symbol": "FILUSDT",
@@ -2384,7 +2384,7 @@
       "best_score": 2,
       "long_notes": "4H:HH-HL",
       "short_notes": "1D:dusus | 1W:ayı",
-      "updated_at": "2026-09-08 05:02:04"
+      "updated_at": "2026-09-08 05:17:48"
     },
     "AEONUSDT": {
       "symbol": "AEONUSDT",
@@ -2394,7 +2394,7 @@
       "best_score": 2,
       "long_notes": "4H:sikisma",
       "short_notes": "4H:LH-LL | 4H:sikisma",
-      "updated_at": "2026-09-08 05:03:10"
+      "updated_at": "2026-09-08 05:19:03"
     },
     "GMTUSDT": {
       "symbol": "GMTUSDT",
@@ -2404,7 +2404,7 @@
       "best_score": 3,
       "long_notes": "4H:sikisma",
       "short_notes": "1D:dusus | 1W:ayı | 4H:sikisma",
-      "updated_at": "2026-09-08 05:06:52"
+      "updated_at": "2026-09-08 05:22:40"
     },
     "HBARUSDT": {
       "symbol": "HBARUSDT",
@@ -2414,7 +2414,7 @@
       "best_score": 1,
       "long_notes": "4H:HH-HL",
       "short_notes": "1D:dusus",
-      "updated_at": "2026-09-08 05:03:59"
+      "updated_at": "2026-09-08 05:19:52"
     },
     "SENTUSDT": {
       "symbol": "SENTUSDT",
@@ -2424,17 +2424,17 @@
       "best_score": 3,
       "long_notes": "4H:HH-HL | 4H:hacimli_yukari | 1H:kirilim+hacim",
       "short_notes": "1D:dusus | 1W:ayı",
-      "updated_at": "2026-09-08 05:02:52"
+      "updated_at": "2026-09-08 05:18:43"
     },
     "OFCUSDT": {
       "symbol": "OFCUSDT",
-      "long_score": 1,
+      "long_score": 2,
       "short_score": 1,
       "best_side": "NONE",
-      "best_score": 1,
-      "long_notes": "4H:sikisma",
+      "best_score": 2,
+      "long_notes": "4H:sikisma | 15M:macd_up",
       "short_notes": "4H:sikisma",
-      "updated_at": "2026-09-08 04:18:47"
+      "updated_at": "2026-09-08 05:26:04"
     },
     "ICXUSDT": {
       "symbol": "ICXUSDT",
@@ -2444,7 +2444,7 @@
       "best_score": 2,
       "long_notes": "4H:HH-HL",
       "short_notes": "1D:dusus | 1W:ayı",
-      "updated_at": "2026-09-08 05:05:40"
+      "updated_at": "2026-09-08 05:21:37"
     },
     "PYTHUSDT": {
       "symbol": "PYTHUSDT",
@@ -2454,7 +2454,7 @@
       "best_score": 2,
       "long_notes": "1D:yukselis | 4H:sikisma",
       "short_notes": "1W:ayı | 4H:sikisma",
-      "updated_at": "2026-09-08 05:06:44"
+      "updated_at": "2026-09-08 05:22:49"
     },
     "POLUSDT": {
       "symbol": "POLUSDT",
@@ -2464,7 +2464,7 @@
       "best_score": 2,
       "long_notes": "1D:birikim | 4H:HH-HL",
       "short_notes": "1W:ayı",
-      "updated_at": "2026-09-08 05:07:42"
+      "updated_at": "2026-09-08 05:23:38"
     },
     "PLUMEUSDT": {
       "symbol": "PLUMEUSDT",
@@ -2474,7 +2474,7 @@
       "best_score": 2,
       "long_notes": "1D:yukselis | 4H:sikisma",
       "short_notes": "4H:LH-LL | 4H:sikisma",
-      "updated_at": "2026-09-08 05:03:42"
+      "updated_at": "2026-09-08 05:19:36"
     },
     "CFXUSDT": {
       "symbol": "CFXUSDT",
@@ -2484,7 +2484,7 @@
       "best_score": 1,
       "long_notes": "4H:HH-HL",
       "short_notes": "1D:dusus",
-      "updated_at": "2026-09-08 05:07:58"
+      "updated_at": "2026-09-08 05:23:46"
     },
     "WOOUSDT": {
       "symbol": "WOOUSDT",
@@ -2494,7 +2494,7 @@
       "best_score": 1,
       "long_notes": "",
       "short_notes": "1D:dusus",
-      "updated_at": "2026-09-08 04:33:48"
+      "updated_at": "2026-09-08 05:26:20"
     },
     "ALGOUSDT": {
       "symbol": "ALGOUSDT",
@@ -2504,7 +2504,7 @@
       "best_score": 2,
       "long_notes": "1D:birikim | 4H:HH-HL",
       "short_notes": "1W:ayı",
-      "updated_at": "2026-09-08 05:06:59"
+      "updated_at": "2026-09-08 05:22:57"
     },
     "OLUSDT": {
       "symbol": "OLUSDT",
@@ -2514,7 +2514,7 @@
       "best_score": 3,
       "long_notes": "4H:HH-HL | 4H:sikisma",
       "short_notes": "1D:dusus | 1W:ayı | 4H:sikisma",
-      "updated_at": "2026-09-08 04:59:15"
+      "updated_at": "2026-09-08 05:15:04"
     },
     "TRXUSDT": {
       "symbol": "TRXUSDT",
@@ -2534,7 +2534,7 @@
       "best_score": 1,
       "long_notes": "1D:birikim",
       "short_notes": "",
-      "updated_at": "2026-09-08 05:05:49"
+      "updated_at": "2026-09-08 05:21:45"
     },
     "FARTCOINUSDT": {
       "symbol": "FARTCOINUSDT",
@@ -2544,7 +2544,7 @@
       "best_score": 3,
       "long_notes": "1D:birikim | 4H:HH-HL | 4H:sikisma",
       "short_notes": "1W:ayı | 4H:sikisma",
-      "updated_at": "2026-09-08 04:17:14"
+      "updated_at": "2026-09-08 05:24:43"
     },
     "SLXUSDT": {
       "symbol": "SLXUSDT",
@@ -2554,17 +2554,17 @@
       "best_score": 1,
       "long_notes": "4H:sikisma",
       "short_notes": "4H:sikisma",
-      "updated_at": "2026-09-08 04:17:56"
+      "updated_at": "2026-09-08 05:25:15"
     },
     "CRVUSDT": {
       "symbol": "CRVUSDT",
-      "long_score": 2,
+      "long_score": 1,
       "short_score": 0,
       "best_side": "NONE",
-      "best_score": 2,
-      "long_notes": "1D:yukselis | 15M:macd_up",
+      "best_score": 1,
+      "long_notes": "1D:yukselis",
       "short_notes": "",
-      "updated_at": "2026-09-08 05:05:00"
+      "updated_at": "2026-09-08 05:21:03"
     },
     "AIUSDT": {
       "symbol": "AIUSDT",
@@ -2574,7 +2574,7 @@
       "best_score": 1,
       "long_notes": "",
       "short_notes": "4H:LH-LL",
-      "updated_at": "2026-09-08 05:00:41"
+      "updated_at": "2026-09-08 05:16:41"
     },
     "HUSDT": {
       "symbol": "HUSDT",
@@ -2584,7 +2584,7 @@
       "best_score": 1,
       "long_notes": "",
       "short_notes": "1D:dusus",
-      "updated_at": "2026-09-08 05:06:29"
+      "updated_at": "2026-09-08 05:22:32"
     },
     "PNUTUSDT": {
       "symbol": "PNUTUSDT",
@@ -2594,17 +2594,17 @@
       "best_score": 2,
       "long_notes": "1D:birikim | 4H:HH-HL",
       "short_notes": "",
-      "updated_at": "2026-09-08 04:52:08"
+      "updated_at": "2026-09-08 05:24:18"
     },
     "BIGTIMEUSDT": {
       "symbol": "BIGTIMEUSDT",
-      "long_score": 0,
+      "long_score": 1,
       "short_score": 2,
       "best_side": "NONE",
       "best_score": 2,
-      "long_notes": "",
+      "long_notes": "15M:macd_up",
       "short_notes": "1D:dusus | 1W:ayı",
-      "updated_at": "2026-09-08 05:00:03"
+      "updated_at": "2026-09-08 05:15:55"
     },
     "GRTUSDT": {
       "symbol": "GRTUSDT",
@@ -2614,7 +2614,7 @@
       "best_score": 1,
       "long_notes": "4H:HH-HL",
       "short_notes": "1D:dusus",
-      "updated_at": "2026-09-08 05:06:21"
+      "updated_at": "2026-09-08 05:22:09"
     },
     "ZKPUSDT": {
       "symbol": "ZKPUSDT",
@@ -2644,7 +2644,7 @@
       "best_score": 1,
       "long_notes": "4H:HH-HL",
       "short_notes": "1D:dusus",
-      "updated_at": "2026-09-08 05:03:25"
+      "updated_at": "2026-09-08 05:19:19"
     },
     "SEIUSDT": {
       "symbol": "SEIUSDT",
@@ -2654,7 +2654,7 @@
       "best_score": 2,
       "long_notes": "4H:HH-HL | 4H:sikisma",
       "short_notes": "1D:dusus | 4H:sikisma",
-      "updated_at": "2026-09-08 05:04:40"
+      "updated_at": "2026-09-08 05:20:31"
     },
     "ONTUSDT": {
       "symbol": "ONTUSDT",
@@ -2664,7 +2664,7 @@
       "best_score": 2,
       "long_notes": "1D:yukselis | 4H:sikisma",
       "short_notes": "4H:sikisma",
-      "updated_at": "2026-09-08 04:19:20"
+      "updated_at": "2026-09-08 05:26:44"
     },
     "MOODENGUSDT": {
       "symbol": "MOODENGUSDT",
@@ -2674,7 +2674,7 @@
       "best_score": 1,
       "long_notes": "4H:HH-HL",
       "short_notes": "1D:dusus",
-      "updated_at": "2026-09-08 05:05:08"
+      "updated_at": "2026-09-08 05:20:47"
     },
     "BASEDUSDT": {
       "symbol": "BASEDUSDT",
@@ -2684,7 +2684,7 @@
       "best_score": 0,
       "long_notes": "",
       "short_notes": "",
-      "updated_at": "2026-09-08 04:51:52"
+      "updated_at": "2026-09-08 05:24:01"
     },
     "FUSDT": {
       "symbol": "FUSDT",
@@ -2694,7 +2694,7 @@
       "best_score": 1,
       "long_notes": "",
       "short_notes": "1D:dusus",
-      "updated_at": "2026-09-08 05:04:53"
+      "updated_at": "2026-09-08 05:20:55"
     },
     "MEGAUSDT": {
       "symbol": "MEGAUSDT",
@@ -2724,7 +2724,7 @@
       "best_score": 2,
       "long_notes": "4H:HH-HL",
       "short_notes": "1D:dusus | 1W:ayı",
-      "updated_at": "2026-09-08 04:18:38"
+      "updated_at": "2026-09-08 05:26:52"
     },
     "SUSDT": {
       "symbol": "SUSDT",
@@ -2764,7 +2764,7 @@
       "best_score": 2,
       "long_notes": "4H:HH-HL | 4H:sikisma",
       "short_notes": "4H:sikisma",
-      "updated_at": "2026-09-08 05:06:37"
+      "updated_at": "2026-09-08 05:22:24"
     },
     "DOSUSDT": {
       "symbol": "DOSUSDT",
@@ -2804,7 +2804,7 @@
       "best_score": 2,
       "long_notes": "",
       "short_notes": "1D:dusus | 1W:ayı",
-      "updated_at": "2026-09-08 04:52:15"
+      "updated_at": "2026-09-08 05:24:10"
     },
     "LITUSDT": {
       "symbol": "LITUSDT",
@@ -2824,7 +2824,7 @@
       "best_score": 1,
       "long_notes": "4H:HH-HL",
       "short_notes": "1D:dagitim",
-      "updated_at": "2026-09-08 05:07:16"
+      "updated_at": "2026-09-08 05:23:13"
     },
     "UNIUSDT": {
       "symbol": "UNIUSDT",
@@ -2854,7 +2854,7 @@
       "best_score": 3,
       "long_notes": "1D:yukselis | 4H:HH-HL | 4H:sikisma",
       "short_notes": "4H:sikisma",
-      "updated_at": "2026-09-08 04:17:48"
+      "updated_at": "2026-09-08 05:24:51"
     },
     "STXUSDT": {
       "symbol": "STXUSDT",
@@ -2864,7 +2864,7 @@
       "best_score": 2,
       "long_notes": "",
       "short_notes": "1D:dagitim | 1W:ayı",
-      "updated_at": "2026-09-08 04:19:29"
+      "updated_at": "2026-09-08 05:26:35"
     },
     "UBUSDT": {
       "symbol": "UBUSDT",
@@ -2894,7 +2894,7 @@
       "best_score": 1,
       "long_notes": "4H:HH-HL",
       "short_notes": "",
-      "updated_at": "2026-09-08 04:18:55"
+      "updated_at": "2026-09-08 05:25:49"
     },
     "CROUSDT": {
       "symbol": "CROUSDT",
@@ -2914,7 +2914,7 @@
       "best_score": 2,
       "long_notes": "1D:yukselis | 4H:HH-HL",
       "short_notes": "",
-      "updated_at": "2026-09-08 04:18:07"
+      "updated_at": "2026-09-08 05:25:33"
     },
     "ENJUSDT": {
       "symbol": "ENJUSDT",
@@ -2934,7 +2934,7 @@
       "best_score": 2,
       "long_notes": "1D:yukselis | 4H:HH-HL",
       "short_notes": "",
-      "updated_at": "2026-09-08 05:05:23"
+      "updated_at": "2026-09-08 05:21:20"
     },
     "JTOUSDT": {
       "symbol": "JTOUSDT",
@@ -2988,23 +2988,23 @@
     },
     "LUNAUSDT": {
       "symbol": "LUNAUSDT",
-      "long_score": 1,
-      "short_score": 2,
-      "best_side": "NONE",
-      "best_score": 2,
-      "long_notes": "4H:HH-HL",
-      "short_notes": "1D:dusus | 1W:ayı",
-      "updated_at": "2026-09-08 04:59:40"
-    },
-    "DOTUSDT": {
-      "symbol": "DOTUSDT",
       "long_score": 2,
       "short_score": 2,
       "best_side": "NONE",
       "best_score": 2,
-      "long_notes": "4H:HH-HL | 4H:hacimli_yukari",
-      "short_notes": "1D:dusus | 15M:macd_down",
-      "updated_at": "2026-09-08 05:04:15"
+      "long_notes": "4H:HH-HL | 1H:stoch_OS",
+      "short_notes": "1D:dusus | 1W:ayı",
+      "updated_at": "2026-09-08 05:15:12"
+    },
+    "DOTUSDT": {
+      "symbol": "DOTUSDT",
+      "long_score": 3,
+      "short_score": 1,
+      "best_side": "WATCH_LONG",
+      "best_score": 3,
+      "long_notes": "4H:HH-HL | 4H:hacimli_yukari | 15M:macd_up",
+      "short_notes": "1D:dusus",
+      "updated_at": "2026-09-08 05:20:08"
     },
     "2ZUSDT": {
       "symbol": "2ZUSDT",
@@ -3024,17 +3024,17 @@
       "best_score": 2,
       "long_notes": "1D:birikim | 4H:HH-HL",
       "short_notes": "",
-      "updated_at": "2026-09-08 04:18:15"
+      "updated_at": "2026-09-08 05:25:41"
     },
     "YGGUSDT": {
       "symbol": "YGGUSDT",
-      "long_score": 2,
+      "long_score": 1,
       "short_score": 2,
       "best_side": "NONE",
       "best_score": 2,
-      "long_notes": "1H:stoch_OS | 15M:macd_up",
+      "long_notes": "1H:stoch_OS",
       "short_notes": "1D:dusus | 1W:ayı",
-      "updated_at": "2026-09-08 05:03:35"
+      "updated_at": "2026-09-08 05:19:29"
     },
     "OPNUSDT": {
       "symbol": "OPNUSDT",
@@ -3224,7 +3224,7 @@
       "best_score": 2,
       "long_notes": "1D:yukselis | 4H:HH-HL",
       "short_notes": "1W:ayı",
-      "updated_at": "2026-09-08 05:06:13"
+      "updated_at": "2026-09-08 05:22:17"
     },
     "LIGHTUSDT": {
       "symbol": "LIGHTUSDT",
@@ -3374,7 +3374,7 @@
       "best_score": 1,
       "long_notes": "4H:HH-HL",
       "short_notes": "",
-      "updated_at": "2026-09-08 05:07:34"
+      "updated_at": "2026-09-08 05:23:21"
     },
     "ACUUSDT": {
       "symbol": "ACUUSDT",
@@ -3554,7 +3554,7 @@
       "best_score": 2,
       "long_notes": "1D:yukselis | 4H:hacimli_yukari",
       "short_notes": "",
-      "updated_at": "2026-09-08 04:20:03"
+      "updated_at": "2026-09-08 05:26:12"
     },
     "ARKMUSDT": {
       "symbol": "ARKMUSDT",
@@ -3644,7 +3644,7 @@
       "best_score": 0,
       "long_notes": "",
       "short_notes": "",
-      "updated_at": "2026-09-08 04:58:50"
+      "updated_at": "2026-09-08 05:14:41"
     },
     "FETUSDT": {
       "symbol": "FETUSDT",
@@ -3724,7 +3724,7 @@
       "best_score": 2,
       "long_notes": "1D:yukselis | 4H:HH-HL",
       "short_notes": "",
-      "updated_at": "2026-09-08 04:18:22"
+      "updated_at": "2026-09-08 05:26:28"
     },
     "METUSDT": {
       "symbol": "METUSDT",
@@ -3739,12 +3739,12 @@
     "LAYERUSDT": {
       "symbol": "LAYERUSDT",
       "long_score": 1,
-      "short_score": 2,
-      "best_side": "NONE",
-      "best_score": 2,
+      "short_score": 3,
+      "best_side": "WATCH_SHORT",
+      "best_score": 3,
       "long_notes": "4H:HH-HL",
-      "short_notes": "1D:dusus | 1W:ayı",
-      "updated_at": "2026-09-08 05:05:58"
+      "short_notes": "1D:dusus | 1W:ayı | 15M:macd_down",
+      "updated_at": "2026-09-08 05:21:53"
     },
     "BREVUSDT": {
       "symbol": "BREVUSDT",
@@ -3804,7 +3804,7 @@
       "best_score": 2,
       "long_notes": "1D:yukselis | 4H:hacimli_yukari",
       "short_notes": "",
-      "updated_at": "2026-09-08 04:19:04"
+      "updated_at": "2026-09-08 05:25:56"
     },
     "CNPYUSDT": {
       "symbol": "CNPYUSDT",
@@ -3814,7 +3814,7 @@
       "best_score": 0,
       "long_notes": "",
       "short_notes": "",
-      "updated_at": "2026-09-08 05:02:59"
+      "updated_at": "2026-09-08 05:18:51"
     },
     "YBUSDT": {
       "symbol": "YBUSDT",
@@ -3874,11 +3874,11 @@
       "internal_event": "none",
       "external_event": "none",
       "long_score": 3,
-      "short_score": 4,
-      "best_side": "WATCH_SHORT",
-      "best_score": 4,
+      "short_score": 3,
+      "best_side": "WATCH_LONG",
+      "best_score": 3,
       "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:discount | 4H:equilibrium | 1D:bull",
-      "short_notes": "4H:breaker_retest | 4H:equilibrium | 15m:sweep | 15m:breaker_bear",
+      "short_notes": "4H:breaker_retest | 4H:equilibrium | 15m:breaker_bear",
       "bull_ob_count": 0,
       "bear_ob_count": 1,
       "breaker_bull": 0,
@@ -3886,7 +3886,7 @@
       "nearest_bull_ob": null,
       "nearest_bear_ob": 1.1622e-08,
       "sweep_bull": false,
-      "sweep_bear": true,
+      "sweep_bear": false,
       "inducement_bull": false,
       "inducement_bear": false,
       "turtle_soup_bull": false,
@@ -3905,7 +3905,7 @@
       "session": "off_hours",
       "killzone": false,
       "confluence_long": 3,
-      "confluence_short": 2,
+      "confluence_short": 1,
       "setup_grade_long": "none",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
@@ -3921,18 +3921,18 @@
       ],
       "eql": [],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 04:53:51"
+      "updated_at": "2026-09-08 05:09:36"
     },
     "PEPEUSDT": {
       "trend": "range",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 4,
+      "long_score": 5,
       "short_score": 3,
       "best_side": "WATCH_LONG",
-      "best_score": 4,
-      "long_notes": "4H:mitigation_retest | 4H:equilibrium | 1D:bull | 15m:breaker_bull | 15m:breaker_bull",
+      "best_score": 5,
+      "long_notes": "4H:mitigation_retest | 4H:equilibrium | 1D:bull | 15m:breaker_bull | 15m:breaker_bull | 15m:bull_engulf",
       "short_notes": "4H:mitigation_retest | 4H:premium | 4H:equilibrium | 1W:bear",
       "bull_ob_count": 3,
       "bear_ob_count": 3,
@@ -3959,7 +3959,7 @@
       "hierarchy_short": false,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 1,
+      "confluence_long": 2,
       "confluence_short": 2,
       "setup_grade_long": "none",
       "setup_grade_short": "none",
@@ -3976,19 +3976,19 @@
         3.3594999999999998e-06
       ],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 04:53:58"
+      "updated_at": "2026-09-08 05:09:44"
     },
     "SHIBUSDT": {
       "trend": "range",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 3,
-      "short_score": 4,
-      "best_side": "WATCH_SHORT",
-      "best_score": 4,
-      "long_notes": "4H:discount | 1D:bull | 15m:breaker_bull",
-      "short_notes": "4H:nested_sweep | 1W:bear | 15m:sweep | 15m:turtle_soup",
+      "long_score": 5,
+      "short_score": 2,
+      "best_side": "WATCH_LONG",
+      "best_score": 5,
+      "long_notes": "4H:discount | 1D:bull | 15m:int_CHoCH | 15m:breaker_bull | 15m:bull_engulf",
+      "short_notes": "4H:nested_sweep | 1W:bear",
       "bull_ob_count": 1,
       "bear_ob_count": 0,
       "breaker_bull": 1,
@@ -3996,11 +3996,11 @@
       "nearest_bull_ob": 5.3225e-06,
       "nearest_bear_ob": null,
       "sweep_bull": false,
-      "sweep_bear": true,
+      "sweep_bear": false,
       "inducement_bull": false,
       "inducement_bear": false,
       "turtle_soup_bull": false,
-      "turtle_soup_bear": true,
+      "turtle_soup_bear": false,
       "nested_sweep_bull": false,
       "nested_sweep_bear": false,
       "in_discount": true,
@@ -4014,8 +4014,8 @@
       "hierarchy_short": false,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 1,
-      "confluence_short": 1,
+      "confluence_long": 2,
+      "confluence_short": 0,
       "setup_grade_long": "none",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
@@ -4034,7 +4034,7 @@
         5.0445e-06
       ],
       "liquidity_pools": 9,
-      "updated_at": "2026-09-08 04:54:07"
+      "updated_at": "2026-09-08 05:09:53"
     },
     "BONKUSDT": {
       "trend": "bull",
@@ -4089,19 +4089,19 @@
         2.8514999999999997e-06
       ],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 04:54:15"
+      "updated_at": "2026-09-08 05:10:02"
     },
     "FLOKIUSDT": {
       "trend": "bull",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 7,
-      "short_score": 2,
+      "long_score": 8,
+      "short_score": 1,
       "best_side": "WATCH_LONG",
-      "best_score": 7,
-      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:discount | 4H:OTE | 1D:bull | 15m:breaker_bull | 15m:breaker_bull",
-      "short_notes": "4H:mitigation_retest | 15m:sweep",
+      "best_score": 8,
+      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:discount | 4H:OTE | 1D:bull | 15m:int_BOS | 15m:breaker_bull | 15m:breaker_bull",
+      "short_notes": "4H:mitigation_retest",
       "bull_ob_count": 1,
       "bear_ob_count": 2,
       "breaker_bull": 0,
@@ -4109,7 +4109,7 @@
       "nearest_bull_ob": 2.547e-05,
       "nearest_bear_ob": 2.623e-05,
       "sweep_bull": false,
-      "sweep_bear": true,
+      "sweep_bear": false,
       "inducement_bull": false,
       "inducement_bear": false,
       "turtle_soup_bull": false,
@@ -4128,7 +4128,7 @@
       "session": "off_hours",
       "killzone": false,
       "confluence_long": 3,
-      "confluence_short": 2,
+      "confluence_short": 1,
       "setup_grade_long": "C",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
@@ -4142,7 +4142,7 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 04:54:36"
+      "updated_at": "2026-09-08 05:10:24"
     },
     "PUMPUSDT": {
       "trend": "range",
@@ -4195,7 +4195,7 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 04:54:22"
+      "updated_at": "2026-09-08 05:10:09"
     },
     "NEIROUSDT": {
       "trend": "range",
@@ -4250,7 +4250,7 @@
         8.3325e-05
       ],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 04:54:51"
+      "updated_at": "2026-09-08 05:10:39"
     },
     "TRIAUSDT": {
       "trend": "range",
@@ -4258,11 +4258,11 @@
       "internal_event": "none",
       "external_event": "none",
       "long_score": 2,
-      "short_score": 2,
+      "short_score": 0,
       "best_side": "NONE",
       "best_score": 2,
       "long_notes": "4H:discount | 15m:breaker_bull",
-      "short_notes": "15m:breaker_bear | 15m:breaker_bear",
+      "short_notes": "",
       "bull_ob_count": 0,
       "bear_ob_count": 0,
       "breaker_bull": 0,
@@ -4305,19 +4305,19 @@
       ],
       "eql": [],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 04:56:39"
+      "updated_at": "2026-09-08 05:12:29"
     },
     "BOMEUSDT": {
       "trend": "range",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 4,
-      "short_score": 0,
+      "long_score": 3,
+      "short_score": 1,
       "best_side": "WATCH_LONG",
-      "best_score": 4,
-      "long_notes": "4H:discount | 1W:bull | 1D:bull | 15m:int_CHoCH",
-      "short_notes": "",
+      "best_score": 3,
+      "long_notes": "4H:discount | 1W:bull | 1D:bull",
+      "short_notes": "15m:sweep",
       "bull_ob_count": 0,
       "bear_ob_count": 0,
       "breaker_bull": 0,
@@ -4325,7 +4325,7 @@
       "nearest_bull_ob": null,
       "nearest_bear_ob": null,
       "sweep_bull": false,
-      "sweep_bear": false,
+      "sweep_bear": true,
       "inducement_bull": false,
       "inducement_bear": false,
       "turtle_soup_bull": false,
@@ -4344,7 +4344,7 @@
       "session": "off_hours",
       "killzone": false,
       "confluence_long": 1,
-      "confluence_short": 0,
+      "confluence_short": 1,
       "setup_grade_long": "none",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
@@ -4362,19 +4362,19 @@
         0.00085165
       ],
       "liquidity_pools": 8,
-      "updated_at": "2026-09-08 04:55:06"
+      "updated_at": "2026-09-08 05:10:53"
     },
     "DOGEUSDT": {
       "trend": "bull",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 6,
-      "short_score": 4,
+      "long_score": 5,
+      "short_score": 3,
       "best_side": "WATCH_LONG",
-      "best_score": 6,
-      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 1D:bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull",
-      "short_notes": "4H:premium | 1W:bear | 15m:sweep | 15m:bear_engulf",
+      "best_score": 5,
+      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 1D:bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull",
+      "short_notes": "4H:premium | 1W:bear | 15m:sweep",
       "bull_ob_count": 3,
       "bear_ob_count": 0,
       "breaker_bull": 3,
@@ -4401,9 +4401,9 @@
       "session": "off_hours",
       "killzone": false,
       "confluence_long": 2,
-      "confluence_short": 3,
+      "confluence_short": 2,
       "setup_grade_long": "none",
-      "setup_grade_short": "C",
+      "setup_grade_short": "none",
       "internal_swing_n": 3,
       "external_swing_n": 5,
       "ifvg_bull": 0,
@@ -4421,7 +4421,7 @@
         0.08374000000000001
       ],
       "liquidity_pools": 10,
-      "updated_at": "2026-09-08 04:55:14"
+      "updated_at": "2026-09-08 05:11:02"
     },
     "HMSTRUSDT": {
       "trend": "bull",
@@ -4476,7 +4476,7 @@
         0.0001671
       ],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 04:55:22"
+      "updated_at": "2026-09-08 05:11:09"
     },
     "PENGUUSDT": {
       "trend": "range",
@@ -4495,7 +4495,7 @@
       "breaker_bear": 1,
       "nearest_bull_ob": 0.0082615,
       "nearest_bear_ob": 0.008726,
-      "sweep_bull": true,
+      "sweep_bull": false,
       "sweep_bear": false,
       "inducement_bull": false,
       "inducement_bear": false,
@@ -4514,7 +4514,7 @@
       "hierarchy_short": false,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 2,
+      "confluence_long": 1,
       "confluence_short": 0,
       "setup_grade_long": "none",
       "setup_grade_short": "none",
@@ -4531,19 +4531,19 @@
         0.008781
       ],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 04:55:30"
+      "updated_at": "2026-09-08 05:11:17"
     },
     "USELESSUSDT": {
       "trend": "bull",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 4,
-      "short_score": 2,
-      "best_side": "WATCH_LONG",
-      "best_score": 4,
-      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:mitigation_retest | 4H:discount | 15m:breaker_bull",
-      "short_notes": "4H:breaker_retest",
+      "long_score": 5,
+      "short_score": 3,
+      "best_side": "BUY",
+      "best_score": 5,
+      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:mitigation_retest | 4H:discount | 15m:breaker_bull | 15m:breaker_bull",
+      "short_notes": "4H:breaker_retest | 15m:breaker_bear",
       "bull_ob_count": 2,
       "bear_ob_count": 2,
       "breaker_bull": 0,
@@ -4571,7 +4571,7 @@
       "killzone": false,
       "confluence_long": 4,
       "confluence_short": 1,
-      "setup_grade_long": "C",
+      "setup_grade_long": "B",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
       "external_swing_n": 5,
@@ -4584,18 +4584,18 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 04:56:32"
+      "updated_at": "2026-09-08 05:12:21"
     },
     "NOTUSDT": {
       "trend": "range",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 1,
+      "long_score": 2,
       "short_score": 1,
       "best_side": "NONE",
-      "best_score": 1,
-      "long_notes": "1D:bull",
+      "best_score": 2,
+      "long_notes": "1D:bull | 15m:breaker_bull",
       "short_notes": "4H:premium",
       "bull_ob_count": 2,
       "bear_ob_count": 2,
@@ -4639,18 +4639,18 @@
         0.0003997
       ],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 04:55:53"
+      "updated_at": "2026-09-08 05:11:42"
     },
     "MEMEUSDT": {
       "trend": "bull",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 6,
+      "long_score": 4,
       "short_score": 3,
       "best_side": "WATCH_LONG",
-      "best_score": 6,
-      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:equilibrium | 1H:ext_BOS | 1D:bull | 15m:breaker_bull | 15m:breaker_bull",
+      "best_score": 4,
+      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:equilibrium | 1D:bull | 15m:breaker_bull | 15m:breaker_bull",
       "short_notes": "4H:mitigation_retest | 4H:premium | 4H:equilibrium | 1W:bear",
       "bull_ob_count": 2,
       "bear_ob_count": 1,
@@ -4694,7 +4694,7 @@
         0.0005235000000000001
       ],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 04:56:24"
+      "updated_at": "2026-09-08 05:12:13"
     },
     "GALAUSDT": {
       "trend": "bull",
@@ -4751,7 +4751,7 @@
         0.0017075
       ],
       "liquidity_pools": 8,
-      "updated_at": "2026-09-08 04:56:01"
+      "updated_at": "2026-09-08 05:11:58"
     },
     "TURBOUSDT": {
       "trend": "bull",
@@ -4806,19 +4806,19 @@
       ],
       "eql": [],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 04:56:47"
+      "updated_at": "2026-09-08 05:12:36"
     },
     "CHIPUSDT": {
       "trend": "range",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 3,
-      "short_score": 1,
+      "long_score": 4,
+      "short_score": 3,
       "best_side": "WATCH_LONG",
-      "best_score": 3,
-      "long_notes": "4H:discount | 15m:breaker_bull | 15m:breaker_bull",
-      "short_notes": "15m:breaker_bear",
+      "best_score": 4,
+      "long_notes": "4H:discount | 15m:breaker_bull | 15m:breaker_bull | 15m:bull_engulf",
+      "short_notes": "15m:breaker_bear | 15m:breaker_bear | 15m:breaker_bear",
       "bull_ob_count": 3,
       "bear_ob_count": 0,
       "breaker_bull": 3,
@@ -4844,7 +4844,7 @@
       "hierarchy_short": false,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 1,
+      "confluence_long": 2,
       "confluence_short": 0,
       "setup_grade_long": "none",
       "setup_grade_short": "none",
@@ -4859,7 +4859,7 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 04:58:38"
+      "updated_at": "2026-09-08 05:14:29"
     },
     "CPUSDT": {
       "trend": "range",
@@ -4867,11 +4867,11 @@
       "internal_event": "none",
       "external_event": "none",
       "long_score": 0,
-      "short_score": 0,
+      "short_score": 2,
       "best_side": "NONE",
-      "best_score": 0,
+      "best_score": 2,
       "long_notes": "",
-      "short_notes": "",
+      "short_notes": "1H:ext_BOS",
       "bull_ob_count": 0,
       "bear_ob_count": 0,
       "breaker_bull": 0,
@@ -4898,7 +4898,7 @@
       "session": "off_hours",
       "killzone": false,
       "confluence_long": 0,
-      "confluence_short": 0,
+      "confluence_short": 1,
       "setup_grade_long": "none",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
@@ -4912,7 +4912,7 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 0,
-      "updated_at": "2026-09-08 04:55:36"
+      "updated_at": "2026-09-08 05:11:24"
     },
     "ARBUSDT": {
       "trend": "bull",
@@ -4920,11 +4920,11 @@
       "internal_event": "none",
       "external_event": "none",
       "long_score": 6,
-      "short_score": 5,
+      "short_score": 2,
       "best_side": "WATCH_LONG",
       "best_score": 6,
       "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 1D:bull | 15m:turtle_soup | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull",
-      "short_notes": "4H:premium | 1W:bear | 15m:sweep | 15m:turtle_soup | 15m:breaker_bear",
+      "short_notes": "4H:premium | 1W:bear",
       "bull_ob_count": 0,
       "bear_ob_count": 0,
       "breaker_bull": 0,
@@ -4932,11 +4932,11 @@
       "nearest_bull_ob": null,
       "nearest_bear_ob": null,
       "sweep_bull": false,
-      "sweep_bear": true,
+      "sweep_bear": false,
       "inducement_bull": false,
       "inducement_bear": false,
       "turtle_soup_bull": true,
-      "turtle_soup_bear": true,
+      "turtle_soup_bear": false,
       "nested_sweep_bull": false,
       "nested_sweep_bear": false,
       "in_discount": false,
@@ -4951,7 +4951,7 @@
       "session": "off_hours",
       "killzone": false,
       "confluence_long": 3,
-      "confluence_short": 2,
+      "confluence_short": 1,
       "setup_grade_long": "C",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
@@ -4965,19 +4965,19 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 04:56:09"
+      "updated_at": "2026-09-08 05:11:50"
     },
     "MEWUSDT": {
       "trend": "bull",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 4,
+      "long_score": 6,
       "short_score": 5,
-      "best_side": "WATCH_SHORT",
-      "best_score": 5,
-      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 1D:bull | 15m:breaker_bull | 15m:breaker_bull",
-      "short_notes": "4H:sweep_high | 4H:weak_high_swept | 4H:premium | 15m:turtle_soup | 15m:breaker_bear",
+      "best_side": "WATCH_LONG",
+      "best_score": 6,
+      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 1D:bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull | 15m:bull_engulf",
+      "short_notes": "4H:sweep_high | 4H:weak_high_swept | 4H:premium | 15m:sweep | 15m:breaker_bear",
       "bull_ob_count": 1,
       "bear_ob_count": 0,
       "breaker_bull": 1,
@@ -4985,11 +4985,11 @@
       "nearest_bull_ob": 0.00043085,
       "nearest_bear_ob": null,
       "sweep_bull": false,
-      "sweep_bear": false,
+      "sweep_bear": true,
       "inducement_bull": false,
       "inducement_bear": false,
       "turtle_soup_bull": false,
-      "turtle_soup_bear": true,
+      "turtle_soup_bear": false,
       "nested_sweep_bull": false,
       "nested_sweep_bear": false,
       "in_discount": false,
@@ -5003,9 +5003,9 @@
       "hierarchy_short": false,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 2,
+      "confluence_long": 3,
       "confluence_short": 2,
-      "setup_grade_long": "none",
+      "setup_grade_long": "C",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
       "external_swing_n": 5,
@@ -5022,7 +5022,7 @@
         0.0003973
       ],
       "liquidity_pools": 8,
-      "updated_at": "2026-09-08 04:55:45"
+      "updated_at": "2026-09-08 05:11:34"
     },
     "ZORAUSDT": {
       "trend": "bull",
@@ -5030,11 +5030,11 @@
       "internal_event": "none",
       "external_event": "none",
       "long_score": 6,
-      "short_score": 7,
-      "best_side": "WATCH_SHORT",
-      "best_score": 7,
+      "short_score": 6,
+      "best_side": "WATCH_LONG",
+      "best_score": 6,
       "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:breaker_retest | 1D:bull | 15m:breaker_bull | 15m:breaker_bull",
-      "short_notes": "4H:mitigation_retest | 4H:premium | 15m:breaker_bear | 15m:breaker_bear | 15m:breaker_bear | 15m:breaker_bear | 15m:bear_engulf",
+      "short_notes": "4H:mitigation_retest | 4H:premium | 15m:breaker_bear | 15m:breaker_bear | 15m:breaker_bear | 15m:breaker_bear",
       "bull_ob_count": 4,
       "bear_ob_count": 2,
       "breaker_bull": 4,
@@ -5061,9 +5061,9 @@
       "session": "off_hours",
       "killzone": false,
       "confluence_long": 3,
-      "confluence_short": 3,
+      "confluence_short": 2,
       "setup_grade_long": "C",
-      "setup_grade_short": "C",
+      "setup_grade_short": "none",
       "internal_swing_n": 3,
       "external_swing_n": 5,
       "ifvg_bull": 0,
@@ -5077,7 +5077,7 @@
         0.004653
       ],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 04:57:28"
+      "updated_at": "2026-09-08 05:13:15"
     },
     "PEOPLEUSDT": {
       "trend": "range",
@@ -5096,8 +5096,8 @@
       "breaker_bear": 3,
       "nearest_bull_ob": 0.007837,
       "nearest_bear_ob": 0.008042,
-      "sweep_bull": true,
-      "sweep_bear": false,
+      "sweep_bull": false,
+      "sweep_bear": true,
       "inducement_bull": false,
       "inducement_bear": false,
       "turtle_soup_bull": false,
@@ -5115,9 +5115,9 @@
       "hierarchy_short": false,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 3,
-      "confluence_short": 1,
-      "setup_grade_long": "C",
+      "confluence_long": 2,
+      "confluence_short": 2,
+      "setup_grade_long": "none",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
       "external_swing_n": 5,
@@ -5132,18 +5132,18 @@
         0.007506499999999999
       ],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 04:57:11"
+      "updated_at": "2026-09-08 05:13:00"
     },
     "ENAUSDT": {
       "trend": "bull",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 8,
+      "long_score": 10,
       "short_score": 1,
       "best_side": "BUY",
-      "best_score": 8,
-      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:breaker_retest | 4H:discount | 1D:bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull",
+      "best_score": 10,
+      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:breaker_retest | 4H:discount | 1D:bull | 15m:int_CHoCH | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull",
       "short_notes": "4H:mitigation_retest",
       "bull_ob_count": 7,
       "bear_ob_count": 2,
@@ -5185,7 +5185,7 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 04:57:19"
+      "updated_at": "2026-09-08 05:13:08"
     },
     "ONEUSDT": {
       "trend": "range",
@@ -5244,7 +5244,7 @@
         0.00070485
       ],
       "liquidity_pools": 10,
-      "updated_at": "2026-09-08 04:56:55"
+      "updated_at": "2026-09-08 05:12:51"
     },
     "CAPUSDT": {
       "trend": "bull",
@@ -5299,19 +5299,19 @@
       ],
       "eql": [],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 04:58:15"
+      "updated_at": "2026-09-08 05:14:05"
     },
     "XRPUSDT": {
       "trend": "range",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 5,
-      "short_score": 5,
+      "long_score": 7,
+      "short_score": 4,
       "best_side": "WATCH_LONG",
-      "best_score": 5,
-      "long_notes": "4H:mitigation_retest | 4H:turtle_soup | 4H:nested_sweep | 4H:discount | 1D:bull",
-      "short_notes": "4H:breaker_retest | 4H:mitigation_retest | 1W:bear | 15m:turtle_soup",
+      "best_score": 7,
+      "long_notes": "4H:mitigation_retest | 4H:turtle_soup | 4H:nested_sweep | 4H:discount | 1D:bull | 15m:breaker_bull | 15m:breaker_bull",
+      "short_notes": "4H:breaker_retest | 4H:mitigation_retest | 1W:bear",
       "bull_ob_count": 1,
       "bear_ob_count": 2,
       "breaker_bull": 0,
@@ -5323,7 +5323,7 @@
       "inducement_bull": false,
       "inducement_bear": false,
       "turtle_soup_bull": false,
-      "turtle_soup_bear": true,
+      "turtle_soup_bear": false,
       "nested_sweep_bull": false,
       "nested_sweep_bear": false,
       "in_discount": true,
@@ -5338,7 +5338,7 @@
       "session": "off_hours",
       "killzone": false,
       "confluence_long": 2,
-      "confluence_short": 2,
+      "confluence_short": 1,
       "setup_grade_long": "none",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
@@ -5358,18 +5358,18 @@
         0.9878
       ],
       "liquidity_pools": 11,
-      "updated_at": "2026-09-08 04:58:08"
+      "updated_at": "2026-09-08 05:13:57"
     },
     "AZTECUSDT": {
       "trend": "bear",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 7,
+      "long_score": 6,
       "short_score": 5,
       "best_side": "WATCH_LONG",
-      "best_score": 7,
-      "long_notes": "4H:breaker_retest | 1D:bull | 15m:int_BOS | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull",
+      "best_score": 6,
+      "long_notes": "4H:breaker_retest | 1D:bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull",
       "short_notes": "4H:trend:bear | 4H:hierarchy_ok | 4H:mitigation_retest | 4H:premium | 4H:OTE",
       "bull_ob_count": 1,
       "bear_ob_count": 3,
@@ -5417,7 +5417,7 @@
         0.0132
       ],
       "liquidity_pools": 10,
-      "updated_at": "2026-09-08 05:04:26"
+      "updated_at": "2026-09-08 05:20:19"
     },
     "XPLUSDT": {
       "trend": "bull",
@@ -5470,18 +5470,18 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 04:57:53"
+      "updated_at": "2026-09-08 05:13:41"
     },
     "MUBARAKUSDT": {
       "trend": "bull",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 7,
+      "long_score": 5,
       "short_score": 2,
       "best_side": "WATCH_LONG",
-      "best_score": 7,
-      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull | 15m:bull_engulf",
+      "best_score": 5,
+      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull",
       "short_notes": "4H:premium | 1W:bear",
       "bull_ob_count": 0,
       "bear_ob_count": 2,
@@ -5508,9 +5508,9 @@
       "hierarchy_short": false,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 3,
+      "confluence_long": 2,
       "confluence_short": 1,
-      "setup_grade_long": "C",
+      "setup_grade_long": "none",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
       "external_swing_n": 5,
@@ -5523,7 +5523,7 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 05:02:23"
+      "updated_at": "2026-09-08 05:18:06"
     },
     "BICOUSDT": {
       "trend": "bull",
@@ -5576,7 +5576,7 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 04:58:00"
+      "updated_at": "2026-09-08 05:13:49"
     },
     "HOMEUSDT": {
       "trend": "bull",
@@ -5629,19 +5629,19 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 04:58:22"
+      "updated_at": "2026-09-08 05:14:14"
     },
     "IOSTUSDT": {
       "trend": "bull",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 2,
-      "short_score": 3,
-      "best_side": "WATCH_SHORT",
-      "best_score": 3,
-      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 15m:breaker_bull",
-      "short_notes": "4H:premium | 1W:bear | 15m:sweep",
+      "long_score": 4,
+      "short_score": 2,
+      "best_side": "WATCH_LONG",
+      "best_score": 4,
+      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 15m:breaker_bull | 15m:breaker_bull | 15m:bull_engulf",
+      "short_notes": "4H:premium | 1W:bear",
       "bull_ob_count": 0,
       "bear_ob_count": 0,
       "breaker_bull": 0,
@@ -5649,7 +5649,7 @@
       "nearest_bull_ob": null,
       "nearest_bear_ob": null,
       "sweep_bull": false,
-      "sweep_bear": true,
+      "sweep_bear": false,
       "inducement_bull": false,
       "inducement_bear": false,
       "turtle_soup_bull": false,
@@ -5667,9 +5667,9 @@
       "hierarchy_short": false,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 2,
-      "confluence_short": 2,
-      "setup_grade_long": "none",
+      "confluence_long": 3,
+      "confluence_short": 1,
+      "setup_grade_long": "C",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
       "external_swing_n": 5,
@@ -5688,7 +5688,7 @@
         0.0005822
       ],
       "liquidity_pools": 10,
-      "updated_at": "2026-09-08 04:54:29"
+      "updated_at": "2026-09-08 05:10:17"
     },
     "MERLUSDT": {
       "trend": "range",
@@ -5696,11 +5696,11 @@
       "internal_event": "none",
       "external_event": "none",
       "long_score": 3,
-      "short_score": 3,
-      "best_side": "WATCH_LONG",
-      "best_score": 3,
+      "short_score": 5,
+      "best_side": "WATCH_SHORT",
+      "best_score": 5,
       "long_notes": "1D:bull | 15m:breaker_bull | 15m:breaker_bull",
-      "short_notes": "4H:mitigation_retest | 4H:premium | 1W:bear",
+      "short_notes": "4H:mitigation_retest | 4H:premium | 1W:bear | 15m:breaker_bear | 15m:breaker_bear",
       "bull_ob_count": 1,
       "bear_ob_count": 2,
       "breaker_bull": 1,
@@ -5743,18 +5743,18 @@
       ],
       "eql": [],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 05:03:06"
+      "updated_at": "2026-09-08 05:18:57"
     },
     "LINEAUSDT": {
       "trend": "bull",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 4,
+      "long_score": 3,
       "short_score": 1,
       "best_side": "WATCH_LONG",
-      "best_score": 4,
-      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 15m:int_BOS | 15m:breaker_bull | 15m:breaker_bull",
+      "best_score": 3,
+      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 15m:breaker_bull | 15m:breaker_bull",
       "short_notes": "4H:premium",
       "bull_ob_count": 0,
       "bear_ob_count": 0,
@@ -5796,19 +5796,19 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 04:57:36"
+      "updated_at": "2026-09-08 05:13:23"
     },
     "ADAUSDT": {
       "trend": "range",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 7,
-      "short_score": 5,
+      "long_score": 6,
+      "short_score": 6,
       "best_side": "WATCH_LONG",
-      "best_score": 7,
-      "long_notes": "4H:OTE | 1D:bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull",
-      "short_notes": "4H:mitigation_retest | 4H:premium | 4H:OTE | 1W:bear",
+      "best_score": 6,
+      "long_notes": "4H:OTE | 1D:bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull",
+      "short_notes": "4H:mitigation_retest | 4H:premium | 4H:OTE | 1W:bear | 15m:bear_engulf",
       "bull_ob_count": 0,
       "bear_ob_count": 2,
       "breaker_bull": 0,
@@ -5835,9 +5835,9 @@
       "session": "off_hours",
       "killzone": false,
       "confluence_long": 1,
-      "confluence_short": 2,
+      "confluence_short": 3,
       "setup_grade_long": "none",
-      "setup_grade_short": "none",
+      "setup_grade_short": "C",
       "internal_swing_n": 3,
       "external_swing_n": 5,
       "ifvg_bull": 0,
@@ -5849,7 +5849,7 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 04:58:30"
+      "updated_at": "2026-09-08 05:14:22"
     },
     "MONUSDT": {
       "trend": "range",
@@ -5869,7 +5869,7 @@
       "nearest_bull_ob": 0.027255,
       "nearest_bear_ob": 0.027255,
       "sweep_bull": false,
-      "sweep_bear": false,
+      "sweep_bear": true,
       "inducement_bull": false,
       "inducement_bear": false,
       "turtle_soup_bull": false,
@@ -5888,9 +5888,9 @@
       "session": "off_hours",
       "killzone": false,
       "confluence_long": 1,
-      "confluence_short": 2,
+      "confluence_short": 3,
       "setup_grade_long": "none",
-      "setup_grade_short": "none",
+      "setup_grade_short": "C",
       "internal_swing_n": 3,
       "external_swing_n": 5,
       "ifvg_bull": 0,
@@ -5904,7 +5904,7 @@
       ],
       "eql": [],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 04:57:46"
+      "updated_at": "2026-09-08 05:13:34"
     },
     "MOVEUSDT": {
       "trend": "range",
@@ -5957,18 +5957,18 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 05:01:59"
+      "updated_at": "2026-09-08 05:17:25"
     },
     "GPSUSDT": {
       "trend": "range",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 7,
+      "long_score": 6,
       "short_score": 4,
       "best_side": "WATCH_LONG",
-      "best_score": 7,
-      "long_notes": "4H:mitigation_retest | 4H:candle_confirm | 1W:bull | 1D:bull | 15m:int_BOS | 15m:breaker_bull | 15m:breaker_bull",
+      "best_score": 6,
+      "long_notes": "4H:mitigation_retest | 4H:candle_confirm | 1W:bull | 1D:bull | 15m:breaker_bull | 15m:breaker_bull",
       "short_notes": "4H:mitigation_retest | 4H:turtle_soup | 4H:nested_sweep | 4H:premium",
       "bull_ob_count": 5,
       "bear_ob_count": 2,
@@ -6010,7 +6010,7 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 05:02:31"
+      "updated_at": "2026-09-08 05:18:30"
     },
     "ROBOUSDT": {
       "trend": "range",
@@ -6065,26 +6065,26 @@
         0.01081
       ],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 05:04:34"
+      "updated_at": "2026-09-08 05:20:41"
     },
     "RSRUSDT": {
       "trend": "bull",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 3,
-      "short_score": 7,
-      "best_side": "WATCH_SHORT",
-      "best_score": 7,
-      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:mitigation_retest | 1D:bull",
-      "short_notes": "4H:breaker_retest | 4H:premium | 1W:bear | 15m:breaker_bear | 15m:breaker_bear | 15m:bear_engulf",
+      "long_score": 5,
+      "short_score": 4,
+      "best_side": "WATCH_LONG",
+      "best_score": 5,
+      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:mitigation_retest | 1D:bull | 15m:breaker_bull | 15m:breaker_bull",
+      "short_notes": "4H:breaker_retest | 4H:premium | 1W:bear",
       "bull_ob_count": 3,
       "bear_ob_count": 3,
       "breaker_bull": 2,
       "breaker_bear": 1,
       "nearest_bull_ob": 0.0014030000000000002,
       "nearest_bear_ob": 0.001445,
-      "sweep_bull": true,
+      "sweep_bull": false,
       "sweep_bear": false,
       "inducement_bull": false,
       "inducement_bear": false,
@@ -6103,10 +6103,10 @@
       "hierarchy_short": false,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 4,
-      "confluence_short": 3,
-      "setup_grade_long": "none",
-      "setup_grade_short": "C",
+      "confluence_long": 3,
+      "confluence_short": 2,
+      "setup_grade_long": "C",
+      "setup_grade_short": "none",
       "internal_swing_n": 3,
       "external_swing_n": 5,
       "ifvg_bull": 0,
@@ -6120,19 +6120,19 @@
         0.001291
       ],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 04:59:32"
+      "updated_at": "2026-09-08 05:15:23"
     },
     "SIGNUSDT": {
       "trend": "range",
       "last_event": "bos_bull",
       "internal_event": "none",
       "external_event": "bos_bull",
-      "long_score": 7,
-      "short_score": 2,
+      "long_score": 6,
+      "short_score": 3,
       "best_side": "WATCH_LONG",
-      "best_score": 7,
-      "long_notes": "4H:ext_BOS | 4H:breaker_retest | 4H:strong_low_break | 15m:breaker_bull | 15m:breaker_bull",
-      "short_notes": "4H:premium | 1D:bear",
+      "best_score": 6,
+      "long_notes": "4H:ext_BOS | 4H:breaker_retest | 4H:strong_low_break | 15m:breaker_bull",
+      "short_notes": "4H:premium | 1D:bear | 15m:breaker_bear",
       "bull_ob_count": 2,
       "bear_ob_count": 0,
       "breaker_bull": 2,
@@ -6177,18 +6177,18 @@
         0.0072180000000000005
       ],
       "liquidity_pools": 8,
-      "updated_at": "2026-09-08 04:17:08"
+      "updated_at": "2026-09-08 05:24:37"
     },
     "PIPPINUSDT": {
       "trend": "range",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 5,
+      "long_score": 4,
       "short_score": 2,
       "best_side": "WATCH_LONG",
-      "best_score": 5,
-      "long_notes": "4H:breaker_retest | 4H:discount | 1D:bull | 15m:bull_engulf",
+      "best_score": 4,
+      "long_notes": "4H:breaker_retest | 4H:discount | 1D:bull",
       "short_notes": "4H:mitigation_retest | 1W:bear",
       "bull_ob_count": 4,
       "bear_ob_count": 5,
@@ -6215,9 +6215,9 @@
       "hierarchy_short": false,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 3,
+      "confluence_long": 2,
       "confluence_short": 1,
-      "setup_grade_long": "C",
+      "setup_grade_long": "none",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
       "external_swing_n": 5,
@@ -6232,18 +6232,18 @@
         0.018125000000000002
       ],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 05:02:39"
+      "updated_at": "2026-09-08 05:18:38"
     },
     "ZILUSDT": {
       "trend": "bull",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 3,
+      "long_score": 2,
       "short_score": 1,
-      "best_side": "WATCH_LONG",
-      "best_score": 3,
-      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 15m:int_BOS | 15m:breaker_bull",
+      "best_side": "NONE",
+      "best_score": 2,
+      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 15m:breaker_bull",
       "short_notes": "4H:premium",
       "bull_ob_count": 2,
       "bear_ob_count": 0,
@@ -6289,7 +6289,7 @@
         0.002616
       ],
       "liquidity_pools": 8,
-      "updated_at": "2026-09-08 05:01:09"
+      "updated_at": "2026-09-08 05:16:59"
     },
     "WLDUSDT": {
       "trend": "range",
@@ -6342,7 +6342,7 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 04:57:04"
+      "updated_at": "2026-09-08 05:12:44"
     },
     "COREUSDT": {
       "trend": "bear",
@@ -6398,7 +6398,7 @@
         0.020900000000000002
       ],
       "liquidity_pools": 8,
-      "updated_at": "2026-09-08 05:04:10"
+      "updated_at": "2026-09-08 05:20:03"
     },
     "SAHARAUSDT": {
       "trend": "bull",
@@ -6406,11 +6406,11 @@
       "internal_event": "none",
       "external_event": "none",
       "long_score": 2,
-      "short_score": 4,
+      "short_score": 3,
       "best_side": "WATCH_SHORT",
-      "best_score": 4,
+      "best_score": 3,
       "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 1D:bull",
-      "short_notes": "4H:premium | 15m:breaker_bear | 15m:breaker_bear | 15m:bear_engulf",
+      "short_notes": "4H:premium | 15m:breaker_bear | 15m:breaker_bear",
       "bull_ob_count": 2,
       "bear_ob_count": 0,
       "breaker_bull": 2,
@@ -6437,7 +6437,7 @@
       "session": "off_hours",
       "killzone": false,
       "confluence_long": 2,
-      "confluence_short": 2,
+      "confluence_short": 1,
       "setup_grade_long": "none",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
@@ -6457,18 +6457,18 @@
         0.0081045
       ],
       "liquidity_pools": 10,
-      "updated_at": "2026-09-08 04:59:57"
+      "updated_at": "2026-09-08 05:15:50"
     },
     "SOPHUSDT": {
       "trend": "bull",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 3,
+      "long_score": 1,
       "short_score": 3,
-      "best_side": "WATCH_LONG",
+      "best_side": "WATCH_SHORT",
       "best_score": 3,
-      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 15m:breaker_bull | 15m:breaker_bull",
+      "long_notes": "4H:trend:bull | 4H:hierarchy_ok",
       "short_notes": "4H:premium | 1W:bear | 1D:bear",
       "bull_ob_count": 4,
       "bear_ob_count": 0,
@@ -6510,18 +6510,18 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 04:54:58"
+      "updated_at": "2026-09-08 05:10:46"
     },
     "ANIMEUSDT": {
       "trend": "range",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 6,
+      "long_score": 8,
       "short_score": 1,
       "best_side": "WATCH_LONG",
-      "best_score": 6,
-      "long_notes": "4H:turtle_soup | 4H:nested_sweep | 4H:discount | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull",
+      "best_score": 8,
+      "long_notes": "4H:turtle_soup | 4H:nested_sweep | 4H:discount | 15m:sweep | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull | 15m:bull_engulf",
       "short_notes": "1W:bear",
       "bull_ob_count": 2,
       "bear_ob_count": 2,
@@ -6548,9 +6548,9 @@
       "hierarchy_short": false,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 2,
+      "confluence_long": 3,
       "confluence_short": 0,
-      "setup_grade_long": "none",
+      "setup_grade_long": "C",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
       "external_swing_n": 5,
@@ -6565,7 +6565,7 @@
         0.002705
       ],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 04:59:09"
+      "updated_at": "2026-09-08 05:14:59"
     },
     "WLFIUSDT": {
       "trend": "range",
@@ -6573,11 +6573,11 @@
       "internal_event": "none",
       "external_event": "none",
       "long_score": 6,
-      "short_score": 1,
+      "short_score": 2,
       "best_side": "WATCH_LONG",
       "best_score": 6,
       "long_notes": "4H:mitigation_retest | 4H:sweep_low | 4H:turtle_soup | 4H:nested_sweep | 4H:weak_low_swept | 4H:discount",
-      "short_notes": "1D:bear",
+      "short_notes": "1D:bear | 15m:sweep",
       "bull_ob_count": 1,
       "bear_ob_count": 1,
       "breaker_bull": 0,
@@ -6585,7 +6585,7 @@
       "nearest_bull_ob": 0.05629,
       "nearest_bear_ob": 0.05766,
       "sweep_bull": false,
-      "sweep_bear": false,
+      "sweep_bear": true,
       "inducement_bull": false,
       "inducement_bear": false,
       "turtle_soup_bull": false,
@@ -6604,7 +6604,7 @@
       "session": "off_hours",
       "killzone": false,
       "confluence_long": 2,
-      "confluence_short": 0,
+      "confluence_short": 1,
       "setup_grade_long": "none",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
@@ -6624,18 +6624,18 @@
         0.056005
       ],
       "liquidity_pools": 10,
-      "updated_at": "2026-09-08 05:00:21"
+      "updated_at": "2026-09-08 05:16:13"
     },
     "SPACEUSDT": {
       "trend": "bull",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 4,
+      "long_score": 5,
       "short_score": 1,
-      "best_side": "WATCH_LONG",
-      "best_score": 4,
-      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:turtle_soup | 4H:nested_sweep | 4H:discount",
+      "best_side": "BUY",
+      "best_score": 5,
+      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:turtle_soup | 4H:nested_sweep | 4H:discount | 15m:bull_engulf",
       "short_notes": "15m:breaker_bear",
       "bull_ob_count": 0,
       "bear_ob_count": 0,
@@ -6662,9 +6662,9 @@
       "hierarchy_short": false,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 4,
+      "confluence_long": 5,
       "confluence_short": 0,
-      "setup_grade_long": "C",
+      "setup_grade_long": "B",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
       "external_swing_n": 5,
@@ -6681,7 +6681,7 @@
         0.004668
       ],
       "liquidity_pools": 8,
-      "updated_at": "2026-09-08 05:02:15"
+      "updated_at": "2026-09-08 05:17:58"
     },
     "EDGEUSDT": {
       "trend": "range",
@@ -6787,7 +6787,7 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 05:03:54"
+      "updated_at": "2026-09-08 05:19:47"
     },
     "DOODUSDT": {
       "trend": "range",
@@ -6845,7 +6845,7 @@
         0.0012805
       ],
       "liquidity_pools": 9,
-      "updated_at": "2026-09-08 04:54:44"
+      "updated_at": "2026-09-08 05:10:31"
     },
     "ZKUSDT": {
       "trend": "bull",
@@ -6898,19 +6898,19 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 04:59:00"
+      "updated_at": "2026-09-08 05:14:50"
     },
     "STRKUSDT": {
       "trend": "range",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 2,
-      "short_score": 4,
-      "best_side": "WATCH_SHORT",
-      "best_score": 4,
-      "long_notes": "15m:breaker_bull | 15m:breaker_bull",
-      "short_notes": "4H:premium | 1W:bear | 15m:turtle_soup | 15m:bear_engulf",
+      "long_score": 3,
+      "short_score": 2,
+      "best_side": "WATCH_LONG",
+      "best_score": 3,
+      "long_notes": "15m:breaker_bull | 15m:breaker_bull | 15m:bull_engulf",
+      "short_notes": "4H:premium | 1W:bear",
       "bull_ob_count": 2,
       "bear_ob_count": 0,
       "breaker_bull": 0,
@@ -6922,7 +6922,7 @@
       "inducement_bull": false,
       "inducement_bear": false,
       "turtle_soup_bull": false,
-      "turtle_soup_bear": true,
+      "turtle_soup_bear": false,
       "nested_sweep_bull": false,
       "nested_sweep_bear": false,
       "in_discount": false,
@@ -6936,10 +6936,10 @@
       "hierarchy_short": false,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 0,
-      "confluence_short": 3,
+      "confluence_long": 1,
+      "confluence_short": 1,
       "setup_grade_long": "none",
-      "setup_grade_short": "C",
+      "setup_grade_short": "none",
       "internal_swing_n": 3,
       "external_swing_n": 5,
       "ifvg_bull": 0,
@@ -6957,18 +6957,18 @@
         0.024245000000000003
       ],
       "liquidity_pools": 11,
-      "updated_at": "2026-09-08 04:59:49"
+      "updated_at": "2026-09-08 05:15:42"
     },
     "NIGHTUSDT": {
       "trend": "bull",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 5,
+      "long_score": 6,
       "short_score": 6,
-      "best_side": "WATCH_SHORT",
+      "best_side": "WATCH_LONG",
       "best_score": 6,
-      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:breaker_retest | 4H:mitigation_retest | 1D:bull",
+      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:breaker_retest | 4H:mitigation_retest | 1D:bull | 15m:sweep",
       "short_notes": "4H:breaker_retest | 4H:mitigation_retest | 4H:nested_sweep | 4H:premium | 15m:breaker_bear",
       "bull_ob_count": 4,
       "bear_ob_count": 3,
@@ -6976,7 +6976,7 @@
       "breaker_bear": 1,
       "nearest_bull_ob": 0.023064,
       "nearest_bear_ob": 0.022383,
-      "sweep_bull": false,
+      "sweep_bull": true,
       "sweep_bear": false,
       "inducement_bull": false,
       "inducement_bear": false,
@@ -6995,9 +6995,9 @@
       "hierarchy_short": false,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 3,
+      "confluence_long": 4,
       "confluence_short": 2,
-      "setup_grade_long": "C",
+      "setup_grade_long": "B",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
       "external_swing_n": 5,
@@ -7012,18 +7012,18 @@
         0.0168375
       ],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 05:07:27"
+      "updated_at": "2026-09-08 05:23:33"
     },
     "APRUSDT": {
       "trend": "bear",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 6,
+      "long_score": 5,
       "short_score": 6,
-      "best_side": "WATCH_LONG",
+      "best_side": "WATCH_SHORT",
       "best_score": 6,
-      "long_notes": "4H:sweep_low | 4H:turtle_soup | 4H:nested_sweep | 4H:weak_low_swept | 4H:discount | 15m:bull_engulf",
+      "long_notes": "4H:sweep_low | 4H:turtle_soup | 4H:nested_sweep | 4H:weak_low_swept | 4H:discount",
       "short_notes": "4H:trend:bear | 4H:hierarchy_ok | 1W:bear | 15m:breaker_bear | 15m:breaker_bear | 15m:breaker_bear | 15m:breaker_bear",
       "bull_ob_count": 0,
       "bear_ob_count": 2,
@@ -7050,7 +7050,7 @@
       "hierarchy_short": true,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 2,
+      "confluence_long": 1,
       "confluence_short": 2,
       "setup_grade_long": "none",
       "setup_grade_short": "none",
@@ -7070,7 +7070,7 @@
         0.18714999999999998
       ],
       "liquidity_pools": 9,
-      "updated_at": "2026-09-08 05:07:10"
+      "updated_at": "2026-09-08 05:23:07"
     },
     "LAUSDT": {
       "trend": "bull",
@@ -7123,18 +7123,18 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 04:17:34"
+      "updated_at": "2026-09-08 05:25:02"
     },
     "KATUSDT": {
       "trend": "range",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 4,
+      "long_score": 3,
       "short_score": 1,
       "best_side": "WATCH_LONG",
-      "best_score": 4,
-      "long_notes": "4H:mitigation_retest | 4H:discount | 4H:equilibrium | 15m:breaker_bull | 15m:bull_engulf",
+      "best_score": 3,
+      "long_notes": "4H:mitigation_retest | 4H:discount | 4H:equilibrium | 15m:breaker_bull",
       "short_notes": "4H:mitigation_retest | 4H:equilibrium",
       "bull_ob_count": 4,
       "bear_ob_count": 2,
@@ -7161,9 +7161,9 @@
       "hierarchy_short": false,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 3,
+      "confluence_long": 2,
       "confluence_short": 1,
-      "setup_grade_long": "C",
+      "setup_grade_long": "none",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
       "external_swing_n": 5,
@@ -7180,18 +7180,18 @@
         0.0043675
       ],
       "liquidity_pools": 8,
-      "updated_at": "2026-09-08 05:01:18"
+      "updated_at": "2026-09-08 05:17:08"
     },
     "ATHUSDT": {
       "trend": "bear",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 2,
+      "long_score": 1,
       "short_score": 7,
       "best_side": "SELL",
       "best_score": 7,
-      "long_notes": "4H:mitigation_retest | 15m:int_CHoCH",
+      "long_notes": "4H:mitigation_retest",
       "short_notes": "4H:trend:bear | 4H:hierarchy_ok | 4H:breaker_retest | 4H:premium | 4H:candle_confirm | 1W:bear | 1D:bear",
       "bull_ob_count": 1,
       "bear_ob_count": 1,
@@ -7235,7 +7235,7 @@
         0.0044785
       ],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 05:00:52"
+      "updated_at": "2026-09-08 05:16:36"
     },
     "BEATUSDT": {
       "trend": "range",
@@ -7288,7 +7288,7 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 05:00:29"
+      "updated_at": "2026-09-08 05:16:21"
     },
     "OPUSDT": {
       "trend": "bull",
@@ -7296,11 +7296,11 @@
       "internal_event": "none",
       "external_event": "none",
       "long_score": 2,
-      "short_score": 3,
-      "best_side": "WATCH_SHORT",
-      "best_score": 3,
+      "short_score": 2,
+      "best_side": "NONE",
+      "best_score": 2,
       "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 1D:bull",
-      "short_notes": "4H:premium | 1W:bear | 15m:sweep",
+      "short_notes": "4H:premium | 1W:bear",
       "bull_ob_count": 2,
       "bear_ob_count": 0,
       "breaker_bull": 2,
@@ -7308,7 +7308,7 @@
       "nearest_bull_ob": 0.1001,
       "nearest_bear_ob": null,
       "sweep_bull": false,
-      "sweep_bear": true,
+      "sweep_bear": false,
       "inducement_bull": false,
       "inducement_bear": false,
       "turtle_soup_bull": false,
@@ -7327,7 +7327,7 @@
       "session": "off_hours",
       "killzone": false,
       "confluence_long": 2,
-      "confluence_short": 2,
+      "confluence_short": 1,
       "setup_grade_long": "none",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
@@ -7343,19 +7343,19 @@
         0.08469499999999999
       ],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 04:59:25"
+      "updated_at": "2026-09-08 05:15:33"
     },
     "SUIUSDT": {
       "trend": "bull",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 8,
-      "short_score": 2,
+      "long_score": 5,
+      "short_score": 1,
       "best_side": "WATCH_LONG",
-      "best_score": 8,
-      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 1H:ext_BOS | 1D:bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull",
-      "short_notes": "4H:premium | 15m:turtle_soup",
+      "best_score": 5,
+      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 1D:bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull",
+      "short_notes": "4H:premium",
       "bull_ob_count": 0,
       "bear_ob_count": 0,
       "breaker_bull": 0,
@@ -7367,7 +7367,7 @@
       "inducement_bull": false,
       "inducement_bear": false,
       "turtle_soup_bull": false,
-      "turtle_soup_bear": true,
+      "turtle_soup_bear": false,
       "nested_sweep_bull": false,
       "nested_sweep_bear": false,
       "in_discount": false,
@@ -7382,7 +7382,7 @@
       "session": "off_hours",
       "killzone": false,
       "confluence_long": 2,
-      "confluence_short": 2,
+      "confluence_short": 1,
       "setup_grade_long": "none",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
@@ -7396,26 +7396,26 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 04:58:46"
+      "updated_at": "2026-09-08 05:14:37"
     },
     "BILLUSDT": {
       "trend": "bear",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 8,
-      "short_score": 5,
+      "long_score": 7,
+      "short_score": 4,
       "best_side": "WATCH_LONG",
-      "best_score": 8,
-      "long_notes": "4H:mitigation_retest | 4H:nested_sweep | 4H:discount | 15m:sweep | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull",
-      "short_notes": "4H:trend:bear | 4H:hierarchy_ok | 4H:breaker_retest | 1D:bear | 15m:bear_engulf",
+      "best_score": 7,
+      "long_notes": "4H:mitigation_retest | 4H:nested_sweep | 4H:discount | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull",
+      "short_notes": "4H:trend:bear | 4H:hierarchy_ok | 4H:breaker_retest | 1D:bear",
       "bull_ob_count": 2,
       "bear_ob_count": 5,
       "breaker_bull": 0,
       "breaker_bear": 5,
       "nearest_bull_ob": 0.015269999999999999,
       "nearest_bear_ob": 0.015269999999999999,
-      "sweep_bull": true,
+      "sweep_bull": false,
       "sweep_bear": false,
       "inducement_bull": false,
       "inducement_bear": false,
@@ -7434,10 +7434,10 @@
       "hierarchy_short": true,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 3,
-      "confluence_short": 4,
-      "setup_grade_long": "C",
-      "setup_grade_short": "B",
+      "confluence_long": 2,
+      "confluence_short": 3,
+      "setup_grade_long": "none",
+      "setup_grade_short": "C",
       "internal_swing_n": 3,
       "external_swing_n": 5,
       "ifvg_bull": 0,
@@ -7449,7 +7449,7 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 05:01:26"
+      "updated_at": "2026-09-08 05:17:16"
     },
     "CHZUSDT": {
       "trend": "bull",
@@ -7504,7 +7504,7 @@
       ],
       "eql": [],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 05:01:44"
+      "updated_at": "2026-09-08 05:17:43"
     },
     "TRUMPUSDT": {
       "trend": "range",
@@ -7559,19 +7559,19 @@
       ],
       "eql": [],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 05:06:08"
+      "updated_at": "2026-09-08 05:22:04"
     },
     "WUSDT": {
       "trend": "range",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 5,
-      "short_score": 4,
+      "long_score": 6,
+      "short_score": 6,
       "best_side": "WATCH_LONG",
-      "best_score": 5,
-      "long_notes": "4H:OTE | 1D:bull | 15m:breaker_bull | 15m:breaker_bull",
-      "short_notes": "4H:premium | 4H:OTE | 1W:bear",
+      "best_score": 6,
+      "long_notes": "4H:OTE | 1D:bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull",
+      "short_notes": "4H:premium | 4H:OTE | 1W:bear | 15m:sweep | 15m:turtle_soup",
       "bull_ob_count": 2,
       "bear_ob_count": 0,
       "breaker_bull": 2,
@@ -7579,11 +7579,11 @@
       "nearest_bull_ob": 0.009482,
       "nearest_bear_ob": null,
       "sweep_bull": false,
-      "sweep_bear": false,
+      "sweep_bear": true,
       "inducement_bull": false,
       "inducement_bear": false,
       "turtle_soup_bull": false,
-      "turtle_soup_bear": false,
+      "turtle_soup_bear": true,
       "nested_sweep_bull": false,
       "nested_sweep_bear": false,
       "in_discount": false,
@@ -7598,7 +7598,7 @@
       "session": "off_hours",
       "killzone": false,
       "confluence_long": 1,
-      "confluence_short": 1,
+      "confluence_short": 2,
       "setup_grade_long": "none",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
@@ -7616,18 +7616,18 @@
       ],
       "eql": [],
       "liquidity_pools": 11,
-      "updated_at": "2026-09-08 05:01:00"
+      "updated_at": "2026-09-08 05:16:51"
     },
     "ACTUSDT": {
       "trend": "range",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 8,
+      "long_score": 7,
       "short_score": 6,
-      "best_side": "BUY",
-      "best_score": 8,
-      "long_notes": "4H:mitigation_retest | 4H:OTE | 1H:ext_BOS | 15m:breaker_bull | 15m:breaker_bull | 15m:bull_engulf",
+      "best_side": "WATCH_LONG",
+      "best_score": 7,
+      "long_notes": "4H:mitigation_retest | 4H:OTE | 1H:ext_BOS | 15m:breaker_bull | 15m:breaker_bull",
       "short_notes": "4H:breaker_retest | 4H:premium | 4H:OTE | 1W:bear",
       "bull_ob_count": 4,
       "bear_ob_count": 1,
@@ -7654,9 +7654,9 @@
       "hierarchy_short": false,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 4,
+      "confluence_long": 3,
       "confluence_short": 2,
-      "setup_grade_long": "B",
+      "setup_grade_long": "C",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
       "external_swing_n": 5,
@@ -7671,7 +7671,7 @@
         0.010586499999999999
       ],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 05:02:47"
+      "updated_at": "2026-09-08 05:18:22"
     },
     "FOGOUSDT": {
       "trend": "bull",
@@ -7679,11 +7679,11 @@
       "internal_event": "none",
       "external_event": "none",
       "long_score": 5,
-      "short_score": 4,
+      "short_score": 5,
       "best_side": "WATCH_LONG",
       "best_score": 5,
       "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:breaker_retest | 15m:breaker_bull | 15m:breaker_bull",
-      "short_notes": "4H:mitigation_retest | 4H:nested_sweep | 4H:premium | 15m:sweep",
+      "short_notes": "4H:mitigation_retest | 4H:nested_sweep | 4H:premium | 15m:sweep | 15m:turtle_soup",
       "bull_ob_count": 1,
       "bear_ob_count": 5,
       "breaker_bull": 1,
@@ -7695,7 +7695,7 @@
       "inducement_bull": false,
       "inducement_bear": false,
       "turtle_soup_bull": false,
-      "turtle_soup_bear": false,
+      "turtle_soup_bear": true,
       "nested_sweep_bull": false,
       "nested_sweep_bear": false,
       "in_discount": false,
@@ -7728,7 +7728,7 @@
         0.0069575
       ],
       "liquidity_pools": 8,
-      "updated_at": "2026-09-08 05:03:20"
+      "updated_at": "2026-09-08 05:19:14"
     },
     "RLSUSDT": {
       "trend": "range",
@@ -7783,7 +7783,7 @@
         0.001676
       ],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 04:56:16"
+      "updated_at": "2026-09-08 05:12:05"
     },
     "RVNUSDT": {
       "trend": "bull",
@@ -7791,11 +7791,11 @@
       "internal_event": "none",
       "external_event": "none",
       "long_score": 7,
-      "short_score": 2,
+      "short_score": 4,
       "best_side": "WATCH_LONG",
       "best_score": 7,
       "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:turtle_soup | 4H:nested_sweep | 4H:discount | 4H:OTE | 1D:bull",
-      "short_notes": "1W:bear | 15m:breaker_bear",
+      "short_notes": "1W:bear | 15m:sweep | 15m:breaker_bear | 15m:bear_engulf",
       "bull_ob_count": 2,
       "bear_ob_count": 1,
       "breaker_bull": 0,
@@ -7803,7 +7803,7 @@
       "nearest_bull_ob": 0.0030375000000000003,
       "nearest_bear_ob": 0.003257,
       "sweep_bull": false,
-      "sweep_bear": false,
+      "sweep_bear": true,
       "inducement_bull": false,
       "inducement_bear": false,
       "turtle_soup_bull": false,
@@ -7822,7 +7822,7 @@
       "session": "off_hours",
       "killzone": false,
       "confluence_long": 3,
-      "confluence_short": 0,
+      "confluence_short": 2,
       "setup_grade_long": "C",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
@@ -7836,7 +7836,7 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 05:01:34"
+      "updated_at": "2026-09-08 05:18:14"
     },
     "ZAMAUSDT": {
       "trend": "range",
@@ -7889,19 +7889,19 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 05:00:13"
+      "updated_at": "2026-09-08 05:16:05"
     },
     "ACHUSDT": {
       "trend": "bull",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 5,
-      "short_score": 2,
-      "best_side": "BUY",
-      "best_score": 5,
-      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:discount | 1D:bull | 15m:breaker_bull | 15m:bull_engulf",
-      "short_notes": "1W:bear | 15m:breaker_bear",
+      "long_score": 4,
+      "short_score": 3,
+      "best_side": "WATCH_LONG",
+      "best_score": 4,
+      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:discount | 1D:bull | 15m:breaker_bull",
+      "short_notes": "1W:bear | 15m:turtle_soup | 15m:breaker_bear",
       "bull_ob_count": 1,
       "bear_ob_count": 0,
       "breaker_bull": 1,
@@ -7913,7 +7913,7 @@
       "inducement_bull": false,
       "inducement_bear": false,
       "turtle_soup_bull": false,
-      "turtle_soup_bear": false,
+      "turtle_soup_bear": true,
       "nested_sweep_bull": false,
       "nested_sweep_bear": false,
       "in_discount": true,
@@ -7927,9 +7927,9 @@
       "hierarchy_short": false,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 4,
-      "confluence_short": 0,
-      "setup_grade_long": "B",
+      "confluence_long": 3,
+      "confluence_short": 1,
+      "setup_grade_long": "C",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
       "external_swing_n": 5,
@@ -7944,7 +7944,7 @@
         0.0047550000000000005
       ],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 05:07:53"
+      "updated_at": "2026-09-08 05:23:56"
     },
     "CASHCATUSDT": {
       "trend": "range",
@@ -7997,7 +7997,7 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 0,
-      "updated_at": "2026-09-08 05:04:49"
+      "updated_at": "2026-09-08 05:20:26"
     },
     "XLMUSDT": {
       "trend": "bull",
@@ -8005,11 +8005,11 @@
       "internal_event": "none",
       "external_event": "none",
       "long_score": 3,
-      "short_score": 2,
+      "short_score": 3,
       "best_side": "WATCH_LONG",
       "best_score": 3,
       "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 1D:bull | 15m:breaker_bull",
-      "short_notes": "4H:premium | 15m:breaker_bear",
+      "short_notes": "4H:premium | 15m:breaker_bear | 15m:bear_engulf",
       "bull_ob_count": 2,
       "bear_ob_count": 0,
       "breaker_bull": 2,
@@ -8036,7 +8036,7 @@
       "session": "off_hours",
       "killzone": false,
       "confluence_long": 2,
-      "confluence_short": 1,
+      "confluence_short": 2,
       "setup_grade_long": "none",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
@@ -8052,7 +8052,7 @@
       ],
       "eql": [],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 05:00:36"
+      "updated_at": "2026-09-08 05:16:28"
     },
     "ONDOUSDT": {
       "trend": "bull",
@@ -8060,11 +8060,11 @@
       "internal_event": "none",
       "external_event": "none",
       "long_score": 4,
-      "short_score": 2,
+      "short_score": 1,
       "best_side": "WATCH_LONG",
       "best_score": 4,
       "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 1D:bull | 15m:breaker_bull | 15m:breaker_bull",
-      "short_notes": "4H:premium | 15m:turtle_soup",
+      "short_notes": "4H:premium",
       "bull_ob_count": 2,
       "bear_ob_count": 0,
       "breaker_bull": 0,
@@ -8076,7 +8076,7 @@
       "inducement_bull": false,
       "inducement_bear": false,
       "turtle_soup_bull": false,
-      "turtle_soup_bear": true,
+      "turtle_soup_bear": false,
       "nested_sweep_bull": false,
       "nested_sweep_bear": false,
       "in_discount": false,
@@ -8091,7 +8091,7 @@
       "session": "off_hours",
       "killzone": false,
       "confluence_long": 2,
-      "confluence_short": 2,
+      "confluence_short": 1,
       "setup_grade_long": "none",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
@@ -8105,7 +8105,7 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 05:01:51"
+      "updated_at": "2026-09-08 05:17:35"
     },
     "LABUSDT": {
       "trend": "bull",
@@ -8160,18 +8160,18 @@
       ],
       "eql": [],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 05:05:18"
+      "updated_at": "2026-09-08 05:21:14"
     },
     "SANDUSDT": {
       "trend": "bull",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 7,
+      "long_score": 8,
       "short_score": 6,
-      "best_side": "BUY",
-      "best_score": 7,
-      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:mitigation_retest | 1H:ext_BOS | 15m:breaker_bull | 15m:breaker_bull | 15m:bull_engulf",
+      "best_side": "WATCH_LONG",
+      "best_score": 8,
+      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:mitigation_retest | 1H:ext_BOS | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull",
       "short_notes": "4H:breaker_retest | 4H:turtle_soup | 4H:nested_sweep | 4H:premium | 1D:bear",
       "bull_ob_count": 2,
       "bear_ob_count": 1,
@@ -8198,9 +8198,9 @@
       "hierarchy_short": false,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 4,
+      "confluence_long": 3,
       "confluence_short": 2,
-      "setup_grade_long": "B",
+      "setup_grade_long": "C",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
       "external_swing_n": 5,
@@ -8215,19 +8215,19 @@
         0.037905
       ],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 05:05:35"
+      "updated_at": "2026-09-08 05:21:32"
     },
     "BIOUSDT": {
       "trend": "range",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 6,
-      "short_score": 1,
+      "long_score": 7,
+      "short_score": 4,
       "best_side": "WATCH_LONG",
-      "best_score": 6,
-      "long_notes": "4H:breaker_retest | 4H:discount | 4H:equilibrium | 1D:bull | 15m:breaker_bull | 15m:breaker_bull",
-      "short_notes": "4H:mitigation_retest | 4H:equilibrium",
+      "best_score": 7,
+      "long_notes": "4H:breaker_retest | 4H:discount | 4H:equilibrium | 1D:bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull",
+      "short_notes": "4H:mitigation_retest | 4H:equilibrium | 15m:sweep | 15m:turtle_soup | 15m:bear_engulf",
       "bull_ob_count": 1,
       "bear_ob_count": 2,
       "breaker_bull": 1,
@@ -8235,11 +8235,11 @@
       "nearest_bull_ob": 0.027505,
       "nearest_bear_ob": 0.027505,
       "sweep_bull": false,
-      "sweep_bear": false,
+      "sweep_bear": true,
       "inducement_bull": false,
       "inducement_bear": false,
       "turtle_soup_bull": false,
-      "turtle_soup_bear": false,
+      "turtle_soup_bear": true,
       "nested_sweep_bull": false,
       "nested_sweep_bear": false,
       "in_discount": true,
@@ -8254,9 +8254,9 @@
       "session": "off_hours",
       "killzone": false,
       "confluence_long": 2,
-      "confluence_short": 1,
+      "confluence_short": 3,
       "setup_grade_long": "none",
-      "setup_grade_short": "none",
+      "setup_grade_short": "C",
       "internal_swing_n": 3,
       "external_swing_n": 5,
       "ifvg_bull": 0,
@@ -8268,18 +8268,18 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 04:17:42"
+      "updated_at": "2026-09-08 05:25:09"
     },
     "EDENUSDT": {
       "trend": "bear",
       "last_event": "bos_bear",
       "internal_event": "bos_bear",
       "external_event": "bos_bear",
-      "long_score": 2,
+      "long_score": 3,
       "short_score": 5,
       "best_side": "WATCH_SHORT",
       "best_score": 5,
-      "long_notes": "4H:discount | 1W:bull",
+      "long_notes": "4H:discount | 1W:bull | 15m:bull_engulf",
       "short_notes": "4H:trend:bear | 4H:hierarchy_ok | 4H:int_BOS | 4H:ext_BOS | 4H:strong_high_break",
       "bull_ob_count": 0,
       "bear_ob_count": 6,
@@ -8306,7 +8306,7 @@
       "hierarchy_short": true,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 1,
+      "confluence_long": 2,
       "confluence_short": 2,
       "setup_grade_long": "none",
       "setup_grade_short": "none",
@@ -8323,7 +8323,7 @@
         0.04665
       ],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 04:17:25"
+      "updated_at": "2026-09-08 05:24:29"
     },
     "FILUSDT": {
       "trend": "bull",
@@ -8376,7 +8376,7 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 05:02:07"
+      "updated_at": "2026-09-08 05:17:50"
     },
     "AEONUSDT": {
       "trend": "range",
@@ -8429,18 +8429,18 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 05:03:13"
+      "updated_at": "2026-09-08 05:19:05"
     },
     "GMTUSDT": {
       "trend": "range",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 4,
+      "long_score": 3,
       "short_score": 8,
       "best_side": "WATCH_SHORT",
       "best_score": 8,
-      "long_notes": "4H:OTE | 1D:bull | 15m:bull_engulf",
+      "long_notes": "4H:OTE | 1D:bull",
       "short_notes": "4H:sweep_high | 4H:turtle_soup | 4H:nested_sweep | 4H:weak_high_swept | 4H:premium | 4H:OTE | 1W:bear",
       "bull_ob_count": 1,
       "bear_ob_count": 0,
@@ -8467,7 +8467,7 @@
       "hierarchy_short": false,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 2,
+      "confluence_long": 1,
       "confluence_short": 1,
       "setup_grade_long": "none",
       "setup_grade_short": "none",
@@ -8486,7 +8486,7 @@
         0.0071385
       ],
       "liquidity_pools": 8,
-      "updated_at": "2026-09-08 05:06:54"
+      "updated_at": "2026-09-08 05:22:43"
     },
     "HBARUSDT": {
       "trend": "bull",
@@ -8543,18 +8543,18 @@
         0.07271
       ],
       "liquidity_pools": 8,
-      "updated_at": "2026-09-08 05:04:02"
+      "updated_at": "2026-09-08 05:19:55"
     },
     "SENTUSDT": {
       "trend": "bull",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 2,
+      "long_score": 3,
       "short_score": 2,
-      "best_side": "NONE",
-      "best_score": 2,
-      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 1D:bull",
+      "best_side": "WATCH_LONG",
+      "best_score": 3,
+      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 1D:bull | 15m:breaker_bull",
       "short_notes": "4H:premium | 1W:bear",
       "bull_ob_count": 0,
       "bear_ob_count": 0,
@@ -8600,7 +8600,7 @@
       ],
       "eql": [],
       "liquidity_pools": 9,
-      "updated_at": "2026-09-08 05:02:55"
+      "updated_at": "2026-09-08 05:18:46"
     },
     "OFCUSDT": {
       "trend": "bear",
@@ -8608,11 +8608,11 @@
       "internal_event": "none",
       "external_event": "none",
       "long_score": 1,
-      "short_score": 8,
+      "short_score": 4,
       "best_side": "WATCH_SHORT",
-      "best_score": 8,
+      "best_score": 4,
       "long_notes": "4H:discount",
-      "short_notes": "4H:trend:bear | 4H:hierarchy_ok | 15m:breaker_bear | 15m:breaker_bear | 15m:breaker_bear | 15m:breaker_bear | 15m:breaker_bear | 15m:breaker_bear | 15m:breaker_bear",
+      "short_notes": "4H:trend:bear | 4H:hierarchy_ok | 15m:breaker_bear | 15m:breaker_bear | 15m:breaker_bear",
       "bull_ob_count": 0,
       "bear_ob_count": 1,
       "breaker_bull": 0,
@@ -8655,7 +8655,7 @@
       ],
       "eql": [],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 04:18:50"
+      "updated_at": "2026-09-08 05:26:07"
     },
     "ICXUSDT": {
       "trend": "bull",
@@ -8710,7 +8710,7 @@
       ],
       "eql": [],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 05:05:43"
+      "updated_at": "2026-09-08 05:21:40"
     },
     "PYTHUSDT": {
       "trend": "bull",
@@ -8766,18 +8766,18 @@
       ],
       "eql": [],
       "liquidity_pools": 8,
-      "updated_at": "2026-09-08 05:06:47"
+      "updated_at": "2026-09-08 05:22:51"
     },
     "POLUSDT": {
       "trend": "bull",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 7,
+      "long_score": 6,
       "short_score": 2,
-      "best_side": "BUY",
-      "best_score": 7,
-      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:discount | 1D:bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull | 15m:bull_engulf",
+      "best_side": "WATCH_LONG",
+      "best_score": 6,
+      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:discount | 1D:bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull",
       "short_notes": "4H:nested_sweep | 1W:bear",
       "bull_ob_count": 2,
       "bear_ob_count": 0,
@@ -8804,9 +8804,9 @@
       "hierarchy_short": false,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 4,
+      "confluence_long": 3,
       "confluence_short": 1,
-      "setup_grade_long": "B",
+      "setup_grade_long": "C",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
       "external_swing_n": 5,
@@ -8819,19 +8819,19 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 05:07:45"
+      "updated_at": "2026-09-08 05:23:41"
     },
     "PLUMEUSDT": {
       "trend": "bear",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 4,
-      "short_score": 3,
-      "best_side": "WATCH_LONG",
+      "long_score": 3,
+      "short_score": 4,
+      "best_side": "WATCH_SHORT",
       "best_score": 4,
-      "long_notes": "4H:mitigation_retest | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull",
-      "short_notes": "4H:trend:bear | 4H:hierarchy_ok | 4H:premium | 15m:breaker_bear",
+      "long_notes": "4H:mitigation_retest | 15m:breaker_bull | 15m:breaker_bull",
+      "short_notes": "4H:trend:bear | 4H:hierarchy_ok | 4H:premium | 15m:breaker_bear | 15m:breaker_bear",
       "bull_ob_count": 2,
       "bear_ob_count": 0,
       "breaker_bull": 0,
@@ -8860,7 +8860,7 @@
       "confluence_long": 1,
       "confluence_short": 3,
       "setup_grade_long": "none",
-      "setup_grade_short": "none",
+      "setup_grade_short": "C",
       "internal_swing_n": 3,
       "external_swing_n": 5,
       "ifvg_bull": 0,
@@ -8874,7 +8874,7 @@
       ],
       "eql": [],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 05:03:45"
+      "updated_at": "2026-09-08 05:19:38"
     },
     "CFXUSDT": {
       "trend": "bull",
@@ -8932,19 +8932,19 @@
         0.04593
       ],
       "liquidity_pools": 9,
-      "updated_at": "2026-09-08 05:08:01"
+      "updated_at": "2026-09-08 05:23:48"
     },
     "WOOUSDT": {
       "trend": "range",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 3,
-      "short_score": 0,
-      "best_side": "WATCH_LONG",
+      "long_score": 2,
+      "short_score": 3,
+      "best_side": "WATCH_SHORT",
       "best_score": 3,
-      "long_notes": "4H:discount | 4H:equilibrium | 1D:bull | 15m:breaker_bull",
-      "short_notes": "4H:equilibrium",
+      "long_notes": "4H:discount | 4H:equilibrium | 1D:bull",
+      "short_notes": "4H:equilibrium | 15m:int_BOS | 15m:breaker_bear | 15m:breaker_bear",
       "bull_ob_count": 0,
       "bear_ob_count": 0,
       "breaker_bull": 0,
@@ -8987,19 +8987,19 @@
         0.01095
       ],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 04:33:51"
+      "updated_at": "2026-09-08 05:26:23"
     },
     "ALGOUSDT": {
       "trend": "bull",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 5,
-      "short_score": 3,
+      "long_score": 4,
+      "short_score": 2,
       "best_side": "WATCH_LONG",
-      "best_score": 5,
-      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 1D:bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull",
-      "short_notes": "4H:premium | 1W:bear | 15m:breaker_bear",
+      "best_score": 4,
+      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 1D:bull | 15m:int_BOS | 15m:breaker_bull",
+      "short_notes": "4H:premium | 1W:bear",
       "bull_ob_count": 3,
       "bear_ob_count": 0,
       "breaker_bull": 3,
@@ -9042,19 +9042,19 @@
         0.08668
       ],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 05:07:02"
+      "updated_at": "2026-09-08 05:22:59"
     },
     "OLUSDT": {
       "trend": "bull",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 5,
-      "short_score": 3,
-      "best_side": "WATCH_LONG",
-      "best_score": 5,
-      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:discount | 4H:OTE | 1D:bull",
-      "short_notes": "1W:bear | 15m:sweep | 15m:turtle_soup",
+      "long_score": 9,
+      "short_score": 1,
+      "best_side": "BUY",
+      "best_score": 9,
+      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:discount | 4H:OTE | 1D:bull | 15m:int_BOS | 15m:breaker_bull | 15m:breaker_bull | 15m:bull_engulf",
+      "short_notes": "1W:bear",
       "bull_ob_count": 0,
       "bear_ob_count": 2,
       "breaker_bull": 0,
@@ -9062,11 +9062,11 @@
       "nearest_bull_ob": null,
       "nearest_bear_ob": 0.0049794999999999996,
       "sweep_bull": false,
-      "sweep_bear": true,
+      "sweep_bear": false,
       "inducement_bull": false,
       "inducement_bear": false,
       "turtle_soup_bull": false,
-      "turtle_soup_bear": true,
+      "turtle_soup_bear": false,
       "nested_sweep_bull": false,
       "nested_sweep_bear": false,
       "in_discount": true,
@@ -9080,9 +9080,9 @@
       "hierarchy_short": false,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 3,
-      "confluence_short": 1,
-      "setup_grade_long": "C",
+      "confluence_long": 4,
+      "confluence_short": 0,
+      "setup_grade_long": "B",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
       "external_swing_n": 5,
@@ -9097,7 +9097,7 @@
       ],
       "eql": [],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 04:59:17"
+      "updated_at": "2026-09-08 05:15:07"
     },
     "TRXUSDT": {
       "trend": "range",
@@ -9209,19 +9209,19 @@
       ],
       "eql": [],
       "liquidity_pools": 9,
-      "updated_at": "2026-09-08 05:05:52"
+      "updated_at": "2026-09-08 05:21:48"
     },
     "FARTCOINUSDT": {
       "trend": "bull",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 5,
-      "short_score": 1,
+      "long_score": 8,
+      "short_score": 3,
       "best_side": "WATCH_LONG",
-      "best_score": 5,
-      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:nested_sweep | 4H:discount | 1D:bull | 15m:breaker_bull",
-      "short_notes": "1W:bear",
+      "best_score": 8,
+      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:nested_sweep | 4H:discount | 1D:bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull",
+      "short_notes": "1W:bear | 15m:sweep | 15m:bear_engulf",
       "bull_ob_count": 0,
       "bear_ob_count": 3,
       "breaker_bull": 0,
@@ -9229,7 +9229,7 @@
       "nearest_bull_ob": null,
       "nearest_bear_ob": 0.17465,
       "sweep_bull": false,
-      "sweep_bear": false,
+      "sweep_bear": true,
       "inducement_bull": false,
       "inducement_bear": false,
       "turtle_soup_bull": false,
@@ -9248,7 +9248,7 @@
       "session": "off_hours",
       "killzone": false,
       "confluence_long": 3,
-      "confluence_short": 0,
+      "confluence_short": 2,
       "setup_grade_long": "C",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
@@ -9262,18 +9262,18 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 04:17:17"
+      "updated_at": "2026-09-08 05:24:45"
     },
     "SLXUSDT": {
       "trend": "range",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 3,
+      "long_score": 4,
       "short_score": 4,
-      "best_side": "WATCH_SHORT",
+      "best_side": "WATCH_LONG",
       "best_score": 4,
-      "long_notes": "4H:mitigation_retest | 4H:OTE",
+      "long_notes": "4H:mitigation_retest | 4H:OTE | 15m:breaker_bull",
       "short_notes": "4H:mitigation_retest | 4H:premium | 4H:OTE",
       "bull_ob_count": 3,
       "bear_ob_count": 2,
@@ -9317,7 +9317,7 @@
         0.06468
       ],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 04:17:59"
+      "updated_at": "2026-09-08 05:25:18"
     },
     "CRVUSDT": {
       "trend": "range",
@@ -9370,7 +9370,7 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 05:05:03"
+      "updated_at": "2026-09-08 05:21:06"
     },
     "AIUSDT": {
       "trend": "bear",
@@ -9429,30 +9429,30 @@
         0.018775
       ],
       "liquidity_pools": 10,
-      "updated_at": "2026-09-08 05:00:44"
+      "updated_at": "2026-09-08 05:16:43"
     },
     "HUSDT": {
       "trend": "range",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 5,
-      "short_score": 3,
+      "long_score": 7,
+      "short_score": 5,
       "best_side": "WATCH_LONG",
-      "best_score": 5,
-      "long_notes": "4H:mitigation_retest | 4H:discount | 1D:bull | 15m:breaker_bull | 15m:breaker_bull",
-      "short_notes": "4H:breaker_retest | 15m:breaker_bear",
+      "best_score": 7,
+      "long_notes": "4H:mitigation_retest | 4H:discount | 1D:bull | 15m:sweep | 15m:turtle_soup | 15m:breaker_bull | 15m:breaker_bull",
+      "short_notes": "4H:breaker_retest | 15m:breaker_bear | 15m:breaker_bear | 15m:bear_engulf",
       "bull_ob_count": 2,
       "bear_ob_count": 4,
       "breaker_bull": 0,
       "breaker_bear": 4,
       "nearest_bull_ob": 0.07654,
       "nearest_bear_ob": 0.079,
-      "sweep_bull": false,
+      "sweep_bull": true,
       "sweep_bear": false,
       "inducement_bull": false,
       "inducement_bear": false,
-      "turtle_soup_bull": false,
+      "turtle_soup_bull": true,
       "turtle_soup_bear": false,
       "nested_sweep_bull": false,
       "nested_sweep_bear": false,
@@ -9467,9 +9467,9 @@
       "hierarchy_short": false,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 2,
-      "confluence_short": 1,
-      "setup_grade_long": "none",
+      "confluence_long": 3,
+      "confluence_short": 2,
+      "setup_grade_long": "C",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
       "external_swing_n": 5,
@@ -9486,7 +9486,7 @@
         0.070325
       ],
       "liquidity_pools": 8,
-      "updated_at": "2026-09-08 05:06:31"
+      "updated_at": "2026-09-08 05:22:35"
     },
     "PNUTUSDT": {
       "trend": "bull",
@@ -9494,11 +9494,11 @@
       "internal_event": "none",
       "external_event": "none",
       "long_score": 6,
-      "short_score": 5,
+      "short_score": 3,
       "best_side": "WATCH_LONG",
       "best_score": 6,
       "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:mitigation_retest | 1D:bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull",
-      "short_notes": "4H:breaker_retest | 4H:premium | 15m:sweep | 15m:turtle_soup",
+      "short_notes": "4H:breaker_retest | 4H:premium",
       "bull_ob_count": 2,
       "bear_ob_count": 2,
       "breaker_bull": 0,
@@ -9506,11 +9506,11 @@
       "nearest_bull_ob": 0.05051,
       "nearest_bear_ob": 0.05051,
       "sweep_bull": false,
-      "sweep_bear": true,
+      "sweep_bear": false,
       "inducement_bull": false,
       "inducement_bear": false,
       "turtle_soup_bull": false,
-      "turtle_soup_bear": true,
+      "turtle_soup_bear": false,
       "nested_sweep_bull": false,
       "nested_sweep_bear": false,
       "in_discount": false,
@@ -9525,9 +9525,9 @@
       "session": "off_hours",
       "killzone": false,
       "confluence_long": 3,
-      "confluence_short": 3,
+      "confluence_short": 2,
       "setup_grade_long": "C",
-      "setup_grade_short": "C",
+      "setup_grade_short": "none",
       "internal_swing_n": 3,
       "external_swing_n": 5,
       "ifvg_bull": 0,
@@ -9539,7 +9539,7 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 04:52:10"
+      "updated_at": "2026-09-08 05:24:20"
     },
     "BIGTIMEUSDT": {
       "trend": "range",
@@ -9596,7 +9596,7 @@
         0.0063254999999999995
       ],
       "liquidity_pools": 8,
-      "updated_at": "2026-09-08 05:00:05"
+      "updated_at": "2026-09-08 05:15:58"
     },
     "GRTUSDT": {
       "trend": "bull",
@@ -9653,7 +9653,7 @@
         0.0159
       ],
       "liquidity_pools": 8,
-      "updated_at": "2026-09-08 05:06:24"
+      "updated_at": "2026-09-08 05:22:12"
     },
     "ZKPUSDT": {
       "trend": "bull",
@@ -9822,18 +9822,18 @@
         0.0194
       ],
       "liquidity_pools": 8,
-      "updated_at": "2026-09-08 05:03:28"
+      "updated_at": "2026-09-08 05:19:22"
     },
     "SEIUSDT": {
       "trend": "bull",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 5,
+      "long_score": 6,
       "short_score": 1,
       "best_side": "WATCH_LONG",
-      "best_score": 5,
-      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:mitigation_retest | 4H:equilibrium | 1D:bull | 15m:breaker_bull | 15m:breaker_bull",
+      "best_score": 6,
+      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:mitigation_retest | 4H:equilibrium | 1D:bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull",
       "short_notes": "4H:premium | 4H:equilibrium",
       "bull_ob_count": 3,
       "bear_ob_count": 0,
@@ -9877,7 +9877,7 @@
       ],
       "eql": [],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 05:04:42"
+      "updated_at": "2026-09-08 05:20:33"
     },
     "ONTUSDT": {
       "trend": "range",
@@ -9885,11 +9885,11 @@
       "internal_event": "none",
       "external_event": "none",
       "long_score": 3,
-      "short_score": 8,
+      "short_score": 6,
       "best_side": "WATCH_SHORT",
-      "best_score": 8,
+      "best_score": 6,
       "long_notes": "4H:mitigation_retest | 4H:discount | 4H:equilibrium | 1D:bull",
-      "short_notes": "4H:breaker_retest | 4H:mitigation_retest | 4H:nested_sweep | 4H:equilibrium | 4H:candle_confirm | 15m:int_BOS | 15m:breaker_bear | 15m:breaker_bear",
+      "short_notes": "4H:breaker_retest | 4H:mitigation_retest | 4H:nested_sweep | 4H:equilibrium | 4H:candle_confirm | 15m:breaker_bear",
       "bull_ob_count": 4,
       "bear_ob_count": 2,
       "breaker_bull": 3,
@@ -9930,7 +9930,7 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 04:19:24"
+      "updated_at": "2026-09-08 05:26:46"
     },
     "MOODENGUSDT": {
       "trend": "bull",
@@ -9938,11 +9938,11 @@
       "internal_event": "none",
       "external_event": "none",
       "long_score": 5,
-      "short_score": 1,
+      "short_score": 2,
       "best_side": "WATCH_LONG",
       "best_score": 5,
       "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:discount | 4H:equilibrium | 1D:bull | 15m:breaker_bull | 15m:breaker_bull",
-      "short_notes": "4H:mitigation_retest | 4H:equilibrium",
+      "short_notes": "4H:mitigation_retest | 4H:equilibrium | 15m:bear_engulf",
       "bull_ob_count": 0,
       "bear_ob_count": 1,
       "breaker_bull": 0,
@@ -9969,7 +9969,7 @@
       "session": "off_hours",
       "killzone": false,
       "confluence_long": 3,
-      "confluence_short": 1,
+      "confluence_short": 2,
       "setup_grade_long": "C",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
@@ -9983,18 +9983,18 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 05:05:10"
+      "updated_at": "2026-09-08 05:20:50"
     },
     "FUSDT": {
       "trend": "range",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 2,
+      "long_score": 4,
       "short_score": 5,
       "best_side": "WATCH_SHORT",
       "best_score": 5,
-      "long_notes": "15m:breaker_bull | 15m:breaker_bull",
+      "long_notes": "15m:int_BOS | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull",
       "short_notes": "4H:sweep_high | 4H:turtle_soup | 4H:nested_sweep | 4H:weak_high_swept | 4H:premium",
       "bull_ob_count": 1,
       "bear_ob_count": 2,
@@ -10040,19 +10040,19 @@
         0.0030575
       ],
       "liquidity_pools": 8,
-      "updated_at": "2026-09-08 05:04:55"
+      "updated_at": "2026-09-08 05:20:58"
     },
     "BASEDUSDT": {
       "trend": "range",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 4,
-      "short_score": 2,
+      "long_score": 6,
+      "short_score": 1,
       "best_side": "WATCH_LONG",
-      "best_score": 4,
-      "long_notes": "4H:nested_sweep | 4H:discount | 1D:bull | 15m:breaker_bull",
-      "short_notes": "15m:breaker_bear | 15m:breaker_bear",
+      "best_score": 6,
+      "long_notes": "4H:nested_sweep | 4H:discount | 1D:bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull",
+      "short_notes": "15m:breaker_bear",
       "bull_ob_count": 0,
       "bear_ob_count": 1,
       "breaker_bull": 0,
@@ -10093,7 +10093,7 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 04:51:55"
+      "updated_at": "2026-09-08 05:24:04"
     },
     "MEGAUSDT": {
       "trend": "bull",
@@ -10428,12 +10428,12 @@
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 4,
-      "short_score": 2,
+      "long_score": 3,
+      "short_score": 3,
       "best_side": "WATCH_LONG",
-      "best_score": 4,
-      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull",
-      "short_notes": "4H:mitigation_retest | 4H:premium",
+      "best_score": 3,
+      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 15m:breaker_bull | 15m:breaker_bull",
+      "short_notes": "4H:mitigation_retest | 4H:premium | 15m:bear_engulf",
       "bull_ob_count": 0,
       "bear_ob_count": 2,
       "breaker_bull": 0,
@@ -10460,7 +10460,7 @@
       "session": "off_hours",
       "killzone": false,
       "confluence_long": 2,
-      "confluence_short": 2,
+      "confluence_short": 3,
       "setup_grade_long": "none",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
@@ -10476,7 +10476,7 @@
       ],
       "eql": [],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 05:06:39"
+      "updated_at": "2026-09-08 05:22:27"
     },
     "DOSUSDT": {
       "trend": "range",
@@ -10670,7 +10670,7 @@
       "breaker_bear": 0,
       "nearest_bull_ob": 0.005082,
       "nearest_bear_ob": null,
-      "sweep_bull": false,
+      "sweep_bull": true,
       "sweep_bear": false,
       "inducement_bull": false,
       "inducement_bear": false,
@@ -10689,7 +10689,7 @@
       "hierarchy_short": false,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 0,
+      "confluence_long": 1,
       "confluence_short": 1,
       "setup_grade_long": "none",
       "setup_grade_short": "none",
@@ -10704,7 +10704,7 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 04:52:18"
+      "updated_at": "2026-09-08 05:24:12"
     },
     "LITUSDT": {
       "trend": "range",
@@ -10812,7 +10812,7 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 05:07:19"
+      "updated_at": "2026-09-08 05:23:15"
     },
     "UNIUSDT": {
       "trend": "bull",
@@ -10932,11 +10932,11 @@
       "internal_event": "none",
       "external_event": "none",
       "long_score": 5,
-      "short_score": 6,
-      "best_side": "WATCH_SHORT",
-      "best_score": 6,
+      "short_score": 8,
+      "best_side": "SELL",
+      "best_score": 8,
       "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 4H:breaker_retest | 4H:mitigation_retest | 1D:bull",
-      "short_notes": "4H:mitigation_retest | 4H:premium | 4H:candle_confirm | 15m:breaker_bear | 15m:breaker_bear | 15m:breaker_bear",
+      "short_notes": "4H:mitigation_retest | 4H:premium | 4H:candle_confirm | 15m:turtle_soup | 15m:breaker_bear | 15m:breaker_bear | 15m:breaker_bear | 15m:breaker_bear",
       "bull_ob_count": 4,
       "bear_ob_count": 4,
       "breaker_bull": 2,
@@ -10948,7 +10948,7 @@
       "inducement_bull": false,
       "inducement_bear": false,
       "turtle_soup_bull": false,
-      "turtle_soup_bear": false,
+      "turtle_soup_bear": true,
       "nested_sweep_bull": false,
       "nested_sweep_bear": false,
       "in_discount": false,
@@ -10963,9 +10963,9 @@
       "session": "off_hours",
       "killzone": false,
       "confluence_long": 3,
-      "confluence_short": 3,
+      "confluence_short": 4,
       "setup_grade_long": "C",
-      "setup_grade_short": "C",
+      "setup_grade_short": "B",
       "internal_swing_n": 3,
       "external_swing_n": 5,
       "ifvg_bull": 0,
@@ -10977,18 +10977,18 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 04:17:51"
+      "updated_at": "2026-09-08 05:24:53"
     },
     "STXUSDT": {
       "trend": "bear",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 3,
+      "long_score": 4,
       "short_score": 7,
       "best_side": "SELL",
       "best_score": 7,
-      "long_notes": "4H:breaker_retest | 15m:breaker_bull",
+      "long_notes": "4H:breaker_retest | 15m:turtle_soup | 15m:breaker_bull",
       "short_notes": "4H:trend:bear | 4H:hierarchy_ok | 4H:mitigation_retest | 4H:nested_sweep | 4H:premium | 1W:bear | 15m:breaker_bear | 15m:breaker_bear",
       "bull_ob_count": 3,
       "bear_ob_count": 2,
@@ -11000,7 +11000,7 @@
       "sweep_bear": false,
       "inducement_bull": false,
       "inducement_bear": false,
-      "turtle_soup_bull": false,
+      "turtle_soup_bull": true,
       "turtle_soup_bear": false,
       "nested_sweep_bull": false,
       "nested_sweep_bear": false,
@@ -11015,7 +11015,7 @@
       "hierarchy_short": true,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 1,
+      "confluence_long": 2,
       "confluence_short": 4,
       "setup_grade_long": "none",
       "setup_grade_short": "B",
@@ -11035,7 +11035,7 @@
         0.25854999999999995
       ],
       "liquidity_pools": 9,
-      "updated_at": "2026-09-08 04:19:31"
+      "updated_at": "2026-09-08 05:26:38"
     },
     "UBUSDT": {
       "trend": "bull",
@@ -11199,7 +11199,7 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 04:18:58"
+      "updated_at": "2026-09-08 05:25:51"
     },
     "CROUSDT": {
       "trend": "bull",
@@ -11310,7 +11310,7 @@
         1.8054999999999999
       ],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 04:18:10"
+      "updated_at": "2026-09-08 05:25:36"
     },
     "ENJUSDT": {
       "trend": "range",
@@ -11371,11 +11371,11 @@
       "internal_event": "none",
       "external_event": "none",
       "long_score": 4,
-      "short_score": 1,
+      "short_score": 2,
       "best_side": "WATCH_LONG",
       "best_score": 4,
       "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 1D:bull | 15m:breaker_bull | 15m:breaker_bull",
-      "short_notes": "4H:premium",
+      "short_notes": "4H:premium | 15m:bear_engulf",
       "bull_ob_count": 2,
       "bear_ob_count": 0,
       "breaker_bull": 2,
@@ -11402,7 +11402,7 @@
       "session": "off_hours",
       "killzone": false,
       "confluence_long": 2,
-      "confluence_short": 1,
+      "confluence_short": 2,
       "setup_grade_long": "none",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
@@ -11419,7 +11419,7 @@
         0.2076
       ],
       "liquidity_pools": 8,
-      "updated_at": "2026-09-08 05:05:25"
+      "updated_at": "2026-09-08 05:21:22"
     },
     "AEVOUSDT": {
       "trend": "range",
@@ -11647,11 +11647,11 @@
       "internal_event": "none",
       "external_event": "none",
       "long_score": 3,
-      "short_score": 4,
-      "best_side": "WATCH_SHORT",
-      "best_score": 4,
+      "short_score": 3,
+      "best_side": "WATCH_LONG",
+      "best_score": 3,
       "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 1D:bull | 15m:breaker_bull",
-      "short_notes": "4H:mitigation_retest | 4H:premium | 1W:bear | 15m:breaker_bear",
+      "short_notes": "4H:mitigation_retest | 4H:premium | 1W:bear",
       "bull_ob_count": 0,
       "bear_ob_count": 2,
       "breaker_bull": 0,
@@ -11694,19 +11694,19 @@
         0.044039999999999996
       ],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 04:59:42"
+      "updated_at": "2026-09-08 05:15:15"
     },
     "DOTUSDT": {
       "trend": "bull",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 5,
-      "short_score": 3,
+      "long_score": 4,
+      "short_score": 4,
       "best_side": "WATCH_LONG",
-      "best_score": 5,
-      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 1D:bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull",
-      "short_notes": "4H:premium | 15m:breaker_bear | 15m:breaker_bear",
+      "best_score": 4,
+      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 1D:bull | 15m:breaker_bull | 15m:bull_engulf",
+      "short_notes": "4H:premium | 15m:breaker_bear | 15m:breaker_bear | 15m:breaker_bear",
       "bull_ob_count": 0,
       "bear_ob_count": 0,
       "breaker_bull": 0,
@@ -11732,9 +11732,9 @@
       "hierarchy_short": false,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 2,
+      "confluence_long": 3,
       "confluence_short": 1,
-      "setup_grade_long": "none",
+      "setup_grade_long": "C",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
       "external_swing_n": 5,
@@ -11750,7 +11750,7 @@
         0.8372
       ],
       "liquidity_pools": 8,
-      "updated_at": "2026-09-08 05:04:18"
+      "updated_at": "2026-09-08 05:20:11"
     },
     "JTOUSDT": {
       "trend": "range",
@@ -11867,11 +11867,11 @@
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 4,
+      "long_score": 5,
       "short_score": 3,
       "best_side": "WATCH_LONG",
-      "best_score": 4,
-      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 1W:bull | 1D:bull | 15m:sweep",
+      "best_score": 5,
+      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 1W:bull | 1D:bull | 15m:breaker_bull | 15m:breaker_bull",
       "short_notes": "4H:premium | 15m:breaker_bear | 15m:breaker_bear",
       "bull_ob_count": 1,
       "bear_ob_count": 0,
@@ -11879,7 +11879,7 @@
       "breaker_bear": 0,
       "nearest_bull_ob": 0.114705,
       "nearest_bear_ob": null,
-      "sweep_bull": true,
+      "sweep_bull": false,
       "sweep_bear": false,
       "inducement_bull": false,
       "inducement_bear": false,
@@ -11898,9 +11898,9 @@
       "hierarchy_short": false,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 3,
+      "confluence_long": 2,
       "confluence_short": 1,
-      "setup_grade_long": "C",
+      "setup_grade_long": "none",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
       "external_swing_n": 5,
@@ -11913,7 +11913,7 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 04:18:17"
+      "updated_at": "2026-09-08 05:25:44"
     },
     "YGGUSDT": {
       "trend": "range",
@@ -11968,7 +11968,7 @@
         0.021695
       ],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 05:03:37"
+      "updated_at": "2026-09-08 05:19:31"
     },
     "OPNUSDT": {
       "trend": "bull",
@@ -13012,7 +13012,7 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 05:06:16"
+      "updated_at": "2026-09-08 05:22:19"
     },
     "LIGHTUSDT": {
       "trend": "bull",
@@ -13855,7 +13855,7 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 6,
-      "updated_at": "2026-09-08 05:07:37"
+      "updated_at": "2026-09-08 05:23:23"
     },
     "ACUUSDT": {
       "trend": "bull",
@@ -14819,12 +14819,12 @@
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 5,
-      "short_score": 1,
+      "long_score": 7,
+      "short_score": 2,
       "best_side": "WATCH_LONG",
-      "best_score": 5,
-      "long_notes": "1D:bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull",
-      "short_notes": "4H:premium",
+      "best_score": 7,
+      "long_notes": "1D:bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull | 15m:breaker_bull",
+      "short_notes": "4H:premium | 15m:turtle_soup",
       "bull_ob_count": 0,
       "bear_ob_count": 0,
       "breaker_bull": 0,
@@ -14836,7 +14836,7 @@
       "inducement_bull": false,
       "inducement_bear": false,
       "turtle_soup_bull": false,
-      "turtle_soup_bear": false,
+      "turtle_soup_bear": true,
       "nested_sweep_bull": false,
       "nested_sweep_bear": false,
       "in_discount": false,
@@ -14851,7 +14851,7 @@
       "session": "off_hours",
       "killzone": false,
       "confluence_long": 0,
-      "confluence_short": 1,
+      "confluence_short": 2,
       "setup_grade_long": "none",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
@@ -14867,7 +14867,7 @@
         0.3982
       ],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 04:20:05"
+      "updated_at": "2026-09-08 05:26:15"
     },
     "ARKMUSDT": {
       "trend": "range",
@@ -15320,12 +15320,12 @@
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 1,
-      "short_score": 1,
+      "long_score": 0,
+      "short_score": 2,
       "best_side": "NONE",
-      "best_score": 1,
-      "long_notes": "15m:breaker_bull",
-      "short_notes": "15m:breaker_bear",
+      "best_score": 2,
+      "long_notes": "",
+      "short_notes": "15m:breaker_bear | 15m:bear_engulf",
       "bull_ob_count": 0,
       "bear_ob_count": 0,
       "breaker_bull": 0,
@@ -15352,7 +15352,7 @@
       "session": "off_hours",
       "killzone": false,
       "confluence_long": 0,
-      "confluence_short": 0,
+      "confluence_short": 1,
       "setup_grade_long": "none",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
@@ -15366,7 +15366,7 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 0,
-      "updated_at": "2026-09-08 04:58:52"
+      "updated_at": "2026-09-08 05:14:43"
     },
     "FETUSDT": {
       "trend": "range",
@@ -15760,11 +15760,11 @@
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 4,
+      "long_score": 6,
       "short_score": 2,
       "best_side": "WATCH_LONG",
-      "best_score": 4,
-      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 1D:bull | 15m:breaker_bull | 15m:breaker_bull",
+      "best_score": 6,
+      "long_notes": "4H:trend:bull | 4H:hierarchy_ok | 1H:ext_BOS | 1D:bull | 15m:breaker_bull | 15m:breaker_bull",
       "short_notes": "4H:premium | 1W:bear",
       "bull_ob_count": 2,
       "bear_ob_count": 0,
@@ -15808,7 +15808,7 @@
       ],
       "eql": [],
       "liquidity_pools": 7,
-      "updated_at": "2026-09-08 04:18:25"
+      "updated_at": "2026-09-08 05:26:31"
     },
     "METUSDT": {
       "trend": "range",
@@ -15874,11 +15874,11 @@
       "internal_event": "none",
       "external_event": "none",
       "long_score": 3,
-      "short_score": 2,
+      "short_score": 3,
       "best_side": "WATCH_LONG",
       "best_score": 3,
       "long_notes": "4H:discount | 15m:breaker_bull | 15m:breaker_bull",
-      "short_notes": "4H:mitigation_retest | 1W:bear",
+      "short_notes": "4H:mitigation_retest | 1W:bear | 15m:turtle_soup",
       "bull_ob_count": 0,
       "bear_ob_count": 2,
       "breaker_bull": 0,
@@ -15890,7 +15890,7 @@
       "inducement_bull": false,
       "inducement_bear": false,
       "turtle_soup_bull": false,
-      "turtle_soup_bear": false,
+      "turtle_soup_bear": true,
       "nested_sweep_bull": false,
       "nested_sweep_bear": false,
       "in_discount": true,
@@ -15905,7 +15905,7 @@
       "session": "off_hours",
       "killzone": false,
       "confluence_long": 1,
-      "confluence_short": 1,
+      "confluence_short": 2,
       "setup_grade_long": "none",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
@@ -15923,7 +15923,7 @@
         0.06655
       ],
       "liquidity_pools": 9,
-      "updated_at": "2026-09-08 05:06:00"
+      "updated_at": "2026-09-08 05:21:56"
     },
     "BREVUSDT": {
       "trend": "bull",
@@ -16201,12 +16201,12 @@
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 2,
-      "short_score": 1,
-      "best_side": "NONE",
-      "best_score": 2,
-      "long_notes": "1D:bull | 15m:turtle_soup",
-      "short_notes": "4H:premium",
+      "long_score": 1,
+      "short_score": 3,
+      "best_side": "WATCH_SHORT",
+      "best_score": 3,
+      "long_notes": "1D:bull",
+      "short_notes": "4H:premium | 15m:turtle_soup | 15m:bear_engulf",
       "bull_ob_count": 1,
       "bear_ob_count": 0,
       "breaker_bull": 1,
@@ -16217,8 +16217,8 @@
       "sweep_bear": false,
       "inducement_bull": false,
       "inducement_bear": false,
-      "turtle_soup_bull": true,
-      "turtle_soup_bear": false,
+      "turtle_soup_bull": false,
+      "turtle_soup_bear": true,
       "nested_sweep_bull": false,
       "nested_sweep_bear": false,
       "in_discount": false,
@@ -16232,8 +16232,8 @@
       "hierarchy_short": false,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 1,
-      "confluence_short": 1,
+      "confluence_long": 0,
+      "confluence_short": 3,
       "setup_grade_long": "none",
       "setup_grade_short": "none",
       "internal_swing_n": 3,
@@ -16253,18 +16253,18 @@
         1.00505
       ],
       "liquidity_pools": 12,
-      "updated_at": "2026-09-08 04:19:07"
+      "updated_at": "2026-09-08 05:25:59"
     },
     "CNPYUSDT": {
       "trend": "range",
       "last_event": "none",
       "internal_event": "none",
       "external_event": "none",
-      "long_score": 1,
+      "long_score": 0,
       "short_score": 0,
       "best_side": "NONE",
-      "best_score": 1,
-      "long_notes": "15m:bull_engulf",
+      "best_score": 0,
+      "long_notes": "",
       "short_notes": "",
       "bull_ob_count": 0,
       "bear_ob_count": 0,
@@ -16291,7 +16291,7 @@
       "hierarchy_short": false,
       "session": "off_hours",
       "killzone": false,
-      "confluence_long": 1,
+      "confluence_long": 0,
       "confluence_short": 0,
       "setup_grade_long": "none",
       "setup_grade_short": "none",
@@ -16306,7 +16306,7 @@
       "eqh": [],
       "eql": [],
       "liquidity_pools": 0,
-      "updated_at": "2026-09-08 05:03:00"
+      "updated_at": "2026-09-08 05:18:51"
     },
     "YBUSDT": {
       "trend": "bear",
@@ -16588,25 +16588,6 @@
     }
   },
   "engine_logs": [
-    "[03:24:19] Canli piyasa simulasyonu: tum USDT perpetual, 31 kasa | klasik=1h kapanis, Patlama/SMC=anlik (~20sn)",
-    "[03:24:19] Lab otomasyon acik: tarif uretimi/backtest arka planda calisacak",
-    "[03:24:19] Piyasa listesi: 457 sembol (tum USDT perpetual)",
-    "[03:24:21] Gemini gecici yogunluk (gemini-3.6-flash) — 4sn sonra yeniden (2/3)",
-    "[03:24:26] Gemini gecici yogunluk (gemini-3.6-flash) — 8sn sonra yeniden (3/3)",
-    "[03:24:35] Gemini test basarisiz (auth (AQ.)): gemini-3.6-flash: SDK: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.goog",
-    "[03:24:37] GitHub yedek: Actions otomatik senkron (token gerekmez) — public pull acik",
-    "[03:26:07] Calisiyor | tarama 15/457 | Aktif 4 | Fon $4383.01",
-    "[03:27:58] Calisiyor | tarama 30/457 | Aktif 4 | Fon $4383.01",
-    "[03:29:47] Calisiyor | tarama 45/457 | Aktif 4 | Fon $4383.01",
-    "[03:31:39] Calisiyor | tarama 60/457 | Aktif 4 | Fon $4383.01",
-    "[03:33:27] Calisiyor | tarama 75/457 | Aktif 4 | Fon $4383.01",
-    "[03:35:19] Calisiyor | tarama 90/457 | Aktif 4 | Fon $4383.01",
-    "[03:37:13] Calisiyor | tarama 105/457 | Aktif 4 | Fon $4383.01",
-    "[03:39:06] Calisiyor | tarama 120/457 | Aktif 4 | Fon $4383.01",
-    "[03:41:02] Calisiyor | tarama 135/457 | Aktif 4 | Fon $4383.01",
-    "[03:41:04] Piyasa listesi: 457 sembol (tum USDT perpetual)",
-    "[03:42:52] Calisiyor | tarama 150/457 | Aktif 4 | Fon $4383.01",
-    "[03:44:46] Calisiyor | tarama 165/457 | Aktif 4 | Fon $4383.01",
     "[03:47:32] State yuklendi [github] | acik 4 | kapanan 22 | github=ok | sync=actions",
     "[03:47:32] HTTP state API :10000",
     "[03:47:32] Canli piyasa simulasyonu: tum USDT perpetual, 31 kasa | klasik=1h kapanis, Patlama/SMC=anlik (~20sn)",
@@ -16687,7 +16668,26 @@
     "[05:01:37] Calisiyor | tarama 60/457 | Aktif 4 | Fon $4383.01",
     "[05:03:30] Calisiyor | tarama 75/457 | Aktif 4 | Fon $4383.01",
     "[05:05:28] Calisiyor | tarama 90/457 | Aktif 4 | Fon $4383.01",
-    "[05:07:30] Calisiyor | tarama 105/457 | Aktif 4 | Fon $4383.01"
+    "[05:07:30] Calisiyor | tarama 105/457 | Aktif 4 | Fon $4383.01",
+    "[05:09:29] State yuklendi [github] | acik 4 | kapanan 22 | github=ok | sync=actions",
+    "[05:09:29] HTTP state API :10000",
+    "[05:09:29] Canli piyasa simulasyonu: tum USDT perpetual, 31 kasa | klasik=1h kapanis, Patlama/SMC=anlik (~20sn)",
+    "[05:09:29] Lab otomasyon acik: tarif uretimi/backtest arka planda calisacak",
+    "[05:09:30] Piyasa listesi: 457 sembol (tum USDT perpetual)",
+    "[05:09:31] Gemini gecici yogunluk (gemini-3.6-flash) — 4sn sonra yeniden (2/3)",
+    "[05:09:36] Gemini gecici yogunluk (gemini-3.6-flash) — 8sn sonra yeniden (3/3)",
+    "[05:09:47] Gemini yeniden deneme basarili (gemini-3.6-flash, deneme 3)",
+    "[05:09:47] Gemini baglantisi OK (auth (AQ.), model gemini-3.6-flash)",
+    "[05:09:49] GitHub yedek: Actions otomatik senkron (token gerekmez) — public pull acik",
+    "[05:11:26] Calisiyor | tarama 15/457 | Aktif 4 | Fon $4383.01",
+    "[05:13:26] Calisiyor | tarama 30/457 | Aktif 4 | Fon $4383.01",
+    "[05:15:26] Calisiyor | tarama 45/457 | Aktif 4 | Fon $4383.01",
+    "[05:17:28] Calisiyor | tarama 60/457 | Aktif 4 | Fon $4383.01",
+    "[05:19:24] Calisiyor | tarama 75/457 | Aktif 4 | Fon $4383.01",
+    "[05:21:25] Calisiyor | tarama 90/457 | Aktif 4 | Fon $4383.01",
+    "[05:23:26] Calisiyor | tarama 105/457 | Aktif 4 | Fon $4383.01",
+    "[05:25:29] Calisiyor | tarama 120/457 | Aktif 4 | Fon $4383.01",
+    "[05:25:31] Piyasa listesi: 457 sembol (tum USDT perpetual)"
   ],
   "equity_curve": [
     {
@@ -16883,7 +16883,7 @@
     }
   ],
   "lab_summary": {
-    "updated_at": "2026-09-08 05:07:30",
+    "updated_at": "2026-09-08 05:25:29",
     "recipe_count": 48,
     "backtest_count": 40,
     "paper_count": 5,
@@ -17174,7 +17174,7 @@
     ],
     "pipeline": {
       "status": "ok",
-      "last_run_at": "2026-09-08 04:54:04",
+      "last_run_at": "2026-09-08 05:09:48",
       "last_generate_at": "2026-09-04 18:28:14",
       "last_backtest_at": "2026-09-04 18:52:36",
       "last_message": "Arastirma 0, uretim 0, backtest 0, yeni aday 0",
@@ -17187,8 +17187,8 @@
       "gemini_configured": true,
       "research_enabled": true,
       "processed_videos": [
-        "Nmu5Rkt7Mjw",
-        "DHqGzh5PN0s"
+        "DHqGzh5PN0s",
+        "Nmu5Rkt7Mjw"
       ],
       "last_youtube_at": "2026-09-04 17:39:23",
       "youtube_recipes": 0,
@@ -17232,5 +17232,5 @@
     "lab_auto": true,
     "github_token": false
   },
-  "updated_at": "2026-09-08 05:08:05"
+  "updated_at": "2026-09-08 05:26:54"
 }
