@@ -9,6 +9,8 @@ from strategies.helpers import make_signal, valid_row
 
 
 class RecipeStrategy(Strategy):
+    entry_mode = "live"
+
     def __init__(self, recipe: StrategyRecipe, ledger: str):
         self.recipe = recipe
         self.name = recipe.name

@@ -75,20 +75,73 @@ def _video_ids_from_rss(channel_id: str, limit: int) -> list[tuple[str, str]]:
     return out
 
 
-def _get_transcript(video_id: str) -> Optional[str]:
+def _chunks_to_text(chunks) -> str:
+    parts = []
+    for c in chunks:
+        if isinstance(c, dict):
+            t = c.get("text")
+        else:
+            t = getattr(c, "text", None)
+        if t:
+            parts.append(str(t))
+    return " ".join(parts)
+
+
+def _get_transcript(video_id: str, *, log=None) -> Optional[str]:
+    """Transkript al. youtube-transcript-api 0.x (get_transcript) ve 1.x (fetch) uyumlu."""
     try:
         from youtube_transcript_api import YouTubeTranscriptApi
         from youtube_transcript_api._errors import TranscriptsDisabled, NoTranscriptFound
+    except Exception as e:
+        if log:
+            log(f"YouTube modul hatasi: {e}")
+        return None
 
-        for langs in (["tr"], ["tr", "en"], ["en"]):
+    lang_sets = (["tr"], ["tr", "en"], ["en"])
+    # v1.x: instance.fetch(video_id, languages=...)
+    if hasattr(YouTubeTranscriptApi, "fetch"):
+        api = YouTubeTranscriptApi()
+        for langs in lang_sets:
             try:
-                chunks = YouTubeTranscriptApi.get_transcript(video_id, languages=langs)
-                return " ".join(c["text"] for c in chunks if c.get("text"))
+                fetched = api.fetch(video_id, languages=langs)
+                text = _chunks_to_text(fetched)
+                if len(text) >= 80:
+                    return text
             except (TranscriptsDisabled, NoTranscriptFound):
                 continue
+            except Exception as e:
+                if log:
+                    log(f"YouTube {video_id} transkript ({','.join(langs)}): {e}")
+                continue
+        try:
+            fetched = api.fetch(video_id)
+            text = _chunks_to_text(fetched)
+            return text if len(text) >= 80 else None
+        except Exception as e:
+            if log:
+                log(f"YouTube {video_id} transkript alinamadi: {e}")
+            return None
+
+    # v0.x: classmethod get_transcript
+    for langs in lang_sets:
+        try:
+            chunks = YouTubeTranscriptApi.get_transcript(video_id, languages=langs)
+            text = _chunks_to_text(chunks)
+            if len(text) >= 80:
+                return text
+        except (TranscriptsDisabled, NoTranscriptFound):
+            continue
+        except Exception as e:
+            if log:
+                log(f"YouTube {video_id} transkript ({','.join(langs)}): {e}")
+            continue
+    try:
         chunks = YouTubeTranscriptApi.get_transcript(video_id)
-        return " ".join(c["text"] for c in chunks if c.get("text"))
-    except Exception:
+        text = _chunks_to_text(chunks)
+        return text if len(text) >= 80 else None
+    except Exception as e:
+        if log:
+            log(f"YouTube {video_id} transkript alinamadi: {e}")
         return None
 
 
@@ -100,7 +153,7 @@ def collect_youtube_recipes(state: dict, *, log=None) -> list[dict]:
     candidates: list[tuple[str, str]] = []
 
     for vid in YOUTUBE_VIDEO_IDS:
-        if vid and vid not in processed:
+        if vid:
             candidates.append((vid, f"video_{vid}"))
 
     per_channel = max(1, YOUTUBE_MAX_VIDEOS_PER_RUN // max(1, len(YOUTUBE_CHANNEL_IDS) or 1))
@@ -120,9 +173,10 @@ def collect_youtube_recipes(state: dict, *, log=None) -> list[dict]:
         if vid in seen_ids:
             continue
         seen_ids.add(vid)
-        text = _get_transcript(vid)
-        if not text or len(text) < 80:
-            processed.add(vid)
+        text = _get_transcript(vid, log=log)
+        if not text:
+            if log:
+                log(f"YouTube {vid}: transkript yok veya cok kisa — sonraki turda tekrar denenecek")
             continue
         raw = generate_recipes_from_text(
             source_label="YouTube teknik analiz videosu",

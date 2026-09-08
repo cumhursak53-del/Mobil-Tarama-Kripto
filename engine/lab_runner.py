@@ -123,7 +123,7 @@ def run_lab_pipeline(*, log=None, force: bool = False) -> dict:
         pending = _pending_recipes(state, LAB_BACKTEST_BATCH)
         backtested = 0
         promoted = 0
-        if pending and _paper_slots_free(state) > 0:
+        if pending:
             symbols = fetch_symbols(LAB_BACKTEST_UNIVERSE)[:LAB_BACKTEST_UNIVERSE]
             dominance = fetch_dominance()
             symbol_frames = {}

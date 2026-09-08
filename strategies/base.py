@@ -48,7 +48,7 @@ class MarketContext:
 class Strategy(ABC):
     name: str
     ledger: str
-    entry_mode: str = "bar_close"  # bar_close | live
+    entry_mode: str = "live"  # bar_close | live
     entry_tf: str = "1h"
 
     def uses_live_entry(self) -> bool:

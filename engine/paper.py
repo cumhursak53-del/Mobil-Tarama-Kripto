@@ -269,8 +269,7 @@ def run_paper(scan_limit: int = SCAN_SYMBOLS) -> None:
     start_http(pf)
     pf.log(
         "Canli piyasa simulasyonu: tum USDT perpetual, "
-        f"{len(LEDGER_NAMES)} kasa | klasik={ENTRY_TF} kapanis, "
-        f"Patlama/SMC=anlik (~{PRICE_POLL_SEC}sn)"
+        f"{len(LEDGER_NAMES)} kasa | tum kasalar=anlik giris (~{PRICE_POLL_SEC}sn)"
     )
     if LAB_AUTO:
         pf.log("Lab otomasyon acik: tarif uretimi/backtest arka planda calisacak")
