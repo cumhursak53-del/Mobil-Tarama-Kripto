@@ -19,20 +19,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Secret kontrolu
-        env:
-          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
-        run: |
-          if [ -z "$RENDER_API_KEY" ]; then
-            echo "::error::RENDER_API_KEY GitHub secret olarak tanimli degil."
-            echo "Settings -> Secrets and variables -> Actions -> New repository secret"
-            echo "Ad: RENDER_API_KEY | Deger: Render Account -> API Keys (rnd_...)"
-            exit 1
-          fi
-          echo "RENDER_API_KEY mevcut."
-
-      - name: Render Worker env uygula
+      - name: Render API ile env senkron (opsiyonel)
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: python scripts/sync_render_env.py --deploy
+        run: |
+          if [ -z "$RENDER_API_KEY" ]; then
+            echo "::notice::RENDER_API_KEY secret yok — atlandi."
+            echo "render.env deploy ile otomatik yuklenir (engine/env_loader.py). Secret opsiyoneldir."
+            exit 0
+          fi
+          python scripts/sync_render_env.py --deploy
+
+      - name: render.env dogrulama
+        run: |
+          test -f render.env
+          grep -q "WEB_RESEARCH_ENABLED=1" render.env
+          grep -q "ENTRY_MODE_DEFAULT=live" render.env
+          echo "render.env OK — bir sonraki Render deploy'da uygulanacak."

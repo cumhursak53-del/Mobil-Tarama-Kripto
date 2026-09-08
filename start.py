@@ -9,6 +9,10 @@ if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 os.chdir(ROOT)
 
+from engine.env_loader import bootstrap_env
+
+bootstrap_env()
+
 from engine.config import SCAN_SYMBOLS
 from engine.paper import run_paper
 
