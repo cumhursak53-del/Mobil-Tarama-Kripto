@@ -1,0 +1,26 @@
+name: Sync Render env
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - render.env
+      - scripts/sync_render_env.py
+      - .github/workflows/sync-render-env.yml
+  workflow_dispatch:
+
+concurrency:
+  group: sync-render-env
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Render Worker env uygula
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python scripts/sync_render_env.py --deploy
