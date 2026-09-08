@@ -101,13 +101,13 @@
     "lab_auto": true,
     "github_token": false
   },
-  "updated_at": "2026-09-08 10:41:53",
+  "updated_at": "2026-09-08 10:56:29",
   "pipeline": {
     "status": "ok",
-    "last_run_at": "2026-09-08 10:27:28",
+    "last_run_at": "2026-09-08 10:45:35",
     "last_generate_at": "2026-09-04 18:28:14",
     "last_backtest_at": "2026-09-04 18:52:36",
-    "last_message": "Arastirma 0, uretim 0, backtest 0, yeni aday 0",
+    "last_message": "Arastirma 2, uretim 0, backtest 0, yeni aday 0",
     "last_generated": 24,
     "last_backtested": 8,
     "last_promoted": 2,
@@ -123,42 +123,43 @@
     "last_youtube_at": "2026-09-04 17:39:23",
     "youtube_recipes": 0,
     "processed_news_batches": [
-      "5d815596c566eb15",
-      "d3dc1e0c4c8d3138",
-      "067ddbb109f6cd02",
-      "ad0ee130a78b4cc9",
+      "21abdfce3a3f4055",
       "dc8ed0ca6aa87bdf",
-      "be50becf62b0d092",
-      "d8bd39be02f269db",
-      "0ac389c19145fda2",
-      "385fdab4931f0c1e",
-      "9f534691102e28ba",
-      "3f1878d5951646b6",
-      "b56880a1125f650e",
-      "47a9cc50e0cfb5b1",
-      "3829917288685cbe",
-      "e86ea47c5eddc046",
       "4645a3e1d917529b",
       "0f50025ee2fc1bd9",
-      "a91f3bc5c8767db3",
-      "d9dc14c4fba72caa",
-      "4c908475ef719cef",
-      "feeb252249f4fef4",
-      "bbd928667f726f3b",
-      "cbf58e11924b1916",
-      "93d0bf32b2bd2f81",
-      "769eccc41bbe4a79",
-      "fa22198ff9323360",
-      "21abdfce3a3f4055",
-      "0c9b92e5d6a68a58",
-      "f86a57a85bd7dbc5",
-      "9b80b7466d357505",
-      "cdf526784ed34eca",
+      "0ac389c19145fda2",
+      "3829917288685cbe",
+      "e86ea47c5eddc046",
       "49c9026d84ca70ac",
-      "4a03937b58d79371"
+      "067ddbb109f6cd02",
+      "2bc902aff2d5e518",
+      "cbf58e11924b1916",
+      "4a03937b58d79371",
+      "fa22198ff9323360",
+      "ad0ee130a78b4cc9",
+      "3f1878d5951646b6",
+      "9b80b7466d357505",
+      "b56880a1125f650e",
+      "769eccc41bbe4a79",
+      "cdf526784ed34eca",
+      "9f534691102e28ba",
+      "d9dc14c4fba72caa",
+      "be50becf62b0d092",
+      "feeb252249f4fef4",
+      "47a9cc50e0cfb5b1",
+      "a91f3bc5c8767db3",
+      "d8bd39be02f269db",
+      "bbd928667f726f3b",
+      "d3dc1e0c4c8d3138",
+      "93d0bf32b2bd2f81",
+      "0c9b92e5d6a68a58",
+      "385fdab4931f0c1e",
+      "5d815596c566eb15",
+      "f86a57a85bd7dbc5",
+      "4c908475ef719cef"
     ],
-    "last_news_at": "2026-09-08 10:07:23",
-    "news_recipes": 2
+    "last_news_at": "2026-09-08 10:45:35",
+    "news_recipes": 4
   },
   "recipes": [
     {
@@ -1405,6 +1406,52 @@
       ],
       "require_aligned": true,
       "source": "news:4a03937b58d79371"
+    },
+    {
+      "id": "66780557",
+      "name": "btc_golden_cross_long",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "week_bias",
+          "value": 1
+        },
+        {
+          "type": "momentum_score",
+          "side": "long",
+          "min": 4
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "news:2bc902aff2d5e518"
+    },
+    {
+      "id": "61f1393e",
+      "name": "macro_pressure_short",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "week_bias",
+          "value": -1
+        },
+        {
+          "type": "smc",
+          "tf": "4h",
+          "kind": "trend_bear"
+        }
+      ],
+      "require_aligned": true,
+      "source": "news:2bc902aff2d5e518"
     }
   ],
   "backtests": [
