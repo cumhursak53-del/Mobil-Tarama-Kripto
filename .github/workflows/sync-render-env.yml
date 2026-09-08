@@ -19,6 +19,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Secret kontrolu
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          if [ -z "$RENDER_API_KEY" ]; then
+            echo "::error::RENDER_API_KEY GitHub secret olarak tanimli degil."
+            echo "Settings -> Secrets and variables -> Actions -> New repository secret"
+            echo "Ad: RENDER_API_KEY | Deger: Render Account -> API Keys (rnd_...)"
+            exit 1
+          fi
+          echo "RENDER_API_KEY mevcut."
+
       - name: Render Worker env uygula
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}

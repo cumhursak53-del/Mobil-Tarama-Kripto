@@ -67,7 +67,14 @@ def _find_service(api_key: str) -> dict:
 def sync(*, deploy: bool = False) -> None:
     api_key = (os.environ.get("RENDER_API_KEY") or "").strip()
     if not api_key:
-        print("RENDER_API_KEY tanimli degil — Render env senkron atlandi.", file=sys.stderr)
+        msg = (
+            "RENDER_API_KEY tanimli degil.\n"
+            "GitHub -> Settings -> Secrets and variables -> Actions -> New repository secret\n"
+            "  Ad: RENDER_API_KEY\n"
+            "  Deger: Render Dashboard -> Account Settings -> API Keys -> Create (rnd_...)\n"
+            "Sonra Actions -> Sync Render env -> Re-run workflow"
+        )
+        print(msg, file=sys.stderr)
         sys.exit(0 if os.environ.get("GITHUB_ACTIONS") != "true" else 1)
 
     file_vars = _load_render_env(ENV_FILE)
