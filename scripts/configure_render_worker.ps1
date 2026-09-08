@@ -79,4 +79,4 @@ Write-Host "Env guncellendi." -ForegroundColor Green
 
 Write-Host "Deploy tetikleniyor..." -ForegroundColor Cyan
 Invoke-RestMethod -Method Post -Uri "https://api.render.com/v1/services/$($svc.id)/deploys" -Headers $headers -Body "{}" -TimeoutSec 60 | Out-Null
-Write-Host "Deploy baslatildi: https://$ServiceName.onrender.com" -ForegroundColor Green
+Write-Host "Deploy baslatildi: https://${ServiceName}.onrender.com" -ForegroundColor Green
