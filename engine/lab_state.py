@@ -61,10 +61,13 @@ def empty_lab_state() -> dict:
         "research": {
             "processed_videos": [],
             "processed_news_batches": [],
+            "processed_web_queries": [],
             "last_youtube_at": "",
             "last_news_at": "",
+            "last_web_at": "",
             "youtube_recipes": 0,
             "news_recipes": 0,
+            "web_recipes": 0,
         },
         "updated_at": now_tr(),
     }

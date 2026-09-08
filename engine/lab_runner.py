@@ -106,7 +106,7 @@ def run_lab_pipeline(*, log=None, force: bool = False) -> dict:
             researched = len(new_research)
             pipe["last_researched"] = researched
             if log:
-                log(f"Arastirma: {researched} yeni tarif (YouTube/haber/Gemini)")
+                log(f"Arastirma: {researched} yeni tarif (YouTube/haber/web/Gemini)")
 
         need_recipes = len(state.get("recipes") or []) < LAB_MIN_RECIPES or (
             force and _paper_slots_free(state) > 0 and len(_pending_recipes(state, 1)) == 0

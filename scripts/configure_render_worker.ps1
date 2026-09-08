@@ -16,6 +16,9 @@ $EnvVars = [ordered]@{
     YOUTUBE_VIDEO_IDS          = "DHqGzh5PN0s,Nmu5Rkt7Mjw"
     YOUTUBE_CHANNEL_IDS        = "@teknikanalizdersleri"
     LAB_MAX_CANDIDATES         = "8"
+    WEB_RESEARCH_ENABLED       = "1"
+    WEB_RESEARCH_QUERIES_PER_RUN = "2"
+    WEB_RESEARCH_AI_QUERIES    = "1"
 }
 
 function Show-ManualInstructions {

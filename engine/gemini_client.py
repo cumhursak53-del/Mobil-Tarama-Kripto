@@ -319,6 +319,47 @@ En fazla {max_recipes} tarif. JSON array only.
         return []
 
 
+def suggest_web_queries(
+    *,
+    already_done: list[str] | None = None,
+    limit: int = 2,
+    log: LogFn | None = None,
+) -> list[str]:
+    """Gemini ile yeni web arama sorgulari uret."""
+    if not gemini_available():
+        return []
+    done = already_done or []
+    prompt = f"""Sen kripto vadeli islem strateji arastirmacisisin.
+Asagidaki konularda internette aranacak {limit} farkli Ingilizce arama sorgusu uret.
+Sorgular teknik, backtest edilebilir kurallar icermeli (indikator, SMC, yapı, hacim vb.).
+
+Daha once islenmis sorgu hash/id listesi (tekrarlama): {done[:15]}
+
+Cikti: JSON array of strings, ornek: ["query one", "query two"]
+Sadece JSON array, baska metin yok.
+"""
+    try:
+        raw_text = _generate_text(prompt=prompt, json_mode=True, log=log)
+        parsed = _extract_json(raw_text)
+        if isinstance(parsed, str):
+            return [parsed.strip()][:limit]
+        if not isinstance(parsed, list):
+            return []
+        out = []
+        for item in parsed:
+            if isinstance(item, str) and item.strip():
+                out.append(item.strip()[:160])
+            elif isinstance(item, dict) and item.get("query"):
+                out.append(str(item["query"]).strip()[:160])
+            if len(out) >= limit:
+                break
+        return out
+    except Exception as e:
+        if log:
+            log(f"Web sorgu onerisi hatasi: {_format_error(e)}")
+        return []
+
+
 def generate_smc_commentary(
     *,
     symbol: str,

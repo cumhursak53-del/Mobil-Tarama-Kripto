@@ -138,6 +138,19 @@ NEWS_RSS_URLS = [
 ]
 NEWS_MAX_HEADLINES = int(os.environ.get("NEWS_MAX_HEADLINES", "15"))
 
+# Internet arastirmasi (web arama + sayfa okuma)
+WEB_RESEARCH_ENABLED = os.environ.get("WEB_RESEARCH_ENABLED", "1") == "1"
+WEB_RESEARCH_QUERIES_PER_RUN = int(os.environ.get("WEB_RESEARCH_QUERIES_PER_RUN", "2"))
+WEB_RESEARCH_MAX_RESULTS = int(os.environ.get("WEB_RESEARCH_MAX_RESULTS", "5"))
+WEB_RESEARCH_MAX_PAGES = int(os.environ.get("WEB_RESEARCH_MAX_PAGES", "2"))
+WEB_RESEARCH_AI_QUERIES = os.environ.get("WEB_RESEARCH_AI_QUERIES", "1") == "1"
+WEB_RESEARCH_QUERIES = [
+    x.strip() for x in os.environ.get("WEB_RESEARCH_QUERIES", "").split("|") if x.strip()
+]
+WEB_RESEARCH_TOPICS = [
+    x.strip() for x in os.environ.get("WEB_RESEARCH_TOPICS", "").split("|") if x.strip()
+]
+
 EXCLUDED_SYMBOLS = {
     "USDCUSDT", "FDUSDUSDT", "USDPUSDT", "BTCDOMUSDT", "DEFIUSDT", "UBERUSDT",
     "BTCSTUSDT", "USDPUSDT",

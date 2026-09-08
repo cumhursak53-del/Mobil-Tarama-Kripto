@@ -76,15 +76,17 @@ def render() -> None:
     research_on = bool(flags.get("research_enabled", research.get("research_enabled", True)))
     gemini_ok = bool(flags.get("gemini_configured", research.get("gemini_configured")))
     has_activity = bool(
-        research.get("last_youtube_at") or research.get("last_news_at")
-        or (research.get("youtube_recipes") or research.get("news_recipes"))
+        research.get("last_youtube_at") or research.get("last_news_at") or research.get("last_web_at")
+        or (research.get("youtube_recipes") or research.get("news_recipes") or research.get("web_recipes"))
     )
 
     if research_on and gemini_ok:
         st.success(
             f"Gemini arastirma **motor uzerinde acik** | YouTube: {research.get('last_youtube_at') or '-'} "
             f"| Haber: {research.get('last_news_at') or '-'} "
-            f"| Uretilen: YT {research.get('youtube_recipes', 0)} + haber {research.get('news_recipes', 0)}"
+            f"| Web: {research.get('last_web_at') or '-'} "
+            f"| Uretilen: YT {research.get('youtube_recipes', 0)} + haber {research.get('news_recipes', 0)} "
+            f"+ web {research.get('web_recipes', 0)}"
         )
     elif research_on and has_activity:
         st.success("Gemini arastirma calismis (motor log / lab_state kaniti var).")
@@ -132,7 +134,8 @@ def render() -> None:
         (
             "0. Gemini arastirma",
             gemini_ok and (has_activity or pipe_status in ("ok", "running")),
-            f"Motor key: {'var' if gemini_ok else 'YOK'} | YT {research.get('youtube_recipes', 0)} + haber {research.get('news_recipes', 0)}",
+            f"Motor key: {'var' if gemini_ok else 'YOK'} | YT {research.get('youtube_recipes', 0)} + "
+            f"haber {research.get('news_recipes', 0)} + web {research.get('web_recipes', 0)}",
         ),
         ("1. Otomasyon motoru", LAB_AUTO and pipe_status in ("ok", "running"), f"Durum: {pipe_status} | Son: {pipe_run}"),
         ("2. Tarif havuzu", recipe_n > 0, f"{recipe_n} tarif" if recipe_n else "Ilk calismada uretilecek"),
