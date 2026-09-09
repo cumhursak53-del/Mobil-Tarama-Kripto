@@ -158,6 +158,24 @@ class Portfolio:
             except Exception:
                 continue
 
+    def reset_trading(self, *, keep_scans: bool = True, keep_signals: bool = True) -> None:
+        """Acik pozisyonlari ve islem gecmisini sifirla; kasa bakiyelerini baslangica cek."""
+        self.positions.clear()
+        self.history.clear()
+        self.pending_orders.clear()
+        self._equity_curve.clear()
+        self._symbol_sl_until.clear()
+        self.ledgers = {k: KASA_START_USD for k in LEDGER_NAMES}
+        self._ensure_lab_ledgers()
+        for ledger in self.active_lab_ledgers():
+            self.ledgers[ledger] = KASA_START_USD
+        if not keep_signals:
+            self.signal_log = {}
+        if not keep_scans:
+            self.patlama_scan.clear()
+            self.smc_scan.clear()
+        self.log("Islem gecmisi ve acik pozisyonlar sifirlandi")
+
     def save(self, sync_github: bool = False) -> None:
         payload = self.snapshot()
         with open(self.path, "w", encoding="utf-8") as f:
