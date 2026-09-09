@@ -77,6 +77,9 @@ class Portfolio:
             self.load()
         self.lab_state = load_lab_state()
         self._ensure_lab_ledgers()
+        if os.environ.get("RESET_TRADING_ON_START", "0") == "1":
+            self.reset_trading(keep_scans=True, keep_signals=True)
+            self.save(sync_github=bool(GITHUB_TOKEN))
         n_pos = len(self.positions)
         n_hist = len(self.history)
         sync_mode = "token" if GITHUB_TOKEN else "actions"
