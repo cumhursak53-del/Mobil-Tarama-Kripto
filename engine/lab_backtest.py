@@ -6,7 +6,16 @@ from typing import Optional
 import pandas as pd
 
 from engine.backtest import _intrabar_exit, _slice_closed
-from engine.config import FIDELITY_MAX_DD, KASA_START_USD, LAB_MIN_BACKTEST_PF, LAB_MIN_BACKTEST_TRADES, TAKER_FEE
+from engine.config import (
+    FIDELITY_MAX_DD,
+    KASA_START_USD,
+    LAB_MIN_BACKTEST_PF,
+    LAB_MIN_BACKTEST_TRADES,
+    LAB_QUICK_BARS,
+    LAB_QUICK_MIN_PF,
+    LAB_QUICK_MIN_TRADES,
+    TAKER_FEE,
+)
 from engine.context import build_context, indicate_frame
 from engine.strategy_recipe import StrategyRecipe, evaluate_recipe
 from engine.types import Side
@@ -125,6 +134,41 @@ def summarize_recipe_results(results: list[dict]) -> dict:
         "passed": passed,
         "symbols": len(results),
     }
+
+
+def _trim_frames(frames: dict[str, pd.DataFrame], bars: int) -> dict[str, pd.DataFrame]:
+    out: dict[str, pd.DataFrame] = {}
+    for tf, df in frames.items():
+        if df is None or df.empty:
+            continue
+        out[tf] = df.iloc[-bars:].copy() if len(df) > bars else df.copy()
+    return out
+
+
+def quick_screen_recipe(
+    recipe: StrategyRecipe | dict,
+    symbol: str,
+    frames: dict[str, pd.DataFrame],
+    dominance: Optional[dict] = None,
+    *,
+    bars: int = LAB_QUICK_BARS,
+    warmup: int = 80,
+) -> dict:
+    """Hizli eleme — tek sembol, son N bar."""
+    rec = recipe if isinstance(recipe, StrategyRecipe) else StrategyRecipe.from_dict(recipe)
+    trimmed = _trim_frames(frames, bars)
+    if "1h" not in trimmed or len(trimmed["1h"]) < warmup + 20:
+        return {"passed": False, "reason": "not_enough_data", "metrics": {}}
+    result = backtest_recipe(rec, symbol, trimmed, dominance, warmup=warmup)
+    metrics = summarize_recipe_results([result])
+    pf = metrics.get("profit_factor")
+    passed = (
+        metrics.get("n", 0) >= LAB_QUICK_MIN_TRADES
+        and pf is not None
+        and pf >= LAB_QUICK_MIN_PF
+        and metrics.get("pnl", 0) > 0
+    )
+    return {"passed": passed, "metrics": metrics, "result": result}
 
 
 def run_lab_backtests(recipes: list[dict], symbol_frames: dict[str, dict], dominance: Optional[dict] = None) -> list[dict]:

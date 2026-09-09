@@ -15,6 +15,8 @@ from engine.config import (
     PATLAMA_LEDGER,
     PRICE_POLL_SEC,
     PRIORITY_LEDGERS,
+    RESEARCH_INTERVAL_SEC,
+    RESEARCH_SEPARATE,
     SCAN_MODE,
     SCAN_SYMBOLS,
     SMT_ENABLED,
@@ -28,7 +30,7 @@ from engine.entry_timing import (
     refresh_tfs_for_scan,
     should_evaluate_entry,
 )
-from engine.lab_runner import maybe_run_lab_pipeline
+from engine.lab_runner import maybe_run_lab_pipeline, maybe_run_research
 from engine.lab_state import load_lab_state
 from engine.momentum_scan import score_momentum
 from engine.smc_scan import score_smc
@@ -326,13 +328,16 @@ def run_paper(scan_limit: int = SCAN_SYMBOLS) -> None:
         f"{len(LEDGER_NAMES)} kasa | tum kasalar=anlik giris (~{PRICE_POLL_SEC}sn)"
     )
     if LAB_AUTO:
-        pf.log("Lab otomasyon acik: tarif uretimi/backtest arka planda calisacak")
+        pf.log("Lab otomasyon acik: arastirma/backtest arka planda calisacak")
+        if RESEARCH_SEPARATE:
+            threading.Thread(target=lambda: maybe_run_research(pf, force=True), daemon=True).start()
         threading.Thread(target=lambda: maybe_run_lab_pipeline(pf, force=True), daemon=True).start()
     cache = FrameCache()
     cursor = 0
     last_universe_refresh = 0.0
     last_lab_refresh = 0.0
     last_lab_pipeline = 0.0
+    last_research_pipeline = 0.0
     last_github_heartbeat = 0.0
     symbols: list[str] = []
     dominance: dict = {}
@@ -365,6 +370,10 @@ def run_paper(scan_limit: int = SCAN_SYMBOLS) -> None:
                 pf._ensure_lab_ledgers()
                 _refresh_strats(pf)
                 last_lab_refresh = time.time()
+
+            if LAB_AUTO and RESEARCH_SEPARATE and time.time() - last_research_pipeline > RESEARCH_INTERVAL_SEC:
+                threading.Thread(target=lambda: maybe_run_research(pf), daemon=True).start()
+                last_research_pipeline = time.time()
 
             if LAB_AUTO and time.time() - last_lab_pipeline > LAB_AUTO_INTERVAL_SEC:
                 threading.Thread(target=lambda: maybe_run_lab_pipeline(pf), daemon=True).start()

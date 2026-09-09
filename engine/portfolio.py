@@ -586,6 +586,8 @@ class Portfolio:
                     "gemini_configured": bool(GEMINI_API_KEY),
                     "research_enabled": RESEARCH_ENABLED,
                 },
+                "source_metrics": self.lab_state.get("source_metrics") or {},
+                "research_queue_len": len(self.lab_state.get("research_queue") or []),
             },
             "engine_flags": {
                 "research_enabled": RESEARCH_ENABLED,

@@ -38,6 +38,8 @@ def render() -> None:
             "all_candidates": lab_remote.get("candidates") or [],
             "pipeline": lab_remote.get("pipeline") or {},
             "research": lab_remote.get("research") or {},
+            "source_metrics": lab_remote.get("source_metrics") or {},
+            "research_queue_len": len(lab_remote.get("research_queue") or []),
         }
         lab_candidates = [c for c in lab_remote.get("candidates") or [] if c.get("status") == "paper"]
 
@@ -147,8 +149,8 @@ def render() -> None:
     for title, ok, detail in steps:
         st.markdown(f"**{'✅' if ok else '⏳'} {title}** — {detail}")
 
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(
-        ["Aday kasalar", "Backtest", "Lab islemleri", "Reddedilenler", "Motor log"]
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
+        ["Aday kasalar", "Backtest", "Kaynak metrikleri", "Lab islemleri", "Reddedilenler", "Motor log"]
     )
 
     with tab1:
@@ -189,6 +191,32 @@ def render() -> None:
             st.info("Backtest sonucu henuz yok.")
 
     with tab3:
+        src_metrics = lab_summary.get("source_metrics") or lab_remote.get("source_metrics") or {}
+        queue_len = lab_summary.get("research_queue_len")
+        if queue_len is None:
+            queue_len = len(lab_remote.get("research_queue") or [])
+        st.caption(f"Arastirma kuyrugu: {queue_len} bekleyen konu")
+        if src_metrics:
+            rows = []
+            for src, m in src_metrics.items():
+                bt = int(m.get("backtests") or 0)
+                passed = int(m.get("backtest_pass") or 0)
+                rate = f"{100 * passed / bt:.0f}%" if bt else "-"
+                rows.append({
+                    "Kaynak": src,
+                    "Tarif": m.get("recipes_added", 0),
+                    "Backtest": bt,
+                    "Gecen": passed,
+                    "Gecme %": rate,
+                    "Hizli eleme fail": m.get("quick_screen_fail", 0),
+                    "Paper": m.get("paper_promoted", 0),
+                    "Red": m.get("paper_rejected", 0),
+                })
+            st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+        else:
+            st.info("Kaynak metrikleri henuz yok; ilk pipeline turundan sonra dolacak.")
+
+    with tab4:
         if lab_open:
             st.dataframe(pd.DataFrame(lab_open), use_container_width=True, hide_index=True)
         else:
@@ -202,7 +230,7 @@ def render() -> None:
                 "Sembol": sym, "Kasa": s.get("last_ledger"), "Yon": s.get("last_side"), "Zaman": s.get("last_time"),
             } for sym, s in lab_signals]), use_container_width=True, hide_index=True)
 
-    with tab4:
+    with tab5:
         all_c = lab_summary.get("all_candidates") or lab_remote.get("candidates") or []
         rej = [c for c in all_c if c.get("status") == "rejected"]
         if rej:
@@ -213,8 +241,8 @@ def render() -> None:
         else:
             st.info(f"Reddedilen aday yok. (Toplam: {rejected_n})")
 
-    with tab5:
-        lab_logs = [ln for ln in logs if "Lab" in ln or "lab" in ln.lower()]
+    with tab6:
+        lab_logs = [ln for ln in logs if "Lab" in ln or "lab" in ln.lower() or "Arastirma" in ln]
         st.code("\n".join(lab_logs[-40:] if lab_logs else logs[-40:] or ["Log yok"]))
 
 

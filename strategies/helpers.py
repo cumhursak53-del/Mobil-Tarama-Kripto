@@ -5,7 +5,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
-from engine.config import MIN_SL_ATR_MULT, MIN_SL_PCT, NEAR_PCT
+from engine.config import MIN_SL_ATR_MULT, MIN_SL_PCT, MIN_TP_R, NEAR_PCT, TP_R_DEFAULT
 from engine.types import EntryMode, Signal, Side, TpMode
 from structure.core import last_pivots
 
@@ -44,15 +44,20 @@ def _normalize_sl_tp(
 ) -> tuple[float, Optional[float]]:
     """SL/TP yonunu ve minimum mesafeyi zorunlu kil."""
     min_dist = _min_sl_distance(entry, atr)
+    tp_r_val = max(tp_r_val, MIN_TP_R)
     if side == Side.BUY:
         if sl_price >= entry or entry - sl_price < min_dist:
             sl_price = entry - min_dist
         if tp_price is not None and tp_price <= entry:
             tp_price = tp_r(entry, sl_price, side, tp_r_val)
+        elif tp_price is not None and tp_price - entry < min_dist * tp_r_val:
+            tp_price = tp_r(entry, sl_price, side, tp_r_val)
     else:
         if sl_price <= entry or sl_price - entry < min_dist:
             sl_price = entry + min_dist
         if tp_price is not None and tp_price >= entry:
+            tp_price = tp_r(entry, sl_price, side, tp_r_val)
+        elif tp_price is not None and entry - tp_price < min_dist * tp_r_val:
             tp_price = tp_r(entry, sl_price, side, tp_r_val)
     return sl_price, tp_price
 
@@ -65,7 +70,7 @@ def make_signal(
     sl: Optional[float] = None,
     extra: Optional[dict] = None,
     *,
-    tp_r_val: float = 2.0,
+    tp_r_val: float = TP_R_DEFAULT,
     tp_price: Optional[float] = None,
     tp_levels: Optional[list[float]] = None,
     tp_mode: TpMode = "r",

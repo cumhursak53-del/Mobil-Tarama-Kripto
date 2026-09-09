@@ -77,9 +77,10 @@ def test_risk_sizer():
     from risk.sizer import PositionRisk, size_position, would_survive_all_sl
     sized = size_position(ledger_balance=100.0, entry=100.0, sl=98.0)
     assert sized is not None
-    assert abs(sized.notional - 100.0) < 1e-6  # 2% of 100 / 2% SL
+    assert abs(sized.notional - 175.0) < 1e-6  # 3.5% of 100 / 2% SL
     assert sized.leverage == 10
-    assert abs(sized.margin - 10.0) < 1e-6  # 100 notional / 10x
+    assert abs(sized.margin - 17.5) < 1e-6  # 175 notional / 10x
+    assert sized.margin >= 10.0
     too_tight = size_position(ledger_balance=100.0, entry=100.0, sl=100.0)
     assert too_tight is None
     ok = PositionRisk(entry=100.0, sl=98.0, notional=100.0, margin=10.0)

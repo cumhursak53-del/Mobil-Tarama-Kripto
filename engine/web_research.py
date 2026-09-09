@@ -38,8 +38,16 @@ def _query_key(query: str) -> str:
 
 
 def _next_queries(state: dict, *, log=None) -> list[str]:
+    from engine.research_queue import dequeue_research_topics
+
     meta = _research_meta(state)
     processed = set(meta.get("processed_web_queries") or [])
+    queue_topics = dequeue_research_topics(state, limit=WEB_RESEARCH_QUERIES_PER_RUN)
+    if queue_topics:
+        if log:
+            log(f"Arastirma kuyrugu: {len(queue_topics)} konu")
+        return queue_topics
+
     topics = list(WEB_RESEARCH_TOPICS or _DEFAULT_TOPICS)
     if WEB_RESEARCH_QUERIES:
         topics = list(WEB_RESEARCH_QUERIES) + topics

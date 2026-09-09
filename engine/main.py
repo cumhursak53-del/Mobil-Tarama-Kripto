@@ -60,6 +60,19 @@ def cmd_lab_backtest(limit: int, symbols: list[str], n_universe: int) -> None:
     print(json.dumps({**result, "backtest_count": len(state.get("backtests") or [])}, indent=2))
 
 
+def cmd_lab_research() -> None:
+    from engine.lab_runner import run_research_pipeline
+    from engine.lab_state import load_lab_state
+
+    result = run_research_pipeline(force=True)
+    state = load_lab_state()
+    print(json.dumps({
+        **result,
+        "recipe_total": len(state.get("recipes") or []),
+        "queue_len": len(state.get("research_queue") or []),
+    }, indent=2))
+
+
 def main() -> None:
     p = argparse.ArgumentParser(description="PDF MTF trading engine")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -79,6 +92,7 @@ def main() -> None:
     lab.add_argument("--limit", type=int, default=20)
     lab.add_argument("--symbol", action="append", default=[])
     lab.add_argument("--universe", type=int, default=6)
+    sub.add_parser("lab-research", help="Sadece arastirma fazini calistir (backtest yok)")
 
     args = p.parse_args()
     if args.cmd == "validate":
@@ -93,6 +107,8 @@ def main() -> None:
         cmd_lab_generate(args.limit)
     elif args.cmd == "lab-backtest":
         cmd_lab_backtest(args.limit, args.symbol, args.universe)
+    elif args.cmd == "lab-research":
+        cmd_lab_research()
 
 
 if __name__ == "__main__":

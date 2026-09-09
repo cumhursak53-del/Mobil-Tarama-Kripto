@@ -21,10 +21,13 @@ TRIGGER_TF = os.environ.get("TRIGGER_TF", "15m")
 ENTRY_MODE_DEFAULT = os.environ.get("ENTRY_MODE_DEFAULT", "live")
 
 KASA_START_USD = 100.0
-CASH_RESERVE_PCT = 0.20
-RISK_PCT = 0.02
+CASH_RESERVE_PCT = float(os.environ.get("CASH_RESERVE_PCT", "0.20"))
+RISK_PCT = float(os.environ.get("RISK_PCT", "0.035"))
 COMBO_LEDGER = "Kasa_RejimOsilator"
-COMBO_RISK_PCT = 0.03
+COMBO_RISK_PCT = float(os.environ.get("COMBO_RISK_PCT", "0.045"))
+MIN_MARGIN_USD = float(os.environ.get("MIN_MARGIN_USD", "10"))
+TP_R_DEFAULT = float(os.environ.get("TP_R_DEFAULT", "2.5"))
+MIN_TP_R = float(os.environ.get("MIN_TP_R", "2.0"))
 PATLAMA_LEDGER = "Kasa_PatlamaSelale"
 
 LEDGER_NAMES = [
@@ -103,8 +106,8 @@ SCAN_MODE = os.environ.get("SCAN_MODE", "best_signal")  # priority | best_signal
 SYMBOL_LOCK_MODE = os.environ.get("SYMBOL_LOCK_MODE", "global")  # global | per_ledger | none
 RETEST_HOLD_BARS = int(os.environ.get("RETEST_HOLD_BARS", "3"))
 MIN_IMPULSE_ATR = float(os.environ.get("MIN_IMPULSE_ATR", "1.5"))
-MIN_SL_PCT = float(os.environ.get("MIN_SL_PCT", "0.008"))
-MIN_SL_ATR_MULT = float(os.environ.get("MIN_SL_ATR_MULT", "1.2"))
+MIN_SL_PCT = float(os.environ.get("MIN_SL_PCT", "0.01"))
+MIN_SL_ATR_MULT = float(os.environ.get("MIN_SL_ATR_MULT", "1.5"))
 SWING_N = 5
 NEAR_PCT = 0.004  # 0.4% proximity to level
 VOLUME_SMA = 20
@@ -129,6 +132,12 @@ LAB_GENERATE_LIMIT = int(os.environ.get("LAB_GENERATE_LIMIT", "24"))
 LAB_BACKTEST_BATCH = int(os.environ.get("LAB_BACKTEST_BATCH", "8"))
 LAB_BACKTEST_UNIVERSE = int(os.environ.get("LAB_BACKTEST_UNIVERSE", "4"))
 LAB_MIN_RECIPES = int(os.environ.get("LAB_MIN_RECIPES", "12"))
+LAB_QUICK_SCREEN_SYMBOL = os.environ.get("LAB_QUICK_SCREEN_SYMBOL", "BTCUSDT")
+LAB_QUICK_MIN_TRADES = int(os.environ.get("LAB_QUICK_MIN_TRADES", "4"))
+LAB_QUICK_MIN_PF = float(os.environ.get("LAB_QUICK_MIN_PF", "1.1"))
+LAB_QUICK_BARS = int(os.environ.get("LAB_QUICK_BARS", "480"))
+RESEARCH_INTERVAL_SEC = int(os.environ.get("RESEARCH_INTERVAL_SEC", "7200"))
+RESEARCH_SEPARATE = os.environ.get("RESEARCH_SEPARATE", "1") == "1"
 ENGINE_URL = os.environ.get("ENGINE_URL", "")
 
 # Gemini + arastirma
@@ -172,7 +181,7 @@ NEWS_MAX_HEADLINES = int(os.environ.get("NEWS_MAX_HEADLINES", "15"))
 
 # Internet arastirmasi (web arama + sayfa okuma)
 WEB_RESEARCH_ENABLED = os.environ.get("WEB_RESEARCH_ENABLED", "1") == "1"
-WEB_RESEARCH_QUERIES_PER_RUN = int(os.environ.get("WEB_RESEARCH_QUERIES_PER_RUN", "2"))
+WEB_RESEARCH_QUERIES_PER_RUN = int(os.environ.get("WEB_RESEARCH_QUERIES_PER_RUN", "5"))
 WEB_RESEARCH_MAX_RESULTS = int(os.environ.get("WEB_RESEARCH_MAX_RESULTS", "5"))
 WEB_RESEARCH_MAX_PAGES = int(os.environ.get("WEB_RESEARCH_MAX_PAGES", "2"))
 WEB_RESEARCH_AI_QUERIES = os.environ.get("WEB_RESEARCH_AI_QUERIES", "1") == "1"

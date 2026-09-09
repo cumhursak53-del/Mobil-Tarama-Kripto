@@ -71,6 +71,8 @@ def empty_lab_state() -> dict:
             "news_recipes": 0,
             "web_recipes": 0,
         },
+        "research_queue": [],
+        "source_metrics": {},
         "updated_at": now_tr(),
     }
 
@@ -199,6 +201,10 @@ def evaluate_lab_candidates(state: dict) -> list[str]:
         bt = c.get("backtest") or {}
         gate = check_paper_acceptance(bt, m)
         if gate["reject"] or wr < LAB_PAPER_MIN_WR or pnl < 0:
+            from engine.research_queue import record_paper_rejection
+
+            recipe = recipe_by_id(state, c.get("recipe_id", ""))
+            record_paper_rejection(state, c, recipe)
             reject_candidate(state, c.get("ledger", ""), "paper_underperform")
             rejected.append(c.get("ledger", ""))
     return rejected

@@ -13,6 +13,7 @@ from engine.config import (
     MAX_LEVERAGE,
     MAX_POSITIONS_PER_KASA,
     MIN_LEVERAGE,
+    MIN_MARGIN_USD,
     MIN_SURVIVAL_USD,
     RISK_PCT,
 )
@@ -98,7 +99,7 @@ def size_position(
     if entry <= 0 or sl <= 0 or entry == sl:
         return None
     deployable = ledger_balance * (1.0 - cash_reserve_pct)
-    if deployable < 5:
+    if deployable < MIN_MARGIN_USD:
         return None
     sl_dist = abs(entry - sl) / entry
     if sl_dist < 0.001:
@@ -113,7 +114,7 @@ def size_position(
         margin = deployable
         notional = margin * leverage
         risk_usd = notional * sl_dist
-    if margin < 1:
+    if margin < MIN_MARGIN_USD:
         return None
     qty = notional / entry
     if qty <= 0:

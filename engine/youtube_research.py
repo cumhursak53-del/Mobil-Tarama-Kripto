@@ -104,6 +104,11 @@ def _is_ip_block(exc: Exception) -> bool:
 
 def _get_transcript(video_id: str, *, log=None) -> Optional[str]:
     """Transkript al. youtube-transcript-api 0.x (get_transcript) ve 1.x (fetch) uyumlu."""
+    from engine.transcript_store import load_transcript
+
+    cached = load_transcript(video_id)
+    if cached:
+        return cached
     if YOUTUBE_SKIP_TRANSCRIPT:
         return None
     try:
