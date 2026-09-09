@@ -3,7 +3,7 @@ from datetime import datetime
 import pandas as pd
 import streamlit as st
 
-from ui_common import build_excel_bytes, get_engine_data, source_caption
+from ui_common import build_excel_bytes, format_price, get_engine_data, source_caption
 
 
 def render() -> None:
@@ -55,10 +55,10 @@ def render() -> None:
                     "Sembol": p.get("symbol", key),
                     "Kasa": p.get("ledger_name", "-"),
                     "Yon": p.get("side"),
-                    "Giris": p.get("entry_price"),
-                    "Anlik": p.get("current_price"),
-                    "SL": p.get("sl_price"),
-                    "TP": p.get("tp_price"),
+                    "Giris": format_price(p.get("entry_price")),
+                    "Anlik": format_price(p.get("current_price")),
+                    "SL": format_price(p.get("sl_price")),
+                    "TP": format_price(p.get("tp_price")),
                     "ROE %": p.get("roe_pct"),
                     "Acik PnL": p.get("unrealized_pnl"),
                     "Marjin": p.get("margin"),
@@ -83,6 +83,9 @@ def render() -> None:
     with tab3:
         if history:
             df_h = pd.DataFrame(history)
+            for col in ("entry", "exit"):
+                if col in df_h.columns:
+                    df_h[col] = df_h[col].apply(format_price)
             cols = [
                 c for c in [
                     "exit_time", "symbol", "ledger", "side", "entry", "exit",

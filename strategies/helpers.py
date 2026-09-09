@@ -5,7 +5,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
-from engine.config import NEAR_PCT
+from engine.config import MIN_SL_ATR_MULT, MIN_SL_PCT, NEAR_PCT
 from engine.types import EntryMode, Signal, Side, TpMode
 from structure.core import last_pivots
 
@@ -30,6 +30,33 @@ def tp_r(entry: float, sl: float, side: Side, r: float = 2.0) -> float:
     return entry - dist * r
 
 
+def _min_sl_distance(entry: float, atr: float) -> float:
+    return max(entry * MIN_SL_PCT, atr * MIN_SL_ATR_MULT)
+
+
+def _normalize_sl_tp(
+    entry: float,
+    sl_price: float,
+    tp_price: Optional[float],
+    side: Side,
+    atr: float,
+    tp_r_val: float,
+) -> tuple[float, Optional[float]]:
+    """SL/TP yonunu ve minimum mesafeyi zorunlu kil."""
+    min_dist = _min_sl_distance(entry, atr)
+    if side == Side.BUY:
+        if sl_price >= entry or entry - sl_price < min_dist:
+            sl_price = entry - min_dist
+        if tp_price is not None and tp_price <= entry:
+            tp_price = tp_r(entry, sl_price, side, tp_r_val)
+    else:
+        if sl_price <= entry or sl_price - entry < min_dist:
+            sl_price = entry + min_dist
+        if tp_price is not None and tp_price >= entry:
+            tp_price = tp_r(entry, sl_price, side, tp_r_val)
+    return sl_price, tp_price
+
+
 def make_signal(
     ledger: str,
     reason: str,
@@ -50,14 +77,9 @@ def make_signal(
     strength: float = 1.0,
 ) -> Optional[Signal]:
     entry = float(df["close"].iloc[-1])
+    atr = float(df["atr"].iloc[-1]) if "atr" in df.columns and pd.notna(df["atr"].iloc[-1]) else entry * 0.01
     sl_price = sl if sl is not None else sl_from_swing(df, side)
     if sl_price is None:
-        return None
-    if side == Side.BUY and sl_price >= entry:
-        sl_price = entry * (1 - 0.01)
-    if side == Side.SELL and sl_price <= entry:
-        sl_price = entry * (1 + 0.01)
-    if abs(entry - sl_price) / entry < 0.002:
         return None
 
     levels = list(tp_levels or [])
@@ -66,6 +88,11 @@ def make_signal(
         final_tp = tp_r(entry, sl_price, side, tp_r_val)
     elif final_tp is None and levels:
         final_tp = levels[0]
+
+    sl_price, final_tp = _normalize_sl_tp(entry, sl_price, final_tp, side, atr, tp_r_val)
+    min_dist = _min_sl_distance(entry, atr)
+    if abs(entry - sl_price) < min_dist * 0.5:
+        return None
 
     return Signal(
         side=side,

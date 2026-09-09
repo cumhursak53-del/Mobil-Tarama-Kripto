@@ -409,12 +409,12 @@ class Portfolio:
         if p.side == Side.BUY:
             if price <= p.sl_price:
                 return "SL"
-            if p.tp_price and price >= p.tp_price:
-                return "TP" if p.partial_taken else "TP"
+            if p.tp_price and p.tp_price > p.entry_price and price >= p.tp_price:
+                return "TP"
         else:
             if price >= p.sl_price:
                 return "SL"
-            if p.tp_price and price <= p.tp_price:
+            if p.tp_price and p.tp_price < p.entry_price and price <= p.tp_price:
                 return "TP"
         return None
 

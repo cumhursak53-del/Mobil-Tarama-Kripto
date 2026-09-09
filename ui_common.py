@@ -28,6 +28,31 @@ except ImportError:
 
 REFRESH_SEC_OPTIONS = [30, 60, 120, 300]
 
+
+def format_price(v: float | None) -> str:
+    """Dusuk fiyatli coinlerde bilimsel gosterim yerine tam ondalik."""
+    if v is None:
+        return "-"
+    try:
+        val = float(v)
+    except (TypeError, ValueError):
+        return str(v)
+    if val == 0:
+        return "0"
+    av = abs(val)
+    if av >= 1000:
+        return f"{val:,.4f}".rstrip("0").rstrip(".")
+    if av >= 1:
+        decimals = 6
+    elif av >= 0.0001:
+        decimals = 8
+    else:
+        decimals = 12
+    text = f"{val:.{decimals}f}"
+    if "." in text:
+        text = text.rstrip("0").rstrip(".")
+    return text
+
 ENGINE_URL = os.environ.get("ENGINE_URL", "https://mobil-tarama-kripto.onrender.com").rstrip("/")
 GITHUB_REPO = os.environ.get("GITHUB_REPO", "cumhursak53-del/Mobil-Tarama-Kripto")
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
@@ -299,10 +324,10 @@ def _pos_rows(active: dict) -> pd.DataFrame:
             "Sembol": p.get("symbol", key),
             "Kasa": p.get("ledger_name", "-"),
             "Yon": p.get("side"),
-            "Giris": p.get("entry_price"),
-            "Anlik": p.get("current_price"),
-            "SL": p.get("sl_price"),
-            "TP": p.get("tp_price"),
+            "Giris": format_price(p.get("entry_price")),
+            "Anlik": format_price(p.get("current_price")),
+            "SL": format_price(p.get("sl_price")),
+            "TP": format_price(p.get("tp_price")),
             "ROE_%": p.get("roe_pct"),
             "Acik_PnL": p.get("unrealized_pnl"),
             "Marjin": p.get("margin"),
@@ -324,6 +349,9 @@ def _history_rows(history: list) -> pd.DataFrame:
     if not history:
         return pd.DataFrame()
     df = pd.DataFrame(history)
+    for col in ("entry", "exit"):
+        if col in df.columns:
+            df[col] = df[col].apply(format_price)
     rename = {
         "exit_time": "Cikis_zamani",
         "entry_time": "Giris_zamani",
