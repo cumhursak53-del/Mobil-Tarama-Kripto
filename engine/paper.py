@@ -11,6 +11,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from engine.config import (
     LAB_AUTO,
     LAB_AUTO_INTERVAL_SEC,
+    LEDGER_NAMES,
     PATLAMA_LEDGER,
     PRICE_POLL_SEC,
     PRIORITY_LEDGERS,
