@@ -10,7 +10,7 @@ except Exception:
     import requests as http
 
 from engine.config import NEWS_MAX_HEADLINES, NEWS_RSS_URLS
-from engine.gemini_client import generate_recipes_from_text, gemini_available
+from engine.gemini_client import generate_recipes_from_text, gemini_usable
 from engine.recipe_validator import validate_recipes
 from engine.youtube_research import _research_meta
 
@@ -59,7 +59,7 @@ def _news_batch_key(headlines: list[tuple[str, str]]) -> str:
 
 
 def collect_news_recipes(state: dict, *, log=None) -> list[dict]:
-    if not gemini_available():
+    if not gemini_usable():
         return []
     meta = _research_meta(state)
     processed_batches = set(meta.get("processed_news_batches") or [])

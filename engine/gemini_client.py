@@ -22,6 +22,7 @@ from engine.config import (
     GEMINI_API_KEY,
     GEMINI_MODEL,
     GEMINI_MODEL_FALLBACKS,
+    GEMINI_QUOTA_COOLDOWN_SEC,
     GEMINI_RESEARCH_FALLBACK_FIRST,
     GEMINI_RETRY_DELAY_SEC,
     GEMINI_RETRY_MAX,
@@ -55,11 +56,28 @@ Her tarifte en az 2 long veya 2 short kural. Belirsiz metin varsa bos array don.
 
 _genai_client: Any = None
 _last_model_used = GEMINI_MODEL
+_quota_blocked_until: float = 0.0
 
 
 def gemini_available() -> bool:
     key = (GEMINI_API_KEY or "").strip()
     return len(key) > 10
+
+
+def gemini_usable() -> bool:
+    if not gemini_available():
+        return False
+    return time.time() >= _quota_blocked_until
+
+
+def _mark_quota_exhausted(log: LogFn | None = None) -> None:
+    global _quota_blocked_until
+    _quota_blocked_until = time.time() + max(300, GEMINI_QUOTA_COOLDOWN_SEC)
+    if log:
+        log(
+            f"Gemini kota doldu — arastirma {GEMINI_QUOTA_COOLDOWN_SEC // 3600}saat bekletildi "
+            f"(tarama devam ediyor)"
+        )
 
 
 def key_format_hint() -> str:
@@ -136,6 +154,10 @@ def _error_kind(exc: Exception) -> str:
         return "auth"
     if "404" in msg or "NOT_FOUND" in msg or "NO LONGER AVAILABLE" in msg:
         return "model"
+    if "RESOURCE_EXHAUSTED" in msg and (
+        "QUOTA" in msg or "EXCEEDED YOUR CURRENT QUOTA" in msg
+    ):
+        return "quota"
     if any(
         token in msg
         for token in (
@@ -143,7 +165,6 @@ def _error_kind(exc: Exception) -> str:
             "429",
             "500",
             "UNAVAILABLE",
-            "RESOURCE_EXHAUSTED",
             "HIGH DEMAND",
             "OVERLOADED",
             "TRY AGAIN",
@@ -220,6 +241,8 @@ def _generate_text(
 ) -> str:
     """Model zinciri + gecici 503/429 icin exponential backoff."""
     global _last_model_used
+    if not gemini_usable():
+        raise RuntimeError("Gemini kota beklemede")
     errors: list[str] = []
 
     for model in _model_chain(research=research):
@@ -239,6 +262,9 @@ def _generate_text(
 
                 if kind == "auth":
                     raise RuntimeError(err) from e
+                if kind == "quota":
+                    _mark_quota_exhausted(log)
+                    raise RuntimeError("Gemini kota doldu") from e
                 if kind == "model":
                     break
                 if kind == "retry" and attempt < GEMINI_RETRY_MAX - 1:
@@ -313,10 +339,12 @@ En fazla {max_recipes} tarif. JSON array only.
         return [r for r in parsed if isinstance(r, dict)][:max_recipes]
     except Exception as e:
         kind = _error_kind(e)
-        if kind == "retry":
+        if kind == "quota":
+            msg = "Gemini kota doldu — arastirma atlandi (tarama devam ediyor)"
+        elif kind == "retry":
             msg = (
-                f"Gemini gecici yogunluk — YouTube/haber tarifleri atlandi "
-                f"(combinator devam ediyor, model {GEMINI_MODEL})"
+                f"Gemini gecici yogunluk — arastirma atlandi "
+                f"(combinator devam ediyor)"
             )
         else:
             msg = f"Gemini hatasi ({key_format_hint()}): {_format_error(e)}"

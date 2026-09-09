@@ -12,7 +12,7 @@ from engine.config import (
     WEB_RESEARCH_QUERIES_PER_RUN,
     WEB_RESEARCH_TOPICS,
 )
-from engine.gemini_client import gemini_available, generate_recipes_from_text, suggest_web_queries
+from engine.gemini_client import gemini_usable, generate_recipes_from_text, suggest_web_queries
 from engine.recipe_validator import validate_recipes
 from engine.web_search import build_research_document, search_web
 from engine.youtube_research import _research_meta
@@ -45,7 +45,7 @@ def _next_queries(state: dict, *, log=None) -> list[str]:
         topics = list(WEB_RESEARCH_QUERIES) + topics
 
     pending = [q for q in topics if _query_key(q) not in processed]
-    if WEB_RESEARCH_AI_QUERIES and gemini_available() and len(pending) < WEB_RESEARCH_QUERIES_PER_RUN:
+    if WEB_RESEARCH_AI_QUERIES and gemini_usable() and len(pending) < WEB_RESEARCH_QUERIES_PER_RUN:
         try:
             ai = suggest_web_queries(
                 already_done=list(processed)[-20:],
@@ -69,7 +69,7 @@ def _next_queries(state: dict, *, log=None) -> list[str]:
 
 
 def collect_web_recipes(state: dict, *, log=None) -> list[dict]:
-    if not WEB_RESEARCH_ENABLED or not gemini_available():
+    if not WEB_RESEARCH_ENABLED or not gemini_usable():
         return []
 
     meta = _research_meta(state)

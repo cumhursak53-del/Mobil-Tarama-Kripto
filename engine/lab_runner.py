@@ -94,10 +94,16 @@ def run_lab_pipeline(*, log=None, force: bool = False) -> dict:
         recipes = state.get("recipes") or []
 
         if RESEARCH_ENABLED and GEMINI_API_KEY:
-            if not GEMINI_SKIP_PIPELINE_TEST:
-                from engine.gemini_client import test_gemini_connection
+            from engine.gemini_client import gemini_usable, test_gemini_connection
+
+            if gemini_usable() and not GEMINI_SKIP_PIPELINE_TEST:
                 test_gemini_connection(log=log)
-            new_research = run_research(state, log=log)
+            if gemini_usable():
+                new_research = run_research(state, log=log)
+            else:
+                new_research = []
+                if log:
+                    log("Arastirma atlandi: Gemini kota beklemede")
         elif RESEARCH_ENABLED and log:
             log("Arastirma atlandi: GEMINI_API_KEY worker env'de tanimli degil")
             new_research = []

@@ -138,7 +138,7 @@ def _normalize_secret(raw: str) -> str:
 
 
 GEMINI_API_KEY = _normalize_secret(os.environ.get("GEMINI_API_KEY", ""))
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash-lite")
 GEMINI_MODEL_FALLBACKS = [
     x.strip() for x in os.environ.get(
         "GEMINI_MODEL_FALLBACKS",
@@ -158,6 +158,8 @@ YOUTUBE_CHANNEL_IDS = [
 ]
 YOUTUBE_VIDEO_IDS = [x.strip() for x in os.environ.get("YOUTUBE_VIDEO_IDS", "").split(",") if x.strip()]
 YOUTUBE_MAX_VIDEOS_PER_RUN = int(os.environ.get("YOUTUBE_MAX_VIDEOS_PER_RUN", "3"))
+YOUTUBE_SKIP_TRANSCRIPT = os.environ.get("YOUTUBE_SKIP_TRANSCRIPT", "0") == "1"
+GEMINI_QUOTA_COOLDOWN_SEC = int(os.environ.get("GEMINI_QUOTA_COOLDOWN_SEC", "21600"))
 NEWS_RSS_URLS = [
     x.strip() for x in os.environ.get(
         "NEWS_RSS_URLS",

@@ -11,8 +11,13 @@ try:
 except Exception:
     import requests as http
 
-from engine.config import YOUTUBE_CHANNEL_IDS, YOUTUBE_MAX_VIDEOS_PER_RUN, YOUTUBE_VIDEO_IDS
-from engine.gemini_client import generate_recipes_from_text, gemini_available
+from engine.config import (
+    YOUTUBE_CHANNEL_IDS,
+    YOUTUBE_MAX_VIDEOS_PER_RUN,
+    YOUTUBE_SKIP_TRANSCRIPT,
+    YOUTUBE_VIDEO_IDS,
+)
+from engine.gemini_client import generate_recipes_from_text, gemini_available, gemini_usable
 from engine.recipe_validator import validate_recipes
 
 _NS = {"atom": "http://www.w3.org/2005/Atom", "yt": "http://www.youtube.com/xml/schemas/2015"}
@@ -92,8 +97,15 @@ def _chunks_to_text(chunks) -> str:
     return " ".join(parts)
 
 
+def _is_ip_block(exc: Exception) -> bool:
+    msg = str(exc).lower()
+    return "blocking requests from your ip" in msg or "ipblocked" in msg or "cloud provider" in msg
+
+
 def _get_transcript(video_id: str, *, log=None) -> Optional[str]:
     """Transkript al. youtube-transcript-api 0.x (get_transcript) ve 1.x (fetch) uyumlu."""
+    if YOUTUBE_SKIP_TRANSCRIPT:
+        return None
     try:
         from youtube_transcript_api import YouTubeTranscriptApi
         from youtube_transcript_api._errors import TranscriptsDisabled, NoTranscriptFound
@@ -115,8 +127,12 @@ def _get_transcript(video_id: str, *, log=None) -> Optional[str]:
             except (TranscriptsDisabled, NoTranscriptFound):
                 continue
             except Exception as e:
+                if _is_ip_block(e):
+                    if log:
+                        log(f"YouTube {video_id}: IP engeli (bulut) — oEmbed fallback")
+                    return None
                 if log:
-                    log(f"YouTube {video_id} transkript ({','.join(langs)}): {e}")
+                    log(f"YouTube {video_id} transkript ({','.join(langs)}): {_format_yt_err(e)}")
                 continue
         try:
             fetched = api.fetch(video_id)
@@ -124,7 +140,7 @@ def _get_transcript(video_id: str, *, log=None) -> Optional[str]:
             return text if len(text) >= 80 else None
         except Exception as e:
             if log:
-                log(f"YouTube {video_id} transkript alinamadi: {e}")
+                log(f"YouTube {video_id} transkript alinamadi: {_format_yt_err(e)}")
             return None
 
     # v0.x: classmethod get_transcript
@@ -137,8 +153,12 @@ def _get_transcript(video_id: str, *, log=None) -> Optional[str]:
         except (TranscriptsDisabled, NoTranscriptFound):
             continue
         except Exception as e:
+            if _is_ip_block(e):
+                if log:
+                    log(f"YouTube {video_id}: IP engeli (bulut) — oEmbed fallback")
+                return None
             if log:
-                log(f"YouTube {video_id} transkript ({','.join(langs)}): {e}")
+                log(f"YouTube {video_id} transkript ({','.join(langs)}): {_format_yt_err(e)}")
             continue
     try:
         chunks = YouTubeTranscriptApi.get_transcript(video_id)
@@ -146,8 +166,15 @@ def _get_transcript(video_id: str, *, log=None) -> Optional[str]:
         return text if len(text) >= 80 else None
     except Exception as e:
         if log:
-            log(f"YouTube {video_id} transkript alinamadi: {e}")
+            log(f"YouTube {video_id} transkript alinamadi: {_format_yt_err(e)}")
         return None
+
+
+def _format_yt_err(exc: Exception) -> str:
+    msg = str(exc).strip().replace("\n", " ")
+    if _is_ip_block(exc):
+        return "IP engeli (bulut ortami)"
+    return msg[:120] if msg else exc.__class__.__name__
 
 
 def _fallback_video_context(video_id: str, title: str) -> Optional[str]:
@@ -177,7 +204,7 @@ def _fallback_video_context(video_id: str, title: str) -> Optional[str]:
 
 
 def collect_youtube_recipes(state: dict, *, log=None) -> list[dict]:
-    if not gemini_available():
+    if not gemini_available() or not gemini_usable():
         return []
     meta = _research_meta(state)
     processed = set(meta.get("processed_videos") or [])

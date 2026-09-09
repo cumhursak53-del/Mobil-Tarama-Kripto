@@ -2,14 +2,14 @@
 from __future__ import annotations
 
 from engine.config import GEMINI_API_KEY, RESEARCH_ENABLED
-from engine.gemini_client import gemini_available
+from engine.gemini_client import gemini_usable
 from engine.news_research import collect_news_recipes
 from engine.web_research import collect_web_recipes
 from engine.youtube_research import collect_youtube_recipes
 
 
 def run_research(state: dict, *, log=None) -> list[dict]:
-    if not RESEARCH_ENABLED or not gemini_available():
+    if not RESEARCH_ENABLED or not gemini_usable():
         return []
     existing_ids = {r.get("id") for r in (state.get("recipes") or []) if r.get("id")}
     out: list[dict] = []
