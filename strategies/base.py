@@ -16,12 +16,14 @@ class MarketContext:
         stage: Stage,
         week_bias: Optional[int],
         dominance: dict,
+        ref_frames: Optional[dict[str, pd.DataFrame]] = None,
     ):
         self.symbol = symbol
         self.frames = frames
         self.stage = stage
         self.week_bias = week_bias
         self.dominance = dominance
+        self.ref_frames = ref_frames or {}
 
     def tf(self, name: str) -> Optional[pd.DataFrame]:
         return self.frames.get(name)
@@ -62,6 +64,10 @@ class Strategy(ABC):
         from engine.config import ENTRY_TF
 
         return self.entry_tf or ENTRY_TF
+
+    def signal_strength(self, ctx: MarketContext, sig: Signal) -> float:
+        """Override for best_signal scan ranking. Default uses sig.strength."""
+        return float(sig.strength or 1.0)
 
     @abstractmethod
     def signal(self, ctx: MarketContext) -> Optional[Signal]:

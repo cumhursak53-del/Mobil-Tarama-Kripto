@@ -12,7 +12,9 @@ SESSION_WINDOWS: dict[str, tuple[int, int]] = {
 }
 
 KILLZONE_WINDOWS: dict[str, tuple[int, int]] = {
+    "asia": (0, 3),
     "london_open": (7, 10),
+    "london_close": (15, 17),
     "ny_open": (13, 16),
     "london_ny_overlap": (13, 16),
     "silver_bullet_am": (14, 15),

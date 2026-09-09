@@ -108,6 +108,19 @@ def crossed_down(a: pd.Series, b: pd.Series) -> pd.Series:
     return (a < b) & (prev_a >= prev_b)
 
 
+def obv(close: pd.Series, volume: pd.Series) -> pd.Series:
+    direction = np.sign(close.diff()).fillna(0)
+    return (direction * volume).cumsum()
+
+
+def keltner_channel(high: pd.Series, low: pd.Series, close: pd.Series, n: int = 20, mult: float = 1.5):
+    mid = ema(close, n)
+    atr_val = atr(high, low, close, n)
+    upper = mid + mult * atr_val
+    lower = mid - mult * atr_val
+    return mid, upper, lower
+
+
 def add_indicators(df: pd.DataFrame) -> pd.DataFrame:
     """Mutates a copy: expects columns open, high, low, close, volume."""
     out = df.copy()
@@ -152,7 +165,10 @@ def add_indicators(df: pd.DataFrame) -> pd.DataFrame:
     out["ichi_kijun"] = kijun
     out["ichi_span_a"] = sa
     out["ichi_span_b"] = sb
-    out["ichi_chikou"] = chikou
+    out["ichi_chikou_plot"] = chikou
+    shift_n = 26
+    out["chikou_bull"] = c > c.shift(shift_n)
+    out["chikou_bear"] = c < c.shift(shift_n)
     out["macd_cross_up"] = crossed_up(out["macd"], out["macd_signal"])
     out["macd_cross_down"] = crossed_down(out["macd"], out["macd_signal"])
     out["sma9_cross_up"] = crossed_up(out["sma9"], out["sma14"])
@@ -174,4 +190,11 @@ def add_indicators(df: pd.DataFrame) -> pd.DataFrame:
     out["body_ratio"] = body / rng
     out["close_loc"] = (c - l) / rng
     out["vol_ok"] = v > out["vol_sma"]
+    out["obv"] = obv(c, v)
+    kc_mid, kc_up, kc_lo = keltner_channel(h, l, c)
+    out["kc_mid"] = kc_mid
+    out["kc_upper"] = kc_up
+    out["kc_lower"] = kc_lo
+    out["ttm_squeeze"] = (bb_up < kc_up) & (bb_lo > kc_lo)
+    out["ttm_squeeze_on"] = out["ttm_squeeze"].rolling(3, min_periods=1).sum() >= 2
     return out

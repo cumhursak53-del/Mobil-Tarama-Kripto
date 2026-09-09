@@ -66,18 +66,28 @@ def _binance_klines(symbol: str, interval: str, limit: int) -> pd.DataFrame:
 
 def _bybit_klines(symbol: str, interval: str, limit: int) -> pd.DataFrame:
     iv = _BYBIT_TF[interval]
-    raw = _get(
-        "https://api.bybit.com/v5/market/kline",
-        {"category": "linear", "symbol": symbol, "interval": iv, "limit": min(limit, 1000)},
-        timeout=10,
-    )
-    lst = (raw.get("result") or {}).get("list") or []
-    # Bybit: newest first: start, open, high, low, close, volume, turnover
-    rows = []
     ms = {"15m": 15 * 60_000, "1h": 60 * 60_000, "4h": 4 * 60 * 60_000, "1d": 86_400_000, "1w": 7 * 86_400_000}[interval]
-    for x in reversed(lst):
-        start = int(x[0])
-        rows.append([start, x[1], x[2], x[3], x[4], x[5], start + ms - 1])
+    rows: list = []
+    end_ms: int | None = None
+    need = limit
+    while need > 0:
+        batch = min(need, 1000)
+        params: dict = {"category": "linear", "symbol": symbol, "interval": iv, "limit": batch}
+        if end_ms is not None:
+            params["end"] = end_ms
+        raw = _get("https://api.bybit.com/v5/market/kline", params, timeout=10)
+        lst = (raw.get("result") or {}).get("list") or []
+        if not lst:
+            break
+        batch_rows = []
+        for x in reversed(lst):
+            start = int(x[0])
+            batch_rows.append([start, x[1], x[2], x[3], x[4], x[5], start + ms - 1])
+        rows = batch_rows + rows
+        end_ms = int(lst[-1][0]) - 1
+        need -= len(lst)
+        if len(lst) < batch:
+            break
     return _to_df(rows)
 
 
@@ -219,19 +229,52 @@ def fetch_all_timeframes(symbol: str) -> dict[str, pd.DataFrame]:
     return out
 
 
+_dominance_cache: dict = {}
+
+
+def _btc_24h_change() -> float:
+    try:
+        raw = _get("https://api.bybit.com/v5/market/tickers", {"category": "linear", "symbol": "BTCUSDT"}, timeout=8)
+        lst = (raw.get("result") or {}).get("list") or []
+        if lst:
+            return float(lst[0].get("price24hPcnt") or 0) * 100.0
+    except Exception:
+        pass
+    try:
+        raw = _get("https://api.binance.com/api/v3/ticker/24hr", {"symbol": "BTCUSDT"}, timeout=8)
+        return float(raw.get("priceChangePercent") or 0)
+    except Exception:
+        return 0.0
+
+
 def fetch_dominance() -> dict:
+    global _dominance_cache
     try:
         g = _get("https://api.coingecko.com/api/v3/global", timeout=12)
         data = g.get("data", {})
         btc_d = float(data.get("market_cap_percentage", {}).get("btc") or 0)
         usdt_d = float(data.get("market_cap_percentage", {}).get("usdt") or 0)
-        return {
+        eth_d = float(data.get("market_cap_percentage", {}).get("eth") or 0)
+        total2 = max(0.0, 100.0 - btc_d)
+        eth_btc = eth_d / btc_d if btc_d > 0 else 0.0
+        btc_chg = _btc_24h_change()
+        out = {
             "btc_d": btc_d,
             "usdt_d": usdt_d,
-            "btc_chg": 0.0,
+            "eth_d": eth_d,
+            "total2": total2,
+            "eth_btc": eth_btc,
+            "btc_chg": btc_chg,
             "btc_d_chg": None,
             "usdt_d_chg": None,
         }
+        prev = _dominance_cache
+        if prev.get("btc_d") is not None:
+            out["btc_d_chg"] = btc_d - float(prev["btc_d"])
+        if prev.get("usdt_d") is not None:
+            out["usdt_d_chg"] = usdt_d - float(prev["usdt_d"])
+        _dominance_cache = {"btc_d": btc_d, "usdt_d": usdt_d}
+        return out
     except Exception:
         return {}
 

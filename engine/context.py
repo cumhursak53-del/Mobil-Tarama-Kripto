@@ -22,7 +22,13 @@ def indicate_frame(df):
     return add_indicators(df)
 
 
-def build_context(symbol: str, frames: dict, dominance: Optional[dict] = None, indicated: bool = False) -> MarketContext:
+def build_context(
+    symbol: str,
+    frames: dict,
+    dominance: Optional[dict] = None,
+    indicated: bool = False,
+    ref_frames: Optional[dict] = None,
+) -> MarketContext:
     prepped = {}
     for tf, df in frames.items():
         if df is None or df.empty:
@@ -33,4 +39,4 @@ def build_context(symbol: str, frames: dict, dominance: Optional[dict] = None, i
     weekly = prepped.get("1w")
     stage = market_stage(daily) if daily is not None else Stage.UNKNOWN
     wbias = weekly_bias(weekly)
-    return MarketContext(symbol, prepped, stage, wbias, dominance or {})
+    return MarketContext(symbol, prepped, stage, wbias, dominance or {}, ref_frames=ref_frames)

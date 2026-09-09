@@ -22,6 +22,7 @@ from engine.config import (
     GEMINI_API_KEY,
     GEMINI_MODEL,
     GEMINI_MODEL_FALLBACKS,
+    GEMINI_RESEARCH_FALLBACK_FIRST,
     GEMINI_RETRY_DELAY_SEC,
     GEMINI_RETRY_MAX,
 )
@@ -78,11 +79,16 @@ def _api_key() -> str:
     return GEMINI_API_KEY.strip()
 
 
-def _model_chain() -> list[str]:
-    chain = [GEMINI_MODEL.strip()]
-    for model in GEMINI_MODEL_FALLBACKS:
-        if model and model not in chain:
-            chain.append(model)
+def _model_chain(*, research: bool = False) -> list[str]:
+    primary = GEMINI_MODEL.strip()
+    fallbacks = [m for m in GEMINI_MODEL_FALLBACKS if m and m != primary]
+    if research and GEMINI_RESEARCH_FALLBACK_FIRST and fallbacks:
+        chain = fallbacks + [primary]
+    else:
+        chain = [primary]
+        for model in fallbacks:
+            if model not in chain:
+                chain.append(model)
     return chain
 
 
@@ -210,12 +216,13 @@ def _generate_text(
     prompt: str,
     json_mode: bool = False,
     log: LogFn | None = None,
+    research: bool = False,
 ) -> str:
     """Model zinciri + gecici 503/429 icin exponential backoff."""
     global _last_model_used
     errors: list[str] = []
 
-    for model in _model_chain():
+    for model in _model_chain(research=research):
         for attempt in range(max(1, GEMINI_RETRY_MAX)):
             try:
                 text = _try_once(prompt=prompt, model=model, json_mode=json_mode)
@@ -297,7 +304,7 @@ Metin:
 En fazla {max_recipes} tarif. JSON array only.
 """
     try:
-        raw_text = _generate_text(prompt=prompt, json_mode=True, log=log)
+        raw_text = _generate_text(prompt=prompt, json_mode=True, log=log, research=True)
         parsed = _extract_json(raw_text)
         if isinstance(parsed, dict):
             parsed = [parsed]
@@ -339,7 +346,7 @@ Cikti: JSON array of strings, ornek: ["query one", "query two"]
 Sadece JSON array, baska metin yok.
 """
     try:
-        raw_text = _generate_text(prompt=prompt, json_mode=True, log=log)
+        raw_text = _generate_text(prompt=prompt, json_mode=True, log=log, research=True)
         parsed = _extract_json(raw_text)
         if isinstance(parsed, str):
             return [parsed.strip()][:limit]

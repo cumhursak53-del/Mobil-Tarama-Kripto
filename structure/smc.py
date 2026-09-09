@@ -140,6 +140,10 @@ class SMCAnalysis:
     setup_grade_short: SetupGrade = "none"
     internal_swing_n: int = 3
     external_swing_n: int = SWING_N
+    smt_bull: bool = False
+    smt_bear: bool = False
+    ob_fvg_valid_long: bool = False
+    ob_fvg_valid_short: bool = False
     long_score: int = 0
     short_score: int = 0
     long_notes: list[str] = field(default_factory=list)
@@ -251,12 +255,14 @@ def _trend_from_structure(df: pd.DataFrame, n: int = EXTERNAL_N) -> Trend:
 
 
 def _detect_structure_event(df: pd.DataFrame, trend: Trend, n: int = EXTERNAL_N) -> EventKind:
+    from engine.config import SMC_BODY_CLOSE
+
     highs = last_pivots(df, "high", 5, n=n)
     lows = last_pivots(df, "low", 5, n=n)
     if len(highs) < 2 or len(lows) < 2:
         return "none"
-    broke_high = broken_above(df, highs[-2][1])
-    broke_low = broken_below(df, lows[-2][1])
+    broke_high = broken_above(df, highs[-2][1], body_close=SMC_BODY_CLOSE)
+    broke_low = broken_below(df, lows[-2][1], body_close=SMC_BODY_CLOSE)
     if trend == "bull":
         if broke_high:
             return "bos_bull"
@@ -862,8 +868,35 @@ def analyze_smc(df: pd.DataFrame) -> SMCAnalysis:
     out.confluence_short = _compute_confluence(out, price, "short")
     out.setup_grade_long = _setup_grade(out.confluence_long, out.long_score)
     out.setup_grade_short = _setup_grade(out.confluence_short, out.short_score)
+    _finalize_ob_fvg(out)
 
     return out
+
+
+def _ob_overlaps_fvg(ob: OrderBlock, fvgs: list[FVG]) -> bool:
+    ob_lo, ob_hi = min(ob.top, ob.bottom), max(ob.top, ob.bottom)
+    for fvg in fvgs:
+        if fvg.mitigated or fvg.side != ob.side:
+            continue
+        f_lo, f_hi = min(fvg.top, fvg.bottom), max(fvg.top, fvg.bottom)
+        if ob_lo <= f_hi and f_lo <= ob_hi:
+            return True
+    return False
+
+
+def _finalize_ob_fvg(out: SMCAnalysis) -> None:
+    bull_blocks = out.active_blocks("bull")
+    bear_blocks = out.active_blocks("bear")
+    bull_fvg = any(not f.mitigated for f in out.fvgs if f.side == "bull")
+    bear_fvg = any(not f.mitigated for f in out.fvgs if f.side == "bear")
+    bos_long = out.last_event in ("bos_bull",) or out.external_event == "bos_bull"
+    bos_short = out.last_event in ("bos_bear",) or out.external_event == "bos_bear"
+    out.ob_fvg_valid_long = bool(bull_blocks) and bull_fvg and bos_long and any(
+        _ob_overlaps_fvg(ob, out.fvgs) for ob in bull_blocks
+    )
+    out.ob_fvg_valid_short = bool(bear_blocks) and bear_fvg and bos_short and any(
+        _ob_overlaps_fvg(ob, out.fvgs) for ob in bear_blocks
+    )
 
 
 def _merge_mtf_base(merged: SMCAnalysis, base: SMCAnalysis, prefix: str) -> None:
@@ -995,4 +1028,5 @@ def analyze_smc_mtf(
     merged.confluence_short = _compute_confluence(merged, price, "short")
     merged.setup_grade_long = _setup_grade(merged.confluence_long, merged.long_score)
     merged.setup_grade_short = _setup_grade(merged.confluence_short, merged.short_score)
+    _finalize_ob_fvg(merged)
     return merged

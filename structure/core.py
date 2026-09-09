@@ -183,16 +183,27 @@ def candle_features(df: pd.DataFrame, i: int = -1) -> dict:
         pbody = abs(pc - po)
         bull_eng = pc < po and c > o and o <= pc and c >= po and body >= pbody
         bear_eng = pc > po and c < o and o >= pc and c <= po and body >= pbody
+    pin_bull = lower >= rng * 0.6 and body <= rng * 0.25 and c > o
+    pin_bear = upper >= rng * 0.6 and body <= rng * 0.25 and c < o
+    inside = False
+    if prev is not None:
+        ph, pl = float(prev["high"]), float(prev["low"])
+        inside = h <= ph and l >= pl
     return {
         "hammer": hammer,
         "shooting_star": star,
         "bull_engulf": bull_eng,
         "bear_engulf": bear_eng,
+        "pin_bull": pin_bull,
+        "pin_bear": pin_bear,
+        "inside_bar": inside,
         "bullish": c > o,
         "bearish": c < o,
         "close_loc": close_loc,
         "body": body,
         "range": rng,
+        "upper_wick": upper / rng,
+        "lower_wick": lower / rng,
     }
 
 
@@ -211,9 +222,113 @@ def add_structure(df: pd.DataFrame, n: int = SWING_N) -> pd.DataFrame:
     return out
 
 
-def broken_above(df: pd.DataFrame, level: float, i: int = -1) -> bool:
-    return float(df["close"].iloc[i]) > level and float(df["close"].iloc[i - 1]) <= level
+def broken_above(df: pd.DataFrame, level: float, i: int = -1, *, body_close: bool = True) -> bool:
+    row = df.iloc[i]
+    prev = df.iloc[i - 1]
+    price = float(row["close"] if body_close else row["high"])
+    prev_price = float(prev["close"] if body_close else prev["high"])
+    return price > level and prev_price <= level
 
 
-def broken_below(df: pd.DataFrame, level: float, i: int = -1) -> bool:
-    return float(df["close"].iloc[i]) < level and float(df["close"].iloc[i - 1]) >= level
+def broken_below(df: pd.DataFrame, level: float, i: int = -1, *, body_close: bool = True) -> bool:
+    row = df.iloc[i]
+    prev = df.iloc[i - 1]
+    price = float(row["close"] if body_close else row["low"])
+    prev_price = float(prev["close"] if body_close else prev["low"])
+    return price < level and prev_price >= level
+
+
+def fib_extension(swing_low: float, swing_high: float, direction: str) -> dict[str, float]:
+    diff = swing_high - swing_low
+    if diff <= 0:
+        return {}
+    if direction == "up":
+        return {"1.272": swing_high + diff * 0.272, "1.618": swing_high + diff * 0.618}
+    return {"1.272": swing_low - diff * 0.272, "1.618": swing_low - diff * 0.618}
+
+
+def validated_impulse(df: pd.DataFrame, min_atr: float = 1.5) -> Optional[tuple[float, float, str]]:
+    impulse = last_impulse(df)
+    if not impulse or "atr" not in df.columns:
+        return impulse
+    lo, hi, direction = impulse
+    atr = float(df["atr"].iloc[-1])
+    if atr <= 0:
+        return impulse
+    if abs(hi - lo) >= atr * min_atr:
+        return impulse
+    return None
+
+
+def structure_event(df: pd.DataFrame, scope: str = "external") -> Optional[str]:
+    """Return bos_bull, bos_bear, choch_bull, choch_bear or None."""
+    n = 3 if scope == "internal" else SWING_N
+    highs = last_pivots(df, "high", 4, n)
+    lows = last_pivots(df, "low", 4, n)
+    if len(highs) < 2 or len(lows) < 2:
+        return None
+    close = float(df["close"].iloc[-1])
+    prev_close = float(df["close"].iloc[-2])
+    last_high = highs[-1][1]
+    last_low = lows[-1][1]
+    trend_up = highs[-1][1] > highs[-2][1] and lows[-1][1] > lows[-2][1]
+    trend_down = highs[-1][1] < highs[-2][1] and lows[-1][1] < lows[-2][1]
+    if close > last_high and prev_close <= last_high:
+        return "bos_bull" if trend_up else "choch_bull"
+    if close < last_low and prev_close >= last_low:
+        return "bos_bear" if trend_down else "choch_bear"
+    return None
+
+
+def retest_after_break(df: pd.DataFrame, level: float, direction: str, hold_bars: int = 3) -> bool:
+    """True if price broke level, held N bars, then retested."""
+    if len(df) < hold_bars + 5:
+        return False
+    closes = df["close"].iloc[-(hold_bars + 4):]
+    if direction == "up":
+        broke = any(closes.iloc[i] > level and closes.iloc[i - 1] <= level for i in range(1, len(closes) - hold_bars))
+        if not broke:
+            return False
+        held = all(float(c) > level * 0.998 for c in closes.iloc[-hold_bars - 1:-1])
+        retest = float(closes.iloc[-1]) >= level * 0.998 and float(closes.iloc[-1]) <= level * 1.006
+        return held and retest
+    broke = any(closes.iloc[i] < level and closes.iloc[i - 1] >= level for i in range(1, len(closes) - hold_bars))
+    if not broke:
+        return False
+    held = all(float(c) < level * 1.002 for c in closes.iloc[-hold_bars - 1:-1])
+    retest = float(closes.iloc[-1]) <= level * 1.002 and float(closes.iloc[-1]) >= level * 0.994
+    return held and retest
+
+
+def trendline_touches(pivots: list[tuple[int, float]], at_index: int, tol_pct: float = 0.008) -> int:
+    if len(pivots) < 2:
+        return 0
+    touches = 0
+    for idx, price in pivots:
+        line = trendline_from_pivots(pivots, idx)
+        if line and abs(price - line) / max(price, 1e-9) <= tol_pct:
+            touches += 1
+    line_now = trendline_from_pivots(pivots, at_index)
+    if line_now:
+        for idx, price in pivots:
+            if abs(price - line_now) / max(price, 1e-9) <= tol_pct:
+                touches += 1
+    return touches
+
+
+def displacement_bar(df: pd.DataFrame, i: int = -1, atr_mult: float = 1.2) -> bool:
+    if "atr" not in df.columns or len(df) < 2:
+        return False
+    row = df.iloc[i]
+    body = abs(float(row["close"]) - float(row["open"]))
+    atr = float(row["atr"])
+    return atr > 0 and body >= atr * atr_mult
+
+
+def wick_ratio(df: pd.DataFrame, side: str, i: int = -1) -> float:
+    row = df.iloc[i]
+    o, h, l, c = float(row["open"]), float(row["high"]), float(row["low"]), float(row["close"])
+    rng = max(h - l, 1e-12)
+    if side == "lower":
+        return (min(o, c) - l) / rng
+    return (h - max(o, c)) / rng

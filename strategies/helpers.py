@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from engine.config import NEAR_PCT
-from engine.types import Signal, Side
+from engine.types import EntryMode, Signal, Side, TpMode
 from structure.core import last_pivots
 
 
@@ -30,7 +30,25 @@ def tp_r(entry: float, sl: float, side: Side, r: float = 2.0) -> float:
     return entry - dist * r
 
 
-def make_signal(ledger: str, reason: str, df: pd.DataFrame, side: Side, sl: Optional[float] = None, extra: Optional[dict] = None) -> Optional[Signal]:
+def make_signal(
+    ledger: str,
+    reason: str,
+    df: pd.DataFrame,
+    side: Side,
+    sl: Optional[float] = None,
+    extra: Optional[dict] = None,
+    *,
+    tp_r_val: float = 2.0,
+    tp_price: Optional[float] = None,
+    tp_levels: Optional[list[float]] = None,
+    tp_mode: TpMode = "r",
+    entry_mode: EntryMode = "market",
+    entry_limit: Optional[float] = None,
+    trail_at_r: Optional[float] = None,
+    be_at_r: Optional[float] = None,
+    partial_pct: float = 0.5,
+    strength: float = 1.0,
+) -> Optional[Signal]:
     entry = float(df["close"].iloc[-1])
     sl_price = sl if sl is not None else sl_from_swing(df, side)
     if sl_price is None:
@@ -41,14 +59,31 @@ def make_signal(ledger: str, reason: str, df: pd.DataFrame, side: Side, sl: Opti
         sl_price = entry * (1 + 0.01)
     if abs(entry - sl_price) / entry < 0.002:
         return None
+
+    levels = list(tp_levels or [])
+    final_tp = tp_price
+    if final_tp is None and not levels:
+        final_tp = tp_r(entry, sl_price, side, tp_r_val)
+    elif final_tp is None and levels:
+        final_tp = levels[0]
+
     return Signal(
         side=side,
         strategy=reason,
         ledger=ledger,
         reason=reason,
         sl_price=float(sl_price),
-        tp_price=tp_r(entry, sl_price, side, 2.0),
+        tp_price=float(final_tp) if final_tp is not None else None,
         extra=extra or {},
+        tp_mode=tp_mode,
+        tp_levels=levels,
+        entry_mode=entry_mode,
+        entry_limit=entry_limit,
+        trail_at_r=trail_at_r,
+        be_at_r=be_at_r,
+        partial_pct=partial_pct,
+        tp_r=tp_r_val,
+        strength=strength,
     )
 
 

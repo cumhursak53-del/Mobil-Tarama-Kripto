@@ -6,14 +6,22 @@ from datetime import datetime
 from typing import Optional
 
 from engine.config import (
+    BE_AT_R,
     GEMINI_API_KEY,
     GITHUB_TOKEN,
     KASA_START_USD,
     LAB_AUTO,
     LAB_LEDGER_PREFIX,
     LEDGER_NAMES,
+    MAX_SHORT_OPEN_RATIO,
+    MAX_TOTAL_POSITIONS,
+    PARTIAL_PCT,
+    PARTIAL_R,
     RESEARCH_ENABLED,
+    SHORT_RATIO_MIN_POSITIONS,
     STATE_FILE,
+    SYMBOL_COOLDOWN_AFTER_SL_SEC,
+    SYMBOL_LOCK_MODE,
     TAKER_FEE,
     TR_TZ,
 )
@@ -51,6 +59,8 @@ class Portfolio:
         self.lab_state: dict = {}
         self.logs: list[str] = []
         self._equity_curve: list[dict] = []
+        self._symbol_sl_until: dict[str, float] = {}
+        self.pending_orders: list[dict] = []
         self.state_source: str = "fresh"
         remote = pull_state()
         local_raw = None
@@ -116,6 +126,7 @@ class Portfolio:
         self.smc_scan = raw.get("smc_scan") or {}
         self.logs = raw.get("engine_logs") or []
         self._equity_curve = raw.get("equity_curve") or []
+        self.pending_orders = raw.get("pending_orders") or []
         self.positions = {}
         for key, p in (raw.get("active_positions") or {}).items():
             try:
@@ -136,6 +147,13 @@ class Portfolio:
                     peak_price=float(p.get("peak_price") or p["entry_price"]),
                     partial_taken=bool(p.get("partial_tp_taken")),
                     current_price=float(p.get("current_price") or p["entry_price"]),
+                    tp_levels=list(p.get("tp_levels") or []),
+                    trail_at_r=p.get("trail_at_r"),
+                    be_at_r=p.get("be_at_r"),
+                    partial_pct=float(p.get("partial_pct") or PARTIAL_PCT),
+                    initial_sl=float(p.get("initial_sl") or p["sl_price"]),
+                    remaining_notional=float(p.get("remaining_notional") or p.get("notional") or 0),
+                    remaining_qty=float(p.get("remaining_qty") or p.get("qty") or 0),
                 )
             except Exception:
                 continue
@@ -175,6 +193,13 @@ class Portfolio:
             "peak_price": p.peak_price,
             "partial_tp_taken": p.partial_taken,
             "current_price": p.current_price,
+            "tp_levels": p.tp_levels,
+            "trail_at_r": p.trail_at_r,
+            "be_at_r": p.be_at_r,
+            "partial_pct": p.partial_pct,
+            "initial_sl": p.initial_sl,
+            "remaining_notional": p.remaining_notional or p.notional,
+            "remaining_qty": p.remaining_qty or p.qty,
         }
 
     def log(self, msg: str) -> None:
@@ -187,8 +212,24 @@ class Portfolio:
     def ledger_position_count(self, ledger: str) -> int:
         return sum(1 for p in self.positions.values() if p.ledger == ledger)
 
-    def symbol_open(self, symbol: str) -> bool:
+    def symbol_open(self, symbol: str, ledger: str | None = None) -> bool:
+        if SYMBOL_LOCK_MODE == "none":
+            return False
+        if SYMBOL_LOCK_MODE == "per_ledger" and ledger:
+            return any(p.symbol == symbol and p.ledger == ledger for p in self.positions.values())
         return any(p.symbol == symbol for p in self.positions.values())
+
+    def symbol_in_cooldown(self, symbol: str) -> bool:
+        import time
+
+        until = self._symbol_sl_until.get(symbol, 0)
+        return until > time.time()
+
+    def _short_open_ratio(self) -> float:
+        if not self.positions:
+            return 0.0
+        shorts = sum(1 for p in self.positions.values() if p.side == Side.SELL)
+        return shorts / len(self.positions)
 
     def _ledger_risks(self, ledger: str) -> list[PositionRisk]:
         return [
@@ -198,14 +239,48 @@ class Portfolio:
         ]
 
     def try_open(self, symbol: str, sig: Signal, price: float) -> bool:
+        if MAX_TOTAL_POSITIONS > 0 and len(self.positions) >= MAX_TOTAL_POSITIONS:
+            return False
+        if self.symbol_in_cooldown(symbol):
+            return False
+        if (
+            sig.side == Side.SELL
+            and MAX_SHORT_OPEN_RATIO > 0
+            and len(self.positions) >= SHORT_RATIO_MIN_POSITIONS
+            and self._short_open_ratio() >= MAX_SHORT_OPEN_RATIO
+        ):
+            return False
         cap = max_positions_for_ledger(sig.ledger)
         if cap is not None and self.ledger_position_count(sig.ledger) >= cap:
             return False
-        if self.symbol_open(symbol):
+        if self.symbol_open(symbol, sig.ledger):
             return False
         key = self.pos_key(sig.ledger, symbol)
         if key in self.positions:
             return False
+
+        if sig.entry_mode == "limit" and sig.entry_limit is not None:
+            self.pending_orders.append({
+                "symbol": symbol,
+                "ledger": sig.ledger,
+                "signal": {
+                    "side": sig.side.value,
+                    "strategy": sig.strategy,
+                    "reason": sig.reason,
+                    "sl_price": sig.sl_price,
+                    "tp_price": sig.tp_price,
+                    "entry_tf": sig.entry_tf,
+                    "entry_limit": sig.entry_limit,
+                    "tp_levels": sig.tp_levels,
+                    "trail_at_r": sig.trail_at_r,
+                    "be_at_r": sig.be_at_r,
+                    "partial_pct": sig.partial_pct,
+                },
+                "created_at": now_tr(),
+            })
+            self.pending_orders = self.pending_orders[-50:]
+            return True
+
         cash = self.ledgers.get(sig.ledger, 0)
         sized = size_position(
             ledger_balance=cash,
@@ -234,6 +309,13 @@ class Portfolio:
             entry_time=now_tr(),
             peak_price=price,
             current_price=price,
+            tp_levels=list(sig.tp_levels or []),
+            trail_at_r=sig.trail_at_r,
+            be_at_r=sig.be_at_r or BE_AT_R,
+            partial_pct=sig.partial_pct,
+            initial_sl=sig.sl_price,
+            remaining_notional=sized.notional,
+            remaining_qty=sized.qty,
         )
         self.log(
             f"YENI {sig.side.value} {symbol} | {sig.strategy} | {sig.ledger} "
@@ -250,24 +332,64 @@ class Portfolio:
                 else:
                     p.peak_price = min(p.peak_price, price) if p.peak_price else price
 
-    def check_exits(self, symbol: str, price: float) -> list[ClosedTrade]:
-        closed: list[ClosedTrade] = []
-        for key in list(self.positions):
-            p = self.positions[key]
-            if p.symbol != symbol:
-                continue
-            reason = self._exit_reason(p, price)
-            if not reason:
-                continue
-            closed.append(self._close(key, price, reason))
-        return closed
+    def _risk_dist(self, p: Position) -> float:
+        return abs(p.entry_price - p.initial_sl) if p.initial_sl else abs(p.entry_price - p.sl_price)
+
+    def _current_r(self, p: Position, price: float) -> float:
+        dist = self._risk_dist(p)
+        if dist <= 0:
+            return 0.0
+        if p.side == Side.BUY:
+            return (price - p.entry_price) / dist
+        return (p.entry_price - price) / dist
+
+    def _maybe_partial(self, key: str, p: Position, price: float) -> bool:
+        if p.partial_taken or PARTIAL_R <= 0:
+            return False
+        r = self._current_r(p, price)
+        if r < PARTIAL_R:
+            return False
+        close_notional = p.remaining_notional * p.partial_pct
+        if close_notional <= 0:
+            return False
+        ratio = (price - p.entry_price) / p.entry_price if p.side == Side.BUY else (p.entry_price - price) / p.entry_price
+        gross = close_notional * ratio
+        fee = close_notional * TAKER_FEE * 2
+        net = gross - fee
+        self.ledgers[p.ledger] = max(self.ledgers.get(p.ledger, 0) + net, 0.0)
+        p.remaining_notional -= close_notional
+        p.remaining_qty *= 1.0 - p.partial_pct
+        p.partial_taken = True
+        if p.be_at_r and r >= p.be_at_r:
+            p.sl_price = p.entry_price
+        self.log(f"KISMI TP {p.symbol} | {p.ledger} | {PARTIAL_PCT*100:.0f}% | PnL ${net:+.2f}")
+        return True
+
+    def _maybe_trail(self, p: Position, price: float) -> None:
+        if not p.trail_at_r:
+            return
+        r = self._current_r(p, price)
+        if r < p.trail_at_r:
+            return
+        dist = self._risk_dist(p)
+        if dist <= 0:
+            return
+        if p.side == Side.BUY:
+            new_sl = p.peak_price - dist * 0.5
+            if new_sl > p.sl_price:
+                p.sl_price = new_sl
+        else:
+            new_sl = p.peak_price + dist * 0.5
+            if new_sl < p.sl_price:
+                p.sl_price = new_sl
 
     def _exit_reason(self, p: Position, price: float) -> Optional[str]:
+        self._maybe_trail(p, price)
         if p.side == Side.BUY:
             if price <= p.sl_price:
                 return "SL"
             if p.tp_price and price >= p.tp_price:
-                return "TP"
+                return "TP" if p.partial_taken else "TP"
         else:
             if price >= p.sl_price:
                 return "SL"
@@ -275,11 +397,57 @@ class Portfolio:
                 return "TP"
         return None
 
+    def check_exits(self, symbol: str, price: float) -> list[ClosedTrade]:
+        closed: list[ClosedTrade] = []
+        for key in list(self.positions):
+            p = self.positions[key]
+            if p.symbol != symbol:
+                continue
+            self._maybe_partial(key, p, price)
+            reason = self._exit_reason(p, price)
+            if not reason:
+                continue
+            closed.append(self._close(key, price, reason))
+        return closed
+
+    def try_pending_orders(self, symbol: str, price: float) -> bool:
+        opened = False
+        remain = []
+        for po in self.pending_orders:
+            if po.get("symbol") != symbol:
+                remain.append(po)
+                continue
+            limit = float(po["signal"].get("entry_limit") or 0)
+            side = po["signal"].get("side")
+            hit = (side == "BUY" and price <= limit) or (side == "SELL" and price >= limit)
+            if not hit:
+                remain.append(po)
+                continue
+            sig = Signal(
+                side=Side(side),
+                strategy=po["signal"]["strategy"],
+                ledger=po["ledger"],
+                reason=po["signal"]["reason"],
+                sl_price=float(po["signal"]["sl_price"]),
+                tp_price=po["signal"].get("tp_price"),
+                entry_tf=po["signal"].get("entry_tf", "1h"),
+                entry_mode="market",
+                tp_levels=list(po["signal"].get("tp_levels") or []),
+                trail_at_r=po["signal"].get("trail_at_r"),
+                be_at_r=po["signal"].get("be_at_r"),
+                partial_pct=float(po["signal"].get("partial_pct") or PARTIAL_PCT),
+            )
+            if self.try_open(symbol, sig, limit):
+                opened = True
+        self.pending_orders = remain
+        return opened
+
     def _close(self, key: str, price: float, reason: str) -> ClosedTrade:
         p = self.positions.pop(key)
+        notional = p.remaining_notional or p.notional
         ratio = (price - p.entry_price) / p.entry_price if p.side == Side.BUY else (p.entry_price - price) / p.entry_price
-        gross = p.notional * ratio
-        fee = p.notional * TAKER_FEE * 2
+        gross = notional * ratio
+        fee = notional * TAKER_FEE * 2
         net = gross - fee
         self.ledgers[p.ledger] = max(self.ledgers.get(p.ledger, 0) + p.margin + net, 0.0)
         risk = abs(p.entry_price - p.sl_price) / p.entry_price * p.notional
@@ -307,6 +475,10 @@ class Portfolio:
         self._equity_curve.append({"time": trade.exit_time, "equity": eq})
         self._equity_curve = self._equity_curve[-300:]
         self.log(f"KAPANDI {p.symbol} {reason} | {p.ledger} | PnL ${net:+.2f}")
+        if reason == "SL" and SYMBOL_COOLDOWN_AFTER_SL_SEC > 0:
+            import time
+
+            self._symbol_sl_until[p.symbol] = time.time() + SYMBOL_COOLDOWN_AFTER_SL_SEC
         if p.ledger.startswith(LAB_LEDGER_PREFIX):
             record_lab_trade(self.lab_state, p.ledger, net)
             evaluate_lab_candidates(self.lab_state)
@@ -363,11 +535,14 @@ class Portfolio:
         backtests = self.lab_state.get("backtests") or []
         paper = [c for c in candidates if c.get("status") == "paper"]
         rejected = [c for c in candidates if c.get("status") == "rejected"]
+        closed_pnl = sum(float(h.get("pnl") or 0) for h in self.history)
         return {
             "ledgers": self.ledgers,
             "balance": cash,
             "equity": eq,
+            "closed_pnl_total": closed_pnl,
             "active_positions": pos_dicts,
+            "pending_orders": self.pending_orders[-20:],
             "history": self.history[-200:],
             "signal_log": {k: v for k, v in self.signal_log.items() if not str(k).startswith("_")},
             "patlama_selale_scan": self.patlama_scan,

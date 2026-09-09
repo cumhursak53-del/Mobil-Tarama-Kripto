@@ -6,7 +6,7 @@ from typing import Optional
 import pandas as pd
 
 from engine.backtest import _intrabar_exit, _slice_closed
-from engine.config import KASA_START_USD, LAB_MIN_BACKTEST_PF, LAB_MIN_BACKTEST_TRADES, TAKER_FEE
+from engine.config import FIDELITY_MAX_DD, KASA_START_USD, LAB_MIN_BACKTEST_PF, LAB_MIN_BACKTEST_TRADES, TAKER_FEE
 from engine.context import build_context, indicate_frame
 from engine.strategy_recipe import StrategyRecipe, evaluate_recipe
 from engine.types import Side
@@ -24,7 +24,8 @@ def backtest_recipe(
 ) -> dict:
     rec = recipe if isinstance(recipe, StrategyRecipe) else StrategyRecipe.from_dict(recipe)
     indicated = {tf: add_structure(indicate_frame(df)) for tf, df in frames.items()}
-    h1 = indicated.get("1h")
+    entry_tf = rec.entry_tf or "1h"
+    h1 = indicated.get(entry_tf) or indicated.get("1h")
     if h1 is None or len(h1) < warmup + 20:
         return {"symbol": symbol, "recipe_id": rec.id, "trades": [], "error": "not_enough_1h"}
 
@@ -38,7 +39,9 @@ def backtest_recipe(
         row = h1.iloc[i]
         ts = row["close_time"]
         price = float(row["close"])
+        slip = 0.0003
         high, low = float(row["high"]), float(row["low"])
+        price *= 1.0 + slip
 
         if open_pos:
             hit = _intrabar_exit(open_pos["side"], open_pos["sl"], open_pos.get("tp"), high, low)
@@ -85,6 +88,18 @@ def backtest_recipe(
     return {"symbol": symbol, "recipe_id": rec.id, "trades": trades, "final_cash": cash}
 
 
+def compute_max_drawdown(trades: list[dict], start_cash: float = KASA_START_USD) -> float:
+    equity = float(start_cash)
+    peak = equity
+    max_dd = 0.0
+    for t in trades:
+        equity += float(t.get("pnl") or 0)
+        peak = max(peak, equity)
+        if peak > 0:
+            max_dd = max(max_dd, (peak - equity) / peak)
+    return max_dd
+
+
 def summarize_recipe_results(results: list[dict]) -> dict:
     pnls = [float(t["pnl"]) for r in results for t in r.get("trades") or []]
     n = len(pnls)
@@ -93,12 +108,20 @@ def summarize_recipe_results(results: list[dict]) -> dict:
     gp, gl = sum(wins), abs(sum(losses))
     pf = (gp / gl) if gl else None
     wr = len(wins) / n if n else 0.0
-    passed = n >= LAB_MIN_BACKTEST_TRADES and pf is not None and pf >= LAB_MIN_BACKTEST_PF
+    all_trades = [t for r in results for t in r.get("trades") or []]
+    max_dd = compute_max_drawdown(all_trades)
+    passed = (
+        n >= LAB_MIN_BACKTEST_TRADES
+        and pf is not None
+        and pf >= LAB_MIN_BACKTEST_PF
+        and max_dd <= FIDELITY_MAX_DD
+    )
     return {
         "n": n,
         "win_rate": wr,
         "pnl": sum(pnls),
         "profit_factor": pf,
+        "max_drawdown": max_dd,
         "passed": passed,
         "symbols": len(results),
     }

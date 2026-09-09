@@ -18,16 +18,21 @@ def render() -> None:
     if not equity:
         equity = cash + sum(float(p.get("margin") or 0) for p in active.values())
     unreal = sum(float(p.get("unrealized_pnl") or 0) for p in active.values())
+    closed_pnl = data.get("closed_pnl_total")
+    if closed_pnl is None and history:
+        closed_pnl = sum(float(h.get("pnl") or 0) for h in history)
+    closed_pnl = float(closed_pnl or 0)
 
     st.title("Canli piyasa simulasyonu")
     st.caption(source_caption(data))
 
-    c1, c2, c3, c4, c5 = st.columns(5)
+    c1, c2, c3, c4, c5, c6 = st.columns(6)
     c1.metric("Toplam ozsermaye", f"${equity:,.2f}")
     c2.metric("Nakit (kasalar)", f"${cash:,.2f}")
     c3.metric("Acik islem", f"{len(active)}")
     c4.metric("Acik PnL", f"${unreal:+,.2f}")
     c5.metric("Kapanan islem", f"{len(history)}")
+    c6.metric("Kapanan PnL", f"${closed_pnl:+,.2f}")
 
     xlsx = build_excel_bytes(data)
     st.download_button(

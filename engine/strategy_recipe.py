@@ -20,6 +20,10 @@ class StrategyRecipe:
     short_rules: list[dict] = field(default_factory=list)
     require_aligned: bool = True
     source: str = "combinator"
+    entry_tf: str = "1h"
+    sl_mode: str = "swing"
+    tp_mode: str = "r"
+    tp_r: float = 2.0
 
     @classmethod
     def from_dict(cls, raw: dict) -> "StrategyRecipe":
@@ -31,6 +35,10 @@ class StrategyRecipe:
             short_rules=list(raw.get("short_rules") or []),
             require_aligned=bool(raw.get("require_aligned", True)),
             source=str(raw.get("source") or "combinator"),
+            entry_tf=str(raw.get("entry_tf") or "1h"),
+            sl_mode=str(raw.get("sl_mode") or "swing"),
+            tp_mode=str(raw.get("tp_mode") or "r"),
+            tp_r=float(raw.get("tp_r") or 2.0),
         )
 
     def to_dict(self) -> dict:
@@ -42,6 +50,10 @@ class StrategyRecipe:
             "short_rules": self.short_rules,
             "require_aligned": self.require_aligned,
             "source": self.source,
+            "entry_tf": self.entry_tf,
+            "sl_mode": self.sl_mode,
+            "tp_mode": self.tp_mode,
+            "tp_r": self.tp_r,
         }
 
 
@@ -187,6 +199,78 @@ def _eval_rule(ctx: MarketContext, rule: dict) -> bool:
             "smc_score_short": smc.short_score >= int(rule.get("min", 5)),
         }
         return mapping.get(kind, False)
+    if rtype == "smc_grade":
+        smc = analyze_smc_mtf(ctx.frames) if len(ctx.frames) > 1 else analyze_smc(ctx.tf("4h") or df)
+        side = str(rule.get("side", "long")).lower()
+        min_grade = str(rule.get("min", "B")).upper()
+        rank = {"A": 3, "B": 2, "C": 1, "NONE": 0}
+        grade = smc.setup_grade_long if side == "long" else smc.setup_grade_short
+        return rank.get(str(grade).upper(), 0) >= rank.get(min_grade, 2)
+    if rtype == "liquidity":
+        smc = analyze_smc_mtf(ctx.frames) if len(ctx.frames) > 1 else analyze_smc(ctx.tf(str(rule.get("tf") or "4h")) or df)
+        kind = str(rule.get("kind", ""))
+        mapping = {
+            "sweep_bull": smc.sweep_bull,
+            "sweep_bear": smc.sweep_bear,
+            "eqh": len(smc.eqh_levels) > 0,
+            "eql": len(smc.eql_levels) > 0,
+            "pool_above": any(p.side == "sell" for p in smc.liquidity_pools),
+            "pool_below": any(p.side == "buy" for p in smc.liquidity_pools),
+            "nested_sweep_bull": smc.nested_sweep_bull,
+            "nested_sweep_bear": smc.nested_sweep_bear,
+            "turtle_soup_bull": smc.turtle_soup_bull,
+            "turtle_soup_bear": smc.turtle_soup_bear,
+            "smt_bull": getattr(smc, "smt_bull", False),
+            "smt_bear": getattr(smc, "smt_bear", False),
+        }
+        return mapping.get(kind, False)
+    if rtype == "fib":
+        setup = ctx.tf(str(rule.get("tf") or "4h"))
+        if setup is None:
+            return False
+        from structure.core import validated_impulse, fib_retracement
+        impulse = validated_impulse(setup)
+        if not impulse:
+            return False
+        lo, hi, direction = impulse
+        levels = fib_retracement(lo, hi, direction)
+        df = ctx.tf("1h")
+        if df is None:
+            return False
+        close = float(df["close"].iloc[-1])
+        zone = str(rule.get("zone", "0.618"))
+        level = levels.get(zone)
+        if level is None:
+            return False
+        return abs(close - level) / close <= 0.008
+    if rtype == "dominance":
+        d = ctx.dominance or {}
+        kind = str(rule.get("kind", ""))
+        if kind == "alt_long":
+            return (d.get("btc_d_chg") or 0) < 0 and (d.get("usdt_d_chg") or 0) < 0
+        if kind == "alt_short":
+            return (d.get("btc_d_chg") or 0) > 0 and (d.get("usdt_d_chg") or 0) > 0
+        return False
+    if rtype == "pattern":
+        from structure.patterns import detect_double_bottom, detect_flag, detect_head_shoulders
+        setup = ctx.tf(str(rule.get("tf") or "4h"))
+        if setup is None:
+            return False
+        kind = str(rule.get("kind", ""))
+        if kind == "double_bottom":
+            return detect_double_bottom(setup) is not None
+        if kind == "head_shoulders":
+            return detect_head_shoulders(setup) is not None
+        if kind == "flag":
+            return detect_flag(setup) is not None
+        return False
+    if rtype == "candle":
+        from structure.core import candle_features
+        df = ctx.tf(str(rule.get("tf") or "1h"))
+        if df is None:
+            return False
+        cf = candle_features(df)
+        return bool(cf.get(str(rule.get("kind", "hammer"))))
     if rtype == "indicator":
         field_name = str(rule.get("field", ""))
         if field_name not in df.columns:

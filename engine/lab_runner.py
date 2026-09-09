@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Optional
 
 from engine.config import (
     GEMINI_API_KEY,
+    GEMINI_SKIP_PIPELINE_TEST,
     LAB_AUTO,
     LAB_AUTO_INTERVAL_SEC,
     LAB_BACKTEST_BATCH,
@@ -93,8 +94,9 @@ def run_lab_pipeline(*, log=None, force: bool = False) -> dict:
         recipes = state.get("recipes") or []
 
         if RESEARCH_ENABLED and GEMINI_API_KEY:
-            from engine.gemini_client import test_gemini_connection
-            test_gemini_connection(log=log)
+            if not GEMINI_SKIP_PIPELINE_TEST:
+                from engine.gemini_client import test_gemini_connection
+                test_gemini_connection(log=log)
             new_research = run_research(state, log=log)
         elif RESEARCH_ENABLED and log:
             log("Arastirma atlandi: GEMINI_API_KEY worker env'de tanimli degil")
@@ -135,7 +137,9 @@ def run_lab_pipeline(*, log=None, force: bool = False) -> dict:
                     if log:
                         log(f"Lab veri hatasi {sym}: {e}")
             if symbol_frames:
-                rows = run_lab_backtests(pending, symbol_frames, dominance)
+                from engine.walk_forward import walk_forward_recipe_batch
+
+                rows = walk_forward_recipe_batch(pending, symbol_frames, dominance)
                 for row in rows:
                     m = row["metrics"]
                     state.setdefault("backtests", []).append({

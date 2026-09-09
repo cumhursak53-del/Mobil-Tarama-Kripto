@@ -6,10 +6,17 @@ from typing import Optional
 from engine.types import Side, Stage
 from strategies.base import MarketContext
 from strategies.helpers import valid_row
-from structure.core import broken_above, broken_below, hh_hl, last_pivots, lh_ll, volume_ok
+from structure.core import broken_above, broken_below, displacement_bar, hh_hl, last_pivots, lh_ll, retest_after_break, volume_ok
 
 
-MIN_TRADE_SCORE = 4
+def _min_trade_score() -> int:
+    from engine.config import PATLAMA_MIN_SCORE
+    return PATLAMA_MIN_SCORE
+
+
+def _min_edge() -> int:
+    from engine.config import PATLAMA_MIN_EDGE
+    return PATLAMA_MIN_EDGE
 
 
 @dataclass
@@ -22,9 +29,10 @@ class MomentumScore:
 
     @property
     def best_side(self) -> str:
-        if self.long_score >= MIN_TRADE_SCORE and self.long_score > self.short_score:
+        ms = _min_trade_score()
+        if self.long_score >= ms and self.long_score > self.short_score:
             return Side.BUY.value
-        if self.short_score >= MIN_TRADE_SCORE and self.short_score > self.long_score:
+        if self.short_score >= ms and self.short_score > self.long_score:
             return Side.SELL.value
         if self.long_score >= self.short_score and self.long_score >= 3:
             return "WATCH_LONG"
@@ -111,12 +119,22 @@ def score_momentum(ctx: MarketContext) -> MomentumScore:
             out.short_notes.append("4H:sikisma")
         highs = last_pivots(h4, "high", 4)
         lows = last_pivots(h4, "low", 4)
-        if len(highs) >= 2 and broken_above(h4, highs[-1][1]):
-            out.long_score += 1
-            out.long_notes.append("4H:direnc_kirildi")
-        if len(lows) >= 2 and broken_below(h4, lows[-1][1]):
-            out.short_score += 1
-            out.short_notes.append("4H:destek_kirildi")
+        if len(highs) >= 2:
+            lvl = highs[-1][1]
+            if broken_above(h4, lvl) and displacement_bar(h4):
+                out.long_score += 1
+                out.long_notes.append("4H:direnc_kirildi")
+            if retest_after_break(h4, lvl, "up"):
+                out.long_score += 1
+                out.long_notes.append("4H:retest_long")
+        if len(lows) >= 2:
+            lvl = lows[-1][1]
+            if broken_below(h4, lvl) and displacement_bar(h4):
+                out.short_score += 1
+                out.short_notes.append("4H:destek_kirildi")
+            if retest_after_break(h4, lvl, "down"):
+                out.short_score += 1
+                out.short_notes.append("4H:retest_short")
         if volume_ok(h4):
             close = float(h4["close"].iloc[-1])
             if highs and close > highs[-1][1]:
@@ -158,8 +176,10 @@ def score_momentum(ctx: MarketContext) -> MomentumScore:
 
 
 def trade_signal_from_score(score: MomentumScore) -> Optional[Side]:
-    if score.long_score >= MIN_TRADE_SCORE and score.long_score > score.short_score:
+    ms = _min_trade_score()
+    edge = _min_edge()
+    if score.long_score >= ms and score.long_score >= score.short_score + edge:
         return Side.BUY
-    if score.short_score >= MIN_TRADE_SCORE and score.short_score > score.long_score:
+    if score.short_score >= ms and score.short_score >= score.long_score + edge:
         return Side.SELL
     return None

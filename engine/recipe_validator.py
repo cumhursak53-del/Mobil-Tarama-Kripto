@@ -36,6 +36,14 @@ ALLOWED_EXTRA = {
     "", "k_lt_25", "k_gt_75", "rsi_lt_45", "rsi_gt_55",
     "hist_pos", "hist_neg", "cci_lt_100", "cci_gt_-100",
 }
+ALLOWED_SMC_GRADE = {"A", "B", "C"}
+ALLOWED_LIQUIDITY = {
+    "sweep_bull", "sweep_bear", "eqh", "eql",
+    "pool_above", "pool_below",
+    "nested_sweep_bull", "nested_sweep_bear",
+    "turtle_soup_bull", "turtle_soup_bear",
+    "smt_bull", "smt_bear",
+}
 
 
 def _clean_rule(rule: dict) -> dict | None:
@@ -97,6 +105,43 @@ def _clean_rule(rule: dict) -> dict | None:
             mn = 4
         mn = max(3, min(7, mn))
         return {"type": "momentum_score", "side": side, "min": mn}
+    if rtype == "fib":
+        tf = str(rule.get("tf") or "4h")
+        zone = str(rule.get("zone") or "0.618")
+        if tf not in ALLOWED_TF or zone not in ("0.382", "0.5", "0.618", "0.786"):
+            return None
+        return {"type": "fib", "tf": tf, "zone": zone}
+    if rtype == "dominance":
+        kind = str(rule.get("kind") or "")
+        if kind not in ("alt_long", "alt_short"):
+            return None
+        return {"type": "dominance", "kind": kind}
+    if rtype == "pattern":
+        tf = str(rule.get("tf") or "4h")
+        kind = str(rule.get("kind") or "")
+        if tf not in ALLOWED_TF or kind not in ("double_bottom", "head_shoulders", "flag"):
+            return None
+        return {"type": "pattern", "tf": tf, "kind": kind}
+    if rtype == "candle":
+        tf = str(rule.get("tf") or "1h")
+        kind = str(rule.get("kind") or "hammer")
+        if tf not in ALLOWED_TF or kind not in ("hammer", "pin_bull", "pin_bear", "inside_bar", "bull_engulf", "bear_engulf"):
+            return None
+        return {"type": "candle", "tf": tf, "kind": kind}
+    if rtype == "smc_grade":
+        side = str(rule.get("side", "long")).lower()
+        if side not in ("long", "short"):
+            side = "long"
+        min_grade = str(rule.get("min", "B")).upper()
+        if min_grade not in ALLOWED_SMC_GRADE:
+            min_grade = "B"
+        return {"type": "smc_grade", "side": side, "min": min_grade}
+    if rtype == "liquidity":
+        tf = str(rule.get("tf") or "4h")
+        kind = str(rule.get("kind") or "")
+        if tf not in ALLOWED_TF or kind not in ALLOWED_LIQUIDITY:
+            return None
+        return {"type": "liquidity", "tf": tf, "kind": kind}
     return None
 
 

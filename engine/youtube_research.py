@@ -1,6 +1,7 @@
 """YouTube RSS + transkript arastirmasi."""
 from __future__ import annotations
 
+import json
 import re
 import xml.etree.ElementTree as ET
 from typing import Optional
@@ -149,6 +150,32 @@ def _get_transcript(video_id: str, *, log=None) -> Optional[str]:
         return None
 
 
+def _fallback_video_context(video_id: str, title: str) -> Optional[str]:
+    """Transkript bloklu IP'lerde oEmbed + RSS basligi ile minimal baglam."""
+    parts = [f"Video: {title}", f"URL: https://www.youtube.com/watch?v={video_id}"]
+    oembed = _fetch(
+        f"https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v={video_id}&format=json",
+        timeout=10,
+    )
+    if oembed:
+        try:
+            meta = json.loads(oembed)
+            if meta.get("title"):
+                parts.append(f"Baslik: {meta['title']}")
+            if meta.get("author_name"):
+                parts.append(f"Kanal: {meta['author_name']}")
+        except json.JSONDecodeError:
+            pass
+    text = " | ".join(parts)
+    if len(text) < 80:
+        return None
+    return (
+        f"{text}\n\n"
+        "Not: Tam transkript alinamadi (IP/kota). Baslik ve kanal baglamindan "
+        "backtest edilebilir teknik kural tarifleri cikar."
+    )
+
+
 def collect_youtube_recipes(state: dict, *, log=None) -> list[dict]:
     if not gemini_available():
         return []
@@ -178,6 +205,10 @@ def collect_youtube_recipes(state: dict, *, log=None) -> list[dict]:
             continue
         seen_ids.add(vid)
         text = _get_transcript(vid, log=log)
+        if not text:
+            text = _fallback_video_context(vid, title)
+            if text and log:
+                log(f"YouTube {vid}: transkript yok — oEmbed/baslik fallback kullaniliyor")
         if not text:
             if log:
                 log(f"YouTube {vid}: transkript yok veya cok kisa — sonraki turda tekrar denenecek")

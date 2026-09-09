@@ -13,6 +13,8 @@ from engine.config import (
     LAB_FREEZE,
     LAB_LEDGER_PREFIX,
     LAB_MAX_CANDIDATES,
+    LAB_PAPER_MIN_TRADES_REJECT,
+    LAB_PAPER_MIN_WR,
     LAB_STATE_FILE,
     TR_TZ,
 )
@@ -188,11 +190,15 @@ def evaluate_lab_candidates(state: dict) -> list[str]:
             continue
         m = c.get("metrics") or {}
         n = int(m.get("n") or 0)
-        if n < 15:
+        if n < LAB_PAPER_MIN_TRADES_REJECT:
             continue
         wr = float(m.get("wr") or 0)
         pnl = float(m.get("pnl") or 0)
-        if wr < 0.35 or pnl < 0:
+        from engine.fidelity_gate import check_paper_acceptance
+
+        bt = c.get("backtest") or {}
+        gate = check_paper_acceptance(bt, m)
+        if gate["reject"] or wr < LAB_PAPER_MIN_WR or pnl < 0:
             reject_candidate(state, c.get("ledger", ""), "paper_underperform")
             rejected.append(c.get("ledger", ""))
     return rejected

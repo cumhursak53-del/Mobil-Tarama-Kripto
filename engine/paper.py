@@ -11,12 +11,13 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from engine.config import (
     LAB_AUTO,
     LAB_AUTO_INTERVAL_SEC,
-    ENTRY_TF,
     PATLAMA_LEDGER,
-    PRIORITY_LEDGERS,
-    LEDGER_NAMES,
     PRICE_POLL_SEC,
+    PRIORITY_LEDGERS,
+    SCAN_MODE,
     SCAN_SYMBOLS,
+    SMT_ENABLED,
+    SMT_REF_SYMBOL,
     TIMEFRAMES,
 )
 from engine.context import build_context
@@ -182,6 +183,8 @@ def _scan_one(pf: Portfolio, cache: FrameCache, sym: str, dominance: dict, force
         closed = pf.check_exits(sym, mark)
         if closed:
             pf.save(sync_github=True)
+        if pf.try_pending_orders(sym, mark):
+            pf.save(sync_github=True)
 
         bar_closed = collect_bar_closes(cache, sym, strats, force=force_entry)
         if not force_entry and not any(bar_closed.values()) and not any(
@@ -189,30 +192,80 @@ def _scan_one(pf: Portfolio, cache: FrameCache, sym: str, dominance: dict, force
         ):
             return
 
-        ctx = build_context(sym, frames, dominance, indicated=False)
+        ref_frames = None
+        if SMT_ENABLED and sym != SMT_REF_SYMBOL:
+            ref_frames = cache.refresh(SMT_REF_SYMBOL, scan_tfs)
+        ctx = build_context(sym, frames, dominance, indicated=False, ref_frames=ref_frames)
         pf.record_patlama_scan(sym, score_momentum(ctx).to_dict())
         pf.record_smc_scan(sym, score_smc(ctx).to_dict())
 
-        priority = [s for s in strats if s.ledger in PRIORITY_LEDGERS]
-        smc_strats = [s for s in strats if s.ledger == "Kasa_SMC"]
-        lab = [s for s in strats if s.ledger.startswith("Kasa_Lab_")]
-        others = [
-            s for s in strats
-            if s.ledger not in PRIORITY_LEDGERS
-            and s.ledger != "Kasa_SMC"
-            and not s.ledger.startswith("Kasa_Lab_")
-        ]
-        for strat in priority + smc_strats + lab + others:
-            if not should_evaluate_entry(strat, force=force_entry, bar_closed=bar_closed):
-                continue
-            px = _entry_price(strat, sym, frames, live_px)
-            if px <= 0:
-                continue
-            if _try_entry(pf, strat, ctx, sym, px):
-                pf.save(sync_github=True)
-                break
+        if SCAN_MODE == "best_signal":
+            _scan_best_signal(pf, strats, ctx, sym, frames, live_px, force_entry, bar_closed)
+        else:
+            priority = [s for s in strats if s.ledger in PRIORITY_LEDGERS]
+            smc_strats = [s for s in strats if s.ledger == "Kasa_SMC"]
+            lab = [s for s in strats if s.ledger.startswith("Kasa_Lab_")]
+            others = [
+                s for s in strats
+                if s.ledger not in PRIORITY_LEDGERS
+                and s.ledger != "Kasa_SMC"
+                and not s.ledger.startswith("Kasa_Lab_")
+            ]
+            for strat in priority + smc_strats + lab + others:
+                if not should_evaluate_entry(strat, force=force_entry, bar_closed=bar_closed):
+                    continue
+                px = _entry_price(strat, sym, frames, live_px)
+                if px <= 0:
+                    continue
+                if _try_entry(pf, strat, ctx, sym, px):
+                    pf.save(sync_github=True)
+                    break
     except Exception as e:
         pf.log(f"{sym} hata: {e}")
+
+
+def _scan_best_signal(
+    pf: Portfolio,
+    strats,
+    ctx,
+    sym: str,
+    frames: dict,
+    live_px: float | None,
+    force_entry: bool,
+    bar_closed: dict,
+) -> None:
+    candidates: list[tuple[float, object, float]] = []
+    for strat in strats:
+        if not should_evaluate_entry(strat, force=force_entry, bar_closed=bar_closed):
+            continue
+        px = _entry_price(strat, sym, frames, live_px)
+        if px <= 0:
+            continue
+        try:
+            sig = strat.signal(ctx)
+        except Exception:
+            continue
+        if sig is None or not ctx.aligned(sig.side):
+            continue
+        strength = strat.signal_strength(ctx, sig)
+        candidates.append((strength, strat, px))
+    if not candidates:
+        return
+    candidates.sort(key=lambda x: x[0], reverse=True)
+    best_strength, best_strat, best_px = candidates[0]
+    try:
+        sig = best_strat.signal(ctx)
+    except Exception:
+        return
+    if sig is None:
+        return
+    pf.record_signal(sym, sig)
+    if pf.try_open(sym, sig, best_px):
+        pf.log(f"best_signal {sym} | {best_strat.ledger} | skor {best_strength:.2f}")
+        if sig.entry_tf:
+            key = pf.pos_key(sig.ledger, sym)
+            if key in pf.positions:
+                pf.positions[key].entry_tf = sig.entry_tf
 
 
 def _try_entry(pf: Portfolio, strat, ctx, sym: str, last: float) -> bool:
