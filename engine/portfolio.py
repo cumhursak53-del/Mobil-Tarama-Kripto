@@ -19,6 +19,7 @@ from engine.config import (
     PARTIAL_R,
     RESEARCH_ENABLED,
     SHORT_RATIO_MIN_POSITIONS,
+    HISTORY_MAX,
     STATE_FILE,
     SYMBOL_COOLDOWN_AFTER_SL_SEC,
     SYMBOL_LOCK_MODE,
@@ -32,7 +33,7 @@ from engine.lab_state import (
     record_lab_trade,
     sync_lab_state,
 )
-from engine.state_merge import pick_best_state
+from engine.state_merge import merge_trading_state
 from engine.types import ClosedTrade, Position, Side, Signal
 from risk.sizer import (
     PositionRisk,
@@ -70,7 +71,9 @@ class Portfolio:
                     local_raw = json.load(f)
             except Exception:
                 local_raw = None
-        merged, self.state_source = pick_best_state(local_raw, remote)
+        merged, self.state_source = merge_trading_state(local_raw, remote)
+        pre_hist = len((local_raw or {}).get("history") or [])
+        pre_remote_hist = len((remote or {}).get("history") or [])
         if merged:
             self._apply_raw(merged)
         else:
@@ -82,6 +85,8 @@ class Portfolio:
             self.save(sync_github=bool(GITHUB_TOKEN))
         n_pos = len(self.positions)
         n_hist = len(self.history)
+        if merged and n_hist > max(pre_hist, pre_remote_hist):
+            self.log(f"Islem gecmisi birlestirildi: {n_hist} kayit (local {pre_hist}, github {pre_remote_hist})")
         sync_mode = "token" if GITHUB_TOKEN else "actions"
         self.log(
             f"State yuklendi [{self.state_source}] | acik {n_pos} | kapanan {n_hist} | "
@@ -383,6 +388,21 @@ class Portfolio:
         p.partial_taken = True
         if p.be_at_r and r >= p.be_at_r:
             p.sl_price = p.entry_price
+        eq = sum(self.ledgers.values()) + sum(x.margin for x in self.positions.values())
+        self.history.append({
+            "symbol": p.symbol,
+            "side": p.side.value,
+            "strategy": p.strategy,
+            "entry": p.entry_price,
+            "exit": price,
+            "pnl": net,
+            "close_reason": "PARTIAL_TP",
+            "ledger": p.ledger,
+            "exit_time": now_tr(),
+            "entry_time": p.entry_time,
+            "partial": True,
+            "new_balance": eq,
+        })
         self.log(f"KISMI TP {p.symbol} | {p.ledger} | {PARTIAL_PCT*100:.0f}% | PnL ${net:+.2f}")
         return True
 
@@ -564,7 +584,8 @@ class Portfolio:
             "closed_pnl_total": closed_pnl,
             "active_positions": pos_dicts,
             "pending_orders": self.pending_orders[-20:],
-            "history": self.history[-200:],
+            "history": self.history[-HISTORY_MAX:],
+            "history_count": len(self.history),
             "signal_log": {k: v for k, v in self.signal_log.items() if not str(k).startswith("_")},
             "patlama_selale_scan": self.patlama_scan,
             "smc_scan": self.smc_scan,

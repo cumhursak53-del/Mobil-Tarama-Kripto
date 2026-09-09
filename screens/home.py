@@ -11,6 +11,7 @@ def render() -> None:
     ledgers = data.get("ledgers") or {}
     active = data.get("active_positions") or {}
     history = data.get("history") or []
+    history_count = int(data.get("history_count") or len(history))
     sig_log = data.get("signal_log") or {}
     logs = data.get("engine_logs") or []
     equity = float(data.get("equity") or 0)
@@ -31,7 +32,7 @@ def render() -> None:
     c2.metric("Nakit (kasalar)", f"${cash:,.2f}")
     c3.metric("Acik islem", f"{len(active)}")
     c4.metric("Acik PnL", f"${unreal:+,.2f}")
-    c5.metric("Kapanan islem", f"{len(history)}")
+    c5.metric("Kapanan islem", f"{history_count}")
     c6.metric("Kapanan PnL", f"${closed_pnl:+,.2f}")
 
     xlsx = build_excel_bytes(data)

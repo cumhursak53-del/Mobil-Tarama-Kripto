@@ -270,7 +270,7 @@ def test_state_merge_picks_newer():
 
 
 def test_pick_best_state_prefers_github_on_deploy_empty():
-    from engine.state_merge import pick_best_state
+    from engine.state_merge import merge_trading_state, pick_best_state
 
     local = {
         "updated_at": "2026-09-04 16:00:00",
@@ -288,6 +288,9 @@ def test_pick_best_state_prefers_github_on_deploy_empty():
     merged, src = pick_best_state(local, remote)
     assert merged is remote
     assert src == "github"
+    merged2, src2 = merge_trading_state(local, remote)
+    assert len(merged2["history"]) == 2
+    assert src2 == "github"
 
 
 def test_recipe_generator_and_eval():

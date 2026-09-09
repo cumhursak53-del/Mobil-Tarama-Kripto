@@ -61,6 +61,62 @@ def pick_newer_state(local: Optional[dict], remote: Optional[dict]) -> Optional[
     return local
 
 
+def history_key(h: dict) -> tuple:
+    sym = str(h.get("symbol") or "")
+    exit_t = str(h.get("exit_time") or "")[:19]
+    if sym and exit_t:
+        return (
+            str(h.get("ledger") or ""),
+            sym,
+            exit_t,
+            str(h.get("entry_time") or "")[:19],
+            round(float(h.get("entry") or 0), 10),
+            round(float(h.get("exit") or 0), 10),
+            str(h.get("close_reason") or ""),
+        )
+    return (
+        "incomplete",
+        str(h.get("ledger") or ""),
+        sym,
+        exit_t,
+        round(float(h.get("pnl") or 0), 8),
+        str(h.get("close_reason") or ""),
+    )
+
+
+def merge_history(*histories: list | None) -> list[dict]:
+    """Deploy/sync yarismasinda kaybolan kapanis kayitlarini birlestir."""
+    seen: set[tuple] = set()
+    out: list[dict] = []
+    for hist in histories:
+        for h in hist or []:
+            if not isinstance(h, dict):
+                continue
+            key = history_key(h)
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append(h)
+    out.sort(key=lambda x: str(x.get("exit_time") or ""))
+    return out
+
+
+def merge_trading_state(local: Optional[dict], remote: Optional[dict]) -> tuple[Optional[dict], str]:
+    """Canli state + birlestirilmis islem gecmisi."""
+    base, src = pick_best_state(local, remote)
+    if not base:
+        return None, "empty"
+    merged = dict(base)
+    merged["history"] = merge_history(
+        (local or {}).get("history"),
+        (remote or {}).get("history"),
+        base.get("history"),
+    )
+    if merged["history"]:
+        merged["closed_pnl_total"] = sum(float(h.get("pnl") or 0) for h in merged["history"])
+    return merged, src
+
+
 def pick_best_state(local: Optional[dict], remote: Optional[dict]) -> tuple[Optional[dict], str]:
     """Deploy sonrasi bos yerel state'in dolu GitHub state'ini ezmesini engeller."""
     if not local and not remote:
