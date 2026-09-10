@@ -101,18 +101,18 @@
     "lab_auto": true,
     "github_token": false
   },
-  "updated_at": "2026-09-10 12:19:19",
+  "updated_at": "2026-09-10 12:37:41",
   "pipeline": {
-    "status": "ok",
-    "last_run_at": "2026-09-10 11:52:10",
+    "status": "error",
+    "last_run_at": "2026-09-10 12:25:24",
     "last_generate_at": "2026-09-04 18:28:14",
     "last_backtest_at": "2026-09-08 15:36:57",
-    "last_message": "Arastirma 0, kombinator 0",
+    "last_message": "The truth value of a DataFrame is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all().",
     "last_generated": 24,
     "last_backtested": 8,
     "last_promoted": 0,
     "last_researched": 0,
-    "last_research_at": "2026-09-10 12:03:55"
+    "last_research_at": "2026-09-10 12:24:24"
   },
   "research": {
     "gemini_configured": true,
@@ -121,7 +121,7 @@
       "DHqGzh5PN0s",
       "Nmu5Rkt7Mjw"
     ],
-    "last_youtube_at": "2026-09-10 12:02:38",
+    "last_youtube_at": "2026-09-10 12:23:07",
     "youtube_recipes": 0,
     "processed_news_batches": [
       "9b80b7466d357505",
@@ -174,21 +174,21 @@
     "last_news_at": "2026-09-10 11:49:52",
     "news_recipes": 9,
     "processed_web_queries": [
-      "fd5e2db580576d33",
+      "7675f429d63faf67",
+      "3c0bea7ea43c4329",
       "f4c150df839d7ecf",
-      "1fae17bc5bbdc89a",
-      "83a62ef039988035",
       "d34234f5fbd3b98a",
       "91e26976d02b32d0",
-      "7675f429d63faf67",
-      "391270e606dd0c05",
       "bdb85e1642896030",
-      "8da258b33a6ad9a7",
       "56884ffdf7b13357",
+      "fd5e2db580576d33",
+      "391270e606dd0c05",
+      "83a62ef039988035",
+      "8da258b33a6ad9a7",
       "6f2ec04a0b2fe055",
-      "3c0bea7ea43c4329"
+      "1fae17bc5bbdc89a"
     ],
-    "last_web_at": "2026-09-10 12:03:55",
+    "last_web_at": "2026-09-10 12:24:24",
     "web_recipes": 0
   },
   "recipes": [
@@ -2507,10 +2507,10 @@
       "status": "paper",
       "paper_started_at": "2026-09-04 18:01:56",
       "metrics": {
-        "n": 4,
-        "wins": 3,
-        "pnl": 6.451606501166651,
-        "wr": 0.75
+        "n": 5,
+        "wins": 4,
+        "pnl": 12.25033419429981,
+        "wr": 0.8
       },
       "backtest": {
         "n": 21,
