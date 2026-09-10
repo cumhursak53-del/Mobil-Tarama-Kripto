@@ -101,27 +101,27 @@
     "lab_auto": true,
     "github_token": false
   },
-  "updated_at": "2026-09-10 06:11:20",
+  "updated_at": "2026-09-10 06:29:57",
   "pipeline": {
-    "status": "ok",
-    "last_run_at": "2026-09-10 05:42:25",
+    "status": "error",
+    "last_run_at": "2026-09-10 06:13:22",
     "last_generate_at": "2026-09-04 18:28:14",
     "last_backtest_at": "2026-09-08 15:36:57",
-    "last_message": "Arastirma 0, kombinator 0",
+    "last_message": "The truth value of a DataFrame is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all().",
     "last_generated": 24,
     "last_backtested": 8,
     "last_promoted": 0,
     "last_researched": 0,
-    "last_research_at": "2026-09-10 05:55:40"
+    "last_research_at": "2026-09-10 06:13:15"
   },
   "research": {
     "gemini_configured": true,
     "research_enabled": true,
     "processed_videos": [
-      "DHqGzh5PN0s",
-      "Nmu5Rkt7Mjw"
+      "Nmu5Rkt7Mjw",
+      "DHqGzh5PN0s"
     ],
-    "last_youtube_at": "2026-09-10 05:55:15",
+    "last_youtube_at": "2026-09-10 06:13:11",
     "youtube_recipes": 0,
     "processed_news_batches": [
       "47a9cc50e0cfb5b1",
@@ -168,21 +168,21 @@
     "last_news_at": "2026-09-09 23:20:22",
     "news_recipes": 9,
     "processed_web_queries": [
-      "7675f429d63faf67",
-      "6f2ec04a0b2fe055",
-      "83a62ef039988035",
       "3c0bea7ea43c4329",
       "56884ffdf7b13357",
-      "391270e606dd0c05",
       "91e26976d02b32d0",
-      "1fae17bc5bbdc89a",
-      "f4c150df839d7ecf",
       "8da258b33a6ad9a7",
+      "1fae17bc5bbdc89a",
       "d34234f5fbd3b98a",
+      "bdb85e1642896030",
+      "391270e606dd0c05",
+      "83a62ef039988035",
+      "6f2ec04a0b2fe055",
+      "f4c150df839d7ecf",
       "fd5e2db580576d33",
-      "bdb85e1642896030"
+      "7675f429d63faf67"
     ],
-    "last_web_at": "2026-09-10 05:55:40",
+    "last_web_at": "2026-09-10 06:13:15",
     "web_recipes": 0
   },
   "recipes": [
@@ -2521,10 +2521,10 @@
       "status": "paper",
       "paper_started_at": "2026-09-04 18:16:05",
       "metrics": {
-        "n": 2,
+        "n": 3,
         "wins": 1,
-        "pnl": -1.5959177406335014,
-        "wr": 0.5
+        "pnl": -5.755071168640656,
+        "wr": 0.3333333333333333
       },
       "backtest": {
         "n": 26,
