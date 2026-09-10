@@ -57,6 +57,13 @@ class StrategyRecipe:
         }
 
 
+def _pick_df(ctx: MarketContext, tf: str, fallback):
+    picked = ctx.tf(tf)
+    if picked is None or getattr(picked, "empty", False):
+        return fallback
+    return picked
+
+
 def _squeeze(df) -> bool:
     if not valid_row(df, ("bb_width", "bb_width_med")):
         return False
@@ -200,14 +207,16 @@ def _eval_rule(ctx: MarketContext, rule: dict) -> bool:
         }
         return mapping.get(kind, False)
     if rtype == "smc_grade":
-        smc = analyze_smc_mtf(ctx.frames) if len(ctx.frames) > 1 else analyze_smc(ctx.tf("4h") or df)
+        smc = analyze_smc_mtf(ctx.frames) if len(ctx.frames) > 1 else analyze_smc(_pick_df(ctx, "4h", df))
         side = str(rule.get("side", "long")).lower()
         min_grade = str(rule.get("min", "B")).upper()
         rank = {"A": 3, "B": 2, "C": 1, "NONE": 0}
         grade = smc.setup_grade_long if side == "long" else smc.setup_grade_short
         return rank.get(str(grade).upper(), 0) >= rank.get(min_grade, 2)
     if rtype == "liquidity":
-        smc = analyze_smc_mtf(ctx.frames) if len(ctx.frames) > 1 else analyze_smc(ctx.tf(str(rule.get("tf") or "4h")) or df)
+        smc = analyze_smc_mtf(ctx.frames) if len(ctx.frames) > 1 else analyze_smc(
+            _pick_df(ctx, str(rule.get("tf") or "4h"), df)
+        )
         kind = str(rule.get("kind", ""))
         mapping = {
             "sweep_bull": smc.sweep_bull,

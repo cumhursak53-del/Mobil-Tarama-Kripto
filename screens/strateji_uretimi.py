@@ -40,6 +40,7 @@ def render() -> None:
             "research": lab_remote.get("research") or {},
             "source_metrics": lab_remote.get("source_metrics") or {},
             "research_queue_len": len(lab_remote.get("research_queue") or []),
+            "research": lab_remote.get("research") or {},
         }
         lab_candidates = [c for c in lab_remote.get("candidates") or [] if c.get("status") == "paper"]
 
@@ -196,6 +197,14 @@ def render() -> None:
         if queue_len is None:
             queue_len = len(lab_remote.get("research_queue") or [])
         st.caption(f"Arastirma kuyrugu: {queue_len} bekleyen konu")
+        rejects = (lab_summary.get("research") or lab_remote.get("research") or {}).get("validator_rejects") or []
+        if rejects:
+            st.caption(f"Son validator redleri: {len(rejects)} kayit")
+            st.dataframe(
+                pd.DataFrame(rejects[-15:][::-1]),
+                use_container_width=True,
+                hide_index=True,
+            )
         if src_metrics:
             rows = []
             for src, m in src_metrics.items():

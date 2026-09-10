@@ -11,9 +11,11 @@ from engine.config import (
     LAB_AUTO_INTERVAL_SEC,
     LAB_BACKTEST_BATCH,
     LAB_BACKTEST_UNIVERSE,
+    LAB_COMBINATOR_ON_IDLE,
     LAB_FREEZE,
     LAB_GENERATE_LIMIT,
     LAB_MAX_CANDIDATES,
+    LAB_MAX_RECIPES,
     LAB_MIN_RECIPES,
     LAB_QUICK_SCREEN_SYMBOL,
     RESEARCH_ENABLED,
@@ -114,12 +116,20 @@ def _run_research_phase(state: dict, *, log=None, force: bool = False) -> int:
 
 
 def _maybe_combinator(state: dict, *, log=None, force: bool = False) -> int:
-    need_recipes = len(state.get("recipes") or []) < LAB_MIN_RECIPES or (
-        force and _paper_slots_free(state) > 0 and len(_pending_recipes(state, 1)) == 0
-    )
+    recipes = state.get("recipes") or []
+    if len(recipes) >= LAB_MAX_RECIPES:
+        return 0
+    pending = len(_pending_recipes(state, 1))
+    slots = _paper_slots_free(state)
+    need_recipes = len(recipes) < LAB_MIN_RECIPES
+    if LAB_COMBINATOR_ON_IDLE and pending == 0 and slots > 0:
+        need_recipes = True
+    if force and pending == 0 and slots > 0:
+        need_recipes = True
     if not need_recipes:
         return 0
-    new_recipes = generate_recipes(limit=LAB_GENERATE_LIMIT)
+    batch = min(LAB_GENERATE_LIMIT, max(8, slots * 3))
+    new_recipes = generate_recipes(limit=batch)
     state.setdefault("recipes", []).extend(new_recipes)
     record_recipes_added(state, new_recipes)
     if log:
@@ -219,17 +229,29 @@ def run_research_pipeline(*, log=None, force: bool = False) -> dict:
         researched = _run_research_phase(state, log=log, force=force)
         generated = _maybe_combinator(state, log=log, force=force) if researched == 0 else 0
 
+        backtested, promoted = 0, 0
+        if researched or generated:
+            backtested, promoted = _run_backtest_phase(state, log=log)
+
         pipe["status"] = "ok"
         pipe["last_research_at"] = now_tr()
         pipe["last_researched"] = researched
         if generated:
             pipe["last_generate_at"] = now_tr()
             pipe["last_generated"] = generated
-        pipe["last_message"] = f"Arastirma {researched}, kombinator {generated}"
+        if backtested:
+            pipe["last_backtest_at"] = now_tr()
+            pipe["last_backtested"] = backtested
+            pipe["last_promoted"] = promoted
+        pipe["last_message"] = (
+            f"Arastirma {researched}, kombinator {generated}, backtest {backtested}, aday {promoted}"
+        )
         sync_lab_state(state)
         return {
             "researched": researched,
             "generated": generated,
+            "backtested": backtested,
+            "promoted": promoted,
             "recipe_total": len(state.get("recipes") or []),
         }
     except Exception as e:
@@ -345,8 +367,9 @@ def maybe_run_research(pf: "Portfolio", force: bool = False) -> None:
 
     result = run_research_pipeline(log=pf.log, force=force)
     pf.lab_state = load_lab_state()
+    pf._ensure_lab_ledgers()
     pf.save(sync_github=True)
-    if result.get("researched") or result.get("generated"):
+    if result.get("researched") or result.get("generated") or result.get("backtested"):
         pf.log(f"Arastirma tamam: {result}")
 
 

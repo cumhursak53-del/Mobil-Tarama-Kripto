@@ -1,7 +1,7 @@
 """Gemini ciktisini guvenli StrategyRecipe dict'e cevir."""
 from __future__ import annotations
 
-from engine.lab_state import new_recipe_id
+from engine.lab_state import new_recipe_id, now_tr
 from engine.strategy_recipe import StrategyRecipe
 
 ALLOWED_STAGE = {"advancing", "declining", "accumulation", "distribution", "unknown"}
@@ -145,6 +145,38 @@ def _clean_rule(rule: dict) -> dict | None:
     return None
 
 
+def _reject_reason(raw: dict) -> str:
+    if not isinstance(raw, dict):
+        return "not_a_dict"
+    long_in = raw.get("long_rules") or []
+    short_in = raw.get("short_rules") or []
+    if not long_in and not short_in:
+        return "no_rules"
+    long_ok = [r for r in (_clean_rule(x) for x in long_in) if r]
+    short_ok = [r for r in (_clean_rule(x) for x in short_in) if r]
+    if not long_ok and not short_ok:
+        return "invalid_rules"
+    side_rules = long_ok if len(long_ok) >= len(short_ok) else short_ok
+    if len(side_rules) < 2:
+        return "min_votes"
+    return "unknown"
+
+
+def _log_rejects(state: dict | None, source: str, rejects: list[dict], *, log=None) -> None:
+    if not rejects:
+        return
+    if log:
+        for r in rejects[:3]:
+            log(f"Validator red: {source} | {r.get('name')} | {r.get('reason')}")
+    if not state:
+        return
+    meta = state.setdefault("research", {})
+    rows = meta.setdefault("validator_rejects", [])
+    for r in rejects:
+        rows.append({**r, "source": source, "at": now_tr()})
+    meta["validator_rejects"] = rows[-50:]
+
+
 def validate_recipe(raw: dict, source: str) -> dict | None:
     if not isinstance(raw, dict):
         return None
@@ -178,10 +210,23 @@ def validate_recipe(raw: dict, source: str) -> dict | None:
     return rec.to_dict()
 
 
-def validate_recipes(raw_list: list[dict], source: str) -> list[dict]:
-    out = []
-    for raw in raw_list:
+def validate_recipes(
+    raw_list: list[dict],
+    source: str,
+    *,
+    state: dict | None = None,
+    log=None,
+) -> list[dict]:
+    out: list[dict] = []
+    rejects: list[dict] = []
+    for raw in raw_list or []:
         v = validate_recipe(raw, source)
         if v:
             out.append(v)
+        else:
+            rejects.append({
+                "name": str((raw or {}).get("name") or "?")[:48],
+                "reason": _reject_reason(raw if isinstance(raw, dict) else {}),
+            })
+    _log_rejects(state, source, rejects, log=log)
     return out

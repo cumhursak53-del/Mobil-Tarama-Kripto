@@ -11,6 +11,9 @@ from engine.youtube_research import collect_youtube_recipes
 def run_research(state: dict, *, log=None) -> list[dict]:
     if not RESEARCH_ENABLED or not gemini_usable():
         return []
+    from engine.research_dedup import migrate_legacy_lists
+
+    migrate_legacy_lists(state.setdefault("research", {}))
     existing_ids = {r.get("id") for r in (state.get("recipes") or []) if r.get("id")}
     out: list[dict] = []
     try:

@@ -19,6 +19,7 @@ from engine.config import (
 )
 from engine.gemini_client import generate_recipes_from_text, gemini_available, gemini_usable
 from engine.recipe_validator import validate_recipes
+from engine.research_dedup import is_recent, mark_done, migrate_legacy_lists, prune_expired
 
 _NS = {"atom": "http://www.w3.org/2005/Atom", "yt": "http://www.youtube.com/xml/schemas/2015"}
 
@@ -212,11 +213,12 @@ def collect_youtube_recipes(state: dict, *, log=None) -> list[dict]:
     if not gemini_available() or not gemini_usable():
         return []
     meta = _research_meta(state)
-    processed = set(meta.get("processed_videos") or [])
+    migrate_legacy_lists(meta)
+    prune_expired(meta, "processed_videos")
     candidates: list[tuple[str, str]] = []
 
     for vid in YOUTUBE_VIDEO_IDS:
-        if vid:
+        if vid and not is_recent(meta, "processed_videos", vid):
             candidates.append((vid, f"video_{vid}"))
 
     per_channel = max(1, YOUTUBE_MAX_VIDEOS_PER_RUN // max(1, len(YOUTUBE_CHANNEL_IDS) or 1))
@@ -227,13 +229,13 @@ def collect_youtube_recipes(state: dict, *, log=None) -> list[dict]:
                 log(f"YouTube kanal cozulemedi: {ch}")
             continue
         for vid, title in _video_ids_from_rss(cid, per_channel):
-            if vid not in processed:
+            if not is_recent(meta, "processed_videos", vid):
                 candidates.append((vid, title))
 
     recipes: list[dict] = []
     seen_ids = set()
     for vid, title in candidates[:YOUTUBE_MAX_VIDEOS_PER_RUN]:
-        if vid in seen_ids:
+        if vid in seen_ids or is_recent(meta, "processed_videos", vid):
             continue
         seen_ids.add(vid)
         text = _get_transcript(vid, log=log)
@@ -252,16 +254,16 @@ def collect_youtube_recipes(state: dict, *, log=None) -> list[dict]:
             max_recipes=2,
             log=log,
         )
-        valid = validate_recipes(raw, source=f"youtube:{vid}")
+        valid = validate_recipes(raw, source=f"youtube:{vid}", state=state, log=log)
         if valid:
             for r in valid:
                 r["source_ref"] = {"video_id": vid, "title": title[:120]}
             recipes.extend(valid)
+            mark_done(meta, "processed_videos", vid)
             if log:
                 log(f"YouTube {vid}: {len(valid)} tarif uretildi")
-        processed.add(vid)
-
-    meta["processed_videos"] = list(processed)[-500:]
+        elif log:
+            log(f"YouTube {vid}: 0 gecerli tarif — tekrar denenecek")
     if candidates:
         from engine.lab_state import now_tr
         meta["last_youtube_at"] = now_tr()

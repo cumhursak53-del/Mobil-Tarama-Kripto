@@ -139,6 +139,9 @@ LAB_QUICK_MIN_PF = float(os.environ.get("LAB_QUICK_MIN_PF", "1.1"))
 LAB_QUICK_BARS = int(os.environ.get("LAB_QUICK_BARS", "480"))
 RESEARCH_INTERVAL_SEC = int(os.environ.get("RESEARCH_INTERVAL_SEC", "7200"))
 RESEARCH_SEPARATE = os.environ.get("RESEARCH_SEPARATE", "1") == "1"
+RESEARCH_DEDUP_TTL_SEC = int(os.environ.get("RESEARCH_DEDUP_TTL_SEC", "172800"))
+LAB_COMBINATOR_ON_IDLE = os.environ.get("LAB_COMBINATOR_ON_IDLE", "1") == "1"
+LAB_MAX_RECIPES = int(os.environ.get("LAB_MAX_RECIPES", "120"))
 ENGINE_URL = os.environ.get("ENGINE_URL", "")
 
 # Gemini + arastirma

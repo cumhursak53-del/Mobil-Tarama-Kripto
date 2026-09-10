@@ -12,6 +12,7 @@ except Exception:
 from engine.config import NEWS_MAX_HEADLINES, NEWS_RSS_URLS
 from engine.gemini_client import generate_recipes_from_text, gemini_usable
 from engine.recipe_validator import validate_recipes
+from engine.research_dedup import is_recent, mark_done, migrate_legacy_lists, prune_expired
 from engine.youtube_research import _research_meta
 
 
@@ -62,7 +63,8 @@ def collect_news_recipes(state: dict, *, log=None) -> list[dict]:
     if not gemini_usable():
         return []
     meta = _research_meta(state)
-    processed_batches = set(meta.get("processed_news_batches") or [])
+    migrate_legacy_lists(meta)
+    prune_expired(meta, "processed_news_batches")
 
     headlines: list[tuple[str, str]] = []
     for url in NEWS_RSS_URLS:
@@ -74,7 +76,7 @@ def collect_news_recipes(state: dict, *, log=None) -> list[dict]:
         return []
 
     batch_key = _news_batch_key(headlines)
-    if batch_key in processed_batches:
+    if is_recent(meta, "processed_news_batches", batch_key):
         return []
 
     body_lines = []
@@ -91,12 +93,11 @@ def collect_news_recipes(state: dict, *, log=None) -> list[dict]:
         max_recipes=3,
         log=log,
     )
-    valid = validate_recipes(raw, source=f"news:{batch_key}")
+    valid = validate_recipes(raw, source=f"news:{batch_key}", state=state, log=log)
     if valid and log:
         log(f"Haber batch {batch_key}: {len(valid)} tarif")
-
-    processed_batches.add(batch_key)
-    meta["processed_news_batches"] = list(processed_batches)[-200:]
+    if raw:
+        mark_done(meta, "processed_news_batches", batch_key)
     from engine.lab_state import now_tr
     meta["last_news_at"] = now_tr()
     meta["news_recipes"] = int(meta.get("news_recipes") or 0) + len(valid)

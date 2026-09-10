@@ -14,6 +14,7 @@ from engine.config import (
 )
 from engine.gemini_client import gemini_usable, generate_recipes_from_text, suggest_web_queries
 from engine.recipe_validator import validate_recipes
+from engine.research_dedup import is_recent, mark_done, migrate_legacy_lists, prune_expired
 from engine.web_search import build_research_document, search_web
 from engine.youtube_research import _research_meta
 
@@ -41,7 +42,8 @@ def _next_queries(state: dict, *, log=None) -> list[str]:
     from engine.research_queue import dequeue_research_topics
 
     meta = _research_meta(state)
-    processed = set(meta.get("processed_web_queries") or [])
+    migrate_legacy_lists(meta)
+    prune_expired(meta, "processed_web_queries")
     queue_topics = dequeue_research_topics(state, limit=WEB_RESEARCH_QUERIES_PER_RUN)
     if queue_topics:
         if log:
@@ -52,25 +54,26 @@ def _next_queries(state: dict, *, log=None) -> list[str]:
     if WEB_RESEARCH_QUERIES:
         topics = list(WEB_RESEARCH_QUERIES) + topics
 
-    pending = [q for q in topics if _query_key(q) not in processed]
+    pending = [q for q in topics if not is_recent(meta, "processed_web_queries", _query_key(q))]
     if WEB_RESEARCH_AI_QUERIES and gemini_usable() and len(pending) < WEB_RESEARCH_QUERIES_PER_RUN:
         try:
+            done_keys = list((meta.get("processed_web_queries") or {}).keys())[-20:]
             ai = suggest_web_queries(
-                already_done=list(processed)[-20:],
+                already_done=done_keys,
                 limit=max(1, WEB_RESEARCH_QUERIES_PER_RUN),
                 log=log,
             )
             for q in ai:
-                if q and _query_key(q) not in processed and q not in pending:
+                qkey = _query_key(q)
+                if q and not is_recent(meta, "processed_web_queries", qkey) and q not in pending:
                     pending.append(q)
         except Exception as e:
             if log:
                 log(f"Web AI sorgu hatasi: {e}")
 
     if not pending:
-        if processed and log:
-            log("Web arastirma: sorgu havuzu tukendi, dongu sifirlaniyor")
-        meta["processed_web_queries"] = []
+        if log:
+            log("Web arastirma: tum sorgular yakin zamanda islendi")
         pending = topics[:WEB_RESEARCH_QUERIES_PER_RUN]
 
     return pending[:WEB_RESEARCH_QUERIES_PER_RUN]
@@ -81,11 +84,13 @@ def collect_web_recipes(state: dict, *, log=None) -> list[dict]:
         return []
 
     meta = _research_meta(state)
-    processed = set(meta.get("processed_web_queries") or [])
+    migrate_legacy_lists(meta)
     recipes: list[dict] = []
 
     for query in _next_queries(state, log=log):
         qkey = _query_key(query)
+        if is_recent(meta, "processed_web_queries", qkey):
+            continue
         hits = search_web(query, max_results=WEB_RESEARCH_MAX_RESULTS)
         if not hits:
             if log:
@@ -105,7 +110,7 @@ def collect_web_recipes(state: dict, *, log=None) -> list[dict]:
             max_recipes=2,
             log=log,
         )
-        valid = validate_recipes(raw, source=f"web:{qkey}")
+        valid = validate_recipes(raw, source=f"web:{qkey}", state=state, log=log)
         if valid:
             for r in valid:
                 r["source_ref"] = {
@@ -113,13 +118,13 @@ def collect_web_recipes(state: dict, *, log=None) -> list[dict]:
                     "urls": [h.get("url") for h in hits[:3] if h.get("url")],
                 }
             recipes.extend(valid)
+            mark_done(meta, "processed_web_queries", qkey)
             if log:
                 log(f"Web '{query[:50]}': {len(valid)} tarif ({len(hits)} sonuc)")
+        elif raw and log:
+            log(f"Web '{query[:50]}': 0 gecerli tarif — tekrar denenecek")
 
-        processed.add(qkey)
-
-    meta["processed_web_queries"] = list(processed)[-300:]
-    if recipes or processed:
+    if recipes:
         from engine.lab_state import now_tr
         meta["last_web_at"] = now_tr()
     meta["web_recipes"] = int(meta.get("web_recipes") or 0) + len(recipes)
