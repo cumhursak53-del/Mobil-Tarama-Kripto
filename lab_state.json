@@ -101,13 +101,13 @@
     "lab_auto": true,
     "github_token": false
   },
-  "updated_at": "2026-09-10 17:56:08",
+  "updated_at": "2026-09-10 18:21:33",
   "pipeline": {
-    "status": "running",
-    "last_run_at": "2026-09-10 16:23:31",
-    "last_generate_at": "2026-09-10 16:05:37",
-    "last_backtest_at": "2026-09-10 16:23:31",
-    "last_message": "Lab pipeline calisiyor...",
+    "status": "ok",
+    "last_run_at": "2026-09-10 18:21:16",
+    "last_generate_at": "2026-09-10 18:03:01",
+    "last_backtest_at": "2026-09-10 18:21:16",
+    "last_message": "Arastirma 0, uretim 24, backtest 24, yeni aday 0",
     "last_generated": 24,
     "last_backtested": 24,
     "last_promoted": 0,
@@ -2308,6 +2308,696 @@
       "sl_mode": "swing",
       "tp_mode": "r",
       "tp_r": 2.0
+    },
+    {
+      "id": "06ed418f",
+      "name": "LabLong_06ed418f",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "cci_cross_up",
+          "extra": "cci_lt_100"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "bos_high"
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator",
+      "entry_tf": "1h",
+      "sl_mode": "swing",
+      "tp_mode": "r",
+      "tp_r": 2.0
+    },
+    {
+      "id": "5a4638c8",
+      "name": "LabLong_5a4638c8",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "cci_cross_up",
+          "extra": "cci_lt_100"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "squeeze"
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator",
+      "entry_tf": "1h",
+      "sl_mode": "swing",
+      "tp_mode": "r",
+      "tp_r": 2.0
+    },
+    {
+      "id": "efb5fcad",
+      "name": "LabLong_efb5fcad",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "cci_cross_up",
+          "extra": "cci_lt_100"
+        },
+        {
+          "type": "volume",
+          "tf": "1h"
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator",
+      "entry_tf": "1h",
+      "sl_mode": "swing",
+      "tp_mode": "r",
+      "tp_r": 2.0
+    },
+    {
+      "id": "750b752e",
+      "name": "LabLong_750b752e",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "cci_cross_up",
+          "extra": "cci_lt_100"
+        },
+        {
+          "type": "momentum_score",
+          "side": "long",
+          "min": 4
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator",
+      "entry_tf": "1h",
+      "sl_mode": "swing",
+      "tp_mode": "r",
+      "tp_r": 2.0
+    },
+    {
+      "id": "dc6eed12",
+      "name": "LabLong_dc6eed12",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "macd_cross_up",
+          "extra": "hist_pos"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "bos_high"
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator",
+      "entry_tf": "1h",
+      "sl_mode": "swing",
+      "tp_mode": "r",
+      "tp_r": 2.0
+    },
+    {
+      "id": "176a382e",
+      "name": "LabLong_176a382e",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "macd_cross_up",
+          "extra": "hist_pos"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "squeeze"
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator",
+      "entry_tf": "1h",
+      "sl_mode": "swing",
+      "tp_mode": "r",
+      "tp_r": 2.0
+    },
+    {
+      "id": "801b3b3c",
+      "name": "LabLong_801b3b3c",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "macd_cross_up",
+          "extra": "hist_pos"
+        },
+        {
+          "type": "volume",
+          "tf": "1h"
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator",
+      "entry_tf": "1h",
+      "sl_mode": "swing",
+      "tp_mode": "r",
+      "tp_r": 2.0
+    },
+    {
+      "id": "1a8cae66",
+      "name": "LabLong_1a8cae66",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "macd_cross_up",
+          "extra": "hist_pos"
+        },
+        {
+          "type": "momentum_score",
+          "side": "long",
+          "min": 4
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator",
+      "entry_tf": "1h",
+      "sl_mode": "swing",
+      "tp_mode": "r",
+      "tp_r": 2.0
+    },
+    {
+      "id": "4607ded8",
+      "name": "LabLong_4607ded8",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "stoch_cross_up",
+          "extra": "k_lt_25"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "bos_high"
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator",
+      "entry_tf": "1h",
+      "sl_mode": "swing",
+      "tp_mode": "r",
+      "tp_r": 2.0
+    },
+    {
+      "id": "99d00dbe",
+      "name": "LabLong_99d00dbe",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "stoch_cross_up",
+          "extra": "k_lt_25"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "squeeze"
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator",
+      "entry_tf": "1h",
+      "sl_mode": "swing",
+      "tp_mode": "r",
+      "tp_r": 2.0
+    },
+    {
+      "id": "919cbc49",
+      "name": "LabLong_919cbc49",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "stoch_cross_up",
+          "extra": "k_lt_25"
+        },
+        {
+          "type": "volume",
+          "tf": "1h"
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator",
+      "entry_tf": "1h",
+      "sl_mode": "swing",
+      "tp_mode": "r",
+      "tp_r": 2.0
+    },
+    {
+      "id": "e2e33c02",
+      "name": "LabLong_e2e33c02",
+      "min_votes": 2,
+      "long_rules": [
+        {
+          "type": "stage",
+          "value": "advancing"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "stoch_cross_up",
+          "extra": "k_lt_25"
+        },
+        {
+          "type": "momentum_score",
+          "side": "long",
+          "min": 4
+        }
+      ],
+      "short_rules": [],
+      "require_aligned": true,
+      "source": "combinator",
+      "entry_tf": "1h",
+      "sl_mode": "swing",
+      "tp_mode": "r",
+      "tp_r": 2.0
+    },
+    {
+      "id": "e3aa2d38",
+      "name": "LabShort_e3aa2d38",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "cci_cross_down",
+          "extra": "cci_gt_-100"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "bos_low"
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator",
+      "entry_tf": "1h",
+      "sl_mode": "swing",
+      "tp_mode": "r",
+      "tp_r": 2.0
+    },
+    {
+      "id": "3de09441",
+      "name": "LabShort_3de09441",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "cci_cross_down",
+          "extra": "cci_gt_-100"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "squeeze"
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator",
+      "entry_tf": "1h",
+      "sl_mode": "swing",
+      "tp_mode": "r",
+      "tp_r": 2.0
+    },
+    {
+      "id": "9ecc1fc8",
+      "name": "LabShort_9ecc1fc8",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "cci_cross_down",
+          "extra": "cci_gt_-100"
+        },
+        {
+          "type": "volume",
+          "tf": "1h"
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator",
+      "entry_tf": "1h",
+      "sl_mode": "swing",
+      "tp_mode": "r",
+      "tp_r": 2.0
+    },
+    {
+      "id": "6e4a779c",
+      "name": "LabShort_6e4a779c",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "cci_cross_down",
+          "extra": "cci_gt_-100"
+        },
+        {
+          "type": "momentum_score",
+          "side": "short",
+          "min": 4
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator",
+      "entry_tf": "1h",
+      "sl_mode": "swing",
+      "tp_mode": "r",
+      "tp_r": 2.0
+    },
+    {
+      "id": "c8184c36",
+      "name": "LabShort_c8184c36",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "macd_cross_down",
+          "extra": "hist_neg"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "bos_low"
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator",
+      "entry_tf": "1h",
+      "sl_mode": "swing",
+      "tp_mode": "r",
+      "tp_r": 2.0
+    },
+    {
+      "id": "3819a322",
+      "name": "LabShort_3819a322",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "macd_cross_down",
+          "extra": "hist_neg"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "squeeze"
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator",
+      "entry_tf": "1h",
+      "sl_mode": "swing",
+      "tp_mode": "r",
+      "tp_r": 2.0
+    },
+    {
+      "id": "4e43898b",
+      "name": "LabShort_4e43898b",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "macd_cross_down",
+          "extra": "hist_neg"
+        },
+        {
+          "type": "volume",
+          "tf": "1h"
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator",
+      "entry_tf": "1h",
+      "sl_mode": "swing",
+      "tp_mode": "r",
+      "tp_r": 2.0
+    },
+    {
+      "id": "fa1ea40b",
+      "name": "LabShort_fa1ea40b",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "macd_cross_down",
+          "extra": "hist_neg"
+        },
+        {
+          "type": "momentum_score",
+          "side": "short",
+          "min": 4
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator",
+      "entry_tf": "1h",
+      "sl_mode": "swing",
+      "tp_mode": "r",
+      "tp_r": 2.0
+    },
+    {
+      "id": "106baf59",
+      "name": "LabShort_106baf59",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "stoch_cross_down",
+          "extra": "k_gt_75"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "bos_low"
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator",
+      "entry_tf": "1h",
+      "sl_mode": "swing",
+      "tp_mode": "r",
+      "tp_r": 2.0
+    },
+    {
+      "id": "55146aaf",
+      "name": "LabShort_55146aaf",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "stoch_cross_down",
+          "extra": "k_gt_75"
+        },
+        {
+          "type": "structure",
+          "tf": "4h",
+          "kind": "squeeze"
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator",
+      "entry_tf": "1h",
+      "sl_mode": "swing",
+      "tp_mode": "r",
+      "tp_r": 2.0
+    },
+    {
+      "id": "afb3fa38",
+      "name": "LabShort_afb3fa38",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "stoch_cross_down",
+          "extra": "k_gt_75"
+        },
+        {
+          "type": "volume",
+          "tf": "1h"
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator",
+      "entry_tf": "1h",
+      "sl_mode": "swing",
+      "tp_mode": "r",
+      "tp_r": 2.0
+    },
+    {
+      "id": "3e696d37",
+      "name": "LabShort_3e696d37",
+      "min_votes": 2,
+      "long_rules": [],
+      "short_rules": [
+        {
+          "type": "stage",
+          "value": "declining"
+        },
+        {
+          "type": "indicator",
+          "tf": "1h",
+          "field": "stoch_cross_down",
+          "extra": "k_gt_75"
+        },
+        {
+          "type": "momentum_score",
+          "side": "short",
+          "min": 4
+        }
+      ],
+      "require_aligned": true,
+      "source": "combinator",
+      "entry_tf": "1h",
+      "sl_mode": "swing",
+      "tp_mode": "r",
+      "tp_r": 2.0
     }
   ],
   "backtests": [
@@ -3741,6 +4431,420 @@
       ],
       "run_at": "2026-09-10 16:23:31",
       "stage": "walk_forward"
+    },
+    {
+      "recipe_id": "06ed418f",
+      "metrics": {
+        "n": 1,
+        "win_rate": 0.0,
+        "pnl": -3.643707719892749,
+        "profit_factor": 0.0,
+        "max_drawdown": 0.036437077198927456,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 18:03:41"
+    },
+    {
+      "recipe_id": "5a4638c8",
+      "metrics": {
+        "n": 5,
+        "win_rate": 0.0,
+        "pnl": -16.932247480676637,
+        "profit_factor": 0.0,
+        "max_drawdown": 0.16932247480676638,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 18:04:09"
+    },
+    {
+      "recipe_id": "efb5fcad",
+      "metrics": {
+        "n": 2,
+        "win_rate": 0.0,
+        "pnl": -7.1577845518785645,
+        "profit_factor": 0.0,
+        "max_drawdown": 0.07157784551878564,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 18:04:46"
+    },
+    {
+      "recipe_id": "750b752e",
+      "metrics": {
+        "n": 0,
+        "win_rate": 0.0,
+        "pnl": 0,
+        "profit_factor": null,
+        "max_drawdown": 0.0,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 18:05:33"
+    },
+    {
+      "recipe_id": "dc6eed12",
+      "metrics": {
+        "n": 0,
+        "win_rate": 0.0,
+        "pnl": 0,
+        "profit_factor": null,
+        "max_drawdown": 0.0,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 18:06:12"
+    },
+    {
+      "recipe_id": "176a382e",
+      "metrics": {
+        "n": 3,
+        "win_rate": 0.0,
+        "pnl": -10.469028477986752,
+        "profit_factor": 0.0,
+        "max_drawdown": 0.10469028477986754,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 18:06:53"
+    },
+    {
+      "recipe_id": "801b3b3c",
+      "metrics": {
+        "n": 2,
+        "win_rate": 0.0,
+        "pnl": -7.101746600483271,
+        "profit_factor": 0.0,
+        "max_drawdown": 0.07101746600483266,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 18:07:28"
+    },
+    {
+      "recipe_id": "1a8cae66",
+      "metrics": {
+        "n": 0,
+        "win_rate": 0.0,
+        "pnl": 0,
+        "profit_factor": null,
+        "max_drawdown": 0.0,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 18:08:14"
+    },
+    {
+      "recipe_id": "4607ded8",
+      "metrics": {
+        "n": 0,
+        "win_rate": 0.0,
+        "pnl": 0,
+        "profit_factor": null,
+        "max_drawdown": 0.0,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 18:08:57"
+    },
+    {
+      "recipe_id": "99d00dbe",
+      "metrics": {
+        "n": 1,
+        "win_rate": 0.0,
+        "pnl": -3.6666159689270703,
+        "profit_factor": 0.0,
+        "max_drawdown": 0.036666159689270755,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 18:09:33"
+    },
+    {
+      "recipe_id": "919cbc49",
+      "metrics": {
+        "n": 0,
+        "win_rate": 0.0,
+        "pnl": 0,
+        "profit_factor": null,
+        "max_drawdown": 0.0,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 18:10:07"
+    },
+    {
+      "recipe_id": "e2e33c02",
+      "metrics": {
+        "n": 0,
+        "win_rate": 0.0,
+        "pnl": 0,
+        "profit_factor": null,
+        "max_drawdown": 0.0,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 18:10:58"
+    },
+    {
+      "recipe_id": "e3aa2d38",
+      "metrics": {
+        "n": 3,
+        "win_rate": 0.3333333333333333,
+        "pnl": -0.5305610256552602,
+        "profit_factor": 0.9272741079793161,
+        "max_drawdown": 0.03594461931117707,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 18:11:32"
+    },
+    {
+      "recipe_id": "3de09441",
+      "metrics": {
+        "n": 6,
+        "win_rate": 0.3333333333333333,
+        "pnl": -1.1969359940897002,
+        "profit_factor": 0.9156577502648933,
+        "max_drawdown": 0.07674040884009571,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 18:12:04"
+    },
+    {
+      "recipe_id": "9ecc1fc8",
+      "metrics": {
+        "n": 9,
+        "win_rate": 0.3333333333333333,
+        "pnl": -1.8687692210708788,
+        "profit_factor": 0.9102201551260447,
+        "max_drawdown": 0.11073211421978414,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 18:12:26"
+    },
+    {
+      "recipe_id": "6e4a779c",
+      "metrics": {
+        "n": 4,
+        "win_rate": 0.25,
+        "pnl": -4.158233324391218,
+        "profit_factor": 0.6105177956319217,
+        "max_drawdown": 0.07110393090510499,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 18:12:59"
+    },
+    {
+      "recipe_id": "c8184c36",
+      "metrics": {
+        "n": 1,
+        "win_rate": 0.0,
+        "pnl": -3.597060496361581,
+        "profit_factor": 0.0,
+        "max_drawdown": 0.03597060496361579,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 18:13:33"
+    },
+    {
+      "recipe_id": "3819a322",
+      "metrics": {
+        "n": 6,
+        "win_rate": 0.3333333333333333,
+        "pnl": -1.2520478502874433,
+        "profit_factor": 0.9105681847272357,
+        "max_drawdown": 0.1054554570334831,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 18:14:04"
+    },
+    {
+      "recipe_id": "fa1ea40b",
+      "metrics": {
+        "n": 2,
+        "win_rate": 0.0,
+        "pnl": -7.112896885508874,
+        "profit_factor": 0.0,
+        "max_drawdown": 0.07112896885508874,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 18:15:06"
+    },
+    {
+      "recipe_id": "106baf59",
+      "metrics": {
+        "n": 2,
+        "win_rate": 0.0,
+        "pnl": -7.210772060347235,
+        "profit_factor": 0.0,
+        "max_drawdown": 0.07210772060347238,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 18:15:45"
+    },
+    {
+      "recipe_id": "55146aaf",
+      "metrics": {
+        "n": 5,
+        "win_rate": 0.2,
+        "pnl": -7.823791887077688,
+        "profit_factor": 0.43584043391737115,
+        "max_drawdown": 0.13868047902482603,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 18:16:23"
+    },
+    {
+      "recipe_id": "3e696d37",
+      "metrics": {
+        "n": 2,
+        "win_rate": 0.0,
+        "pnl": -7.210772060347235,
+        "profit_factor": 0.0,
+        "max_drawdown": 0.07210772060347238,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 18:17:27"
+    },
+    {
+      "recipe_id": "4e43898b",
+      "metrics": {
+        "n": 13,
+        "win_rate": 0.46153846153846156,
+        "pnl": 15.445358533481594,
+        "profit_factor": 1.6222685748031986,
+        "max_drawdown": 0.07108476977838507,
+        "passed": false,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-10 18:21:16",
+      "stage": "walk_forward"
+    },
+    {
+      "recipe_id": "afb3fa38",
+      "metrics": {
+        "n": 13,
+        "win_rate": 0.5384615384615384,
+        "pnl": 26.321280111245677,
+        "profit_factor": 2.228266456313983,
+        "max_drawdown": 0.07108476977838507,
+        "passed": false,
+        "symbols": 4
+      },
+      "symbols": [
+        "SATSUSDT",
+        "PEPEUSDT",
+        "SHIBUSDT",
+        "BONKUSDT"
+      ],
+      "run_at": "2026-09-10 18:21:16",
+      "stage": "walk_forward"
     }
   ],
   "candidates": [
@@ -3876,10 +4980,10 @@
       "paper_pnl": 0.0
     },
     "combinator": {
-      "recipes_added": 24,
-      "backtests": 24,
+      "recipes_added": 48,
+      "backtests": 48,
       "backtest_pass": 0,
-      "quick_screen_fail": 22,
+      "quick_screen_fail": 44,
       "paper_promoted": 0,
       "paper_rejected": 1,
       "paper_pnl": 0.0
@@ -3910,6 +5014,22 @@
       "priority": 7,
       "created_at": "2026-09-10 16:23:31",
       "updated_at": "2026-09-10 16:23:31"
+    },
+    {
+      "topic": "improve combinator futures strategy rules: PF=1.6222685748031986 trades=13",
+      "reason": "backtest_fail",
+      "source": "combinator",
+      "priority": 7,
+      "created_at": "2026-09-10 18:21:16",
+      "updated_at": "2026-09-10 18:21:16"
+    },
+    {
+      "topic": "improve combinator futures strategy rules: PF=2.228266456313983 trades=13",
+      "reason": "backtest_fail",
+      "source": "combinator",
+      "priority": 7,
+      "created_at": "2026-09-10 18:21:16",
+      "updated_at": "2026-09-10 18:21:16"
     },
     {
       "topic": "crypto futures strategy alternative to btc_golden_cross_bull: need higher PF and more trades",
@@ -4126,6 +5246,182 @@
       "priority": 6,
       "created_at": "2026-09-10 16:20:10",
       "updated_at": "2026-09-10 16:20:10"
+    },
+    {
+      "topic": "crypto futures strategy alternative to LabLong_06ed418f: need higher PF and more trades",
+      "reason": "quick_screen_fail",
+      "source": "combinator",
+      "priority": 6,
+      "created_at": "2026-09-10 18:03:41",
+      "updated_at": "2026-09-10 18:03:41"
+    },
+    {
+      "topic": "crypto futures strategy alternative to LabLong_5a4638c8: need higher PF and more trades",
+      "reason": "quick_screen_fail",
+      "source": "combinator",
+      "priority": 6,
+      "created_at": "2026-09-10 18:04:09",
+      "updated_at": "2026-09-10 18:04:09"
+    },
+    {
+      "topic": "crypto futures strategy alternative to LabLong_efb5fcad: need higher PF and more trades",
+      "reason": "quick_screen_fail",
+      "source": "combinator",
+      "priority": 6,
+      "created_at": "2026-09-10 18:04:46",
+      "updated_at": "2026-09-10 18:04:46"
+    },
+    {
+      "topic": "crypto futures strategy alternative to LabLong_750b752e: need higher PF and more trades",
+      "reason": "quick_screen_fail",
+      "source": "combinator",
+      "priority": 6,
+      "created_at": "2026-09-10 18:05:33",
+      "updated_at": "2026-09-10 18:05:33"
+    },
+    {
+      "topic": "crypto futures strategy alternative to LabLong_dc6eed12: need higher PF and more trades",
+      "reason": "quick_screen_fail",
+      "source": "combinator",
+      "priority": 6,
+      "created_at": "2026-09-10 18:06:12",
+      "updated_at": "2026-09-10 18:06:12"
+    },
+    {
+      "topic": "crypto futures strategy alternative to LabLong_176a382e: need higher PF and more trades",
+      "reason": "quick_screen_fail",
+      "source": "combinator",
+      "priority": 6,
+      "created_at": "2026-09-10 18:06:53",
+      "updated_at": "2026-09-10 18:06:53"
+    },
+    {
+      "topic": "crypto futures strategy alternative to LabLong_801b3b3c: need higher PF and more trades",
+      "reason": "quick_screen_fail",
+      "source": "combinator",
+      "priority": 6,
+      "created_at": "2026-09-10 18:07:28",
+      "updated_at": "2026-09-10 18:07:28"
+    },
+    {
+      "topic": "crypto futures strategy alternative to LabLong_1a8cae66: need higher PF and more trades",
+      "reason": "quick_screen_fail",
+      "source": "combinator",
+      "priority": 6,
+      "created_at": "2026-09-10 18:08:14",
+      "updated_at": "2026-09-10 18:08:14"
+    },
+    {
+      "topic": "crypto futures strategy alternative to LabLong_4607ded8: need higher PF and more trades",
+      "reason": "quick_screen_fail",
+      "source": "combinator",
+      "priority": 6,
+      "created_at": "2026-09-10 18:08:57",
+      "updated_at": "2026-09-10 18:08:57"
+    },
+    {
+      "topic": "crypto futures strategy alternative to LabLong_99d00dbe: need higher PF and more trades",
+      "reason": "quick_screen_fail",
+      "source": "combinator",
+      "priority": 6,
+      "created_at": "2026-09-10 18:09:33",
+      "updated_at": "2026-09-10 18:09:33"
+    },
+    {
+      "topic": "crypto futures strategy alternative to LabLong_919cbc49: need higher PF and more trades",
+      "reason": "quick_screen_fail",
+      "source": "combinator",
+      "priority": 6,
+      "created_at": "2026-09-10 18:10:07",
+      "updated_at": "2026-09-10 18:10:07"
+    },
+    {
+      "topic": "crypto futures strategy alternative to LabLong_e2e33c02: need higher PF and more trades",
+      "reason": "quick_screen_fail",
+      "source": "combinator",
+      "priority": 6,
+      "created_at": "2026-09-10 18:10:58",
+      "updated_at": "2026-09-10 18:10:58"
+    },
+    {
+      "topic": "crypto futures strategy alternative to LabShort_e3aa2d38: need higher PF and more trades",
+      "reason": "quick_screen_fail",
+      "source": "combinator",
+      "priority": 6,
+      "created_at": "2026-09-10 18:11:32",
+      "updated_at": "2026-09-10 18:11:32"
+    },
+    {
+      "topic": "crypto futures strategy alternative to LabShort_3de09441: need higher PF and more trades",
+      "reason": "quick_screen_fail",
+      "source": "combinator",
+      "priority": 6,
+      "created_at": "2026-09-10 18:12:04",
+      "updated_at": "2026-09-10 18:12:04"
+    },
+    {
+      "topic": "crypto futures strategy alternative to LabShort_9ecc1fc8: need higher PF and more trades",
+      "reason": "quick_screen_fail",
+      "source": "combinator",
+      "priority": 6,
+      "created_at": "2026-09-10 18:12:26",
+      "updated_at": "2026-09-10 18:12:26"
+    },
+    {
+      "topic": "crypto futures strategy alternative to LabShort_6e4a779c: need higher PF and more trades",
+      "reason": "quick_screen_fail",
+      "source": "combinator",
+      "priority": 6,
+      "created_at": "2026-09-10 18:12:59",
+      "updated_at": "2026-09-10 18:12:59"
+    },
+    {
+      "topic": "crypto futures strategy alternative to LabShort_c8184c36: need higher PF and more trades",
+      "reason": "quick_screen_fail",
+      "source": "combinator",
+      "priority": 6,
+      "created_at": "2026-09-10 18:13:33",
+      "updated_at": "2026-09-10 18:13:33"
+    },
+    {
+      "topic": "crypto futures strategy alternative to LabShort_3819a322: need higher PF and more trades",
+      "reason": "quick_screen_fail",
+      "source": "combinator",
+      "priority": 6,
+      "created_at": "2026-09-10 18:14:04",
+      "updated_at": "2026-09-10 18:14:04"
+    },
+    {
+      "topic": "crypto futures strategy alternative to LabShort_fa1ea40b: need higher PF and more trades",
+      "reason": "quick_screen_fail",
+      "source": "combinator",
+      "priority": 6,
+      "created_at": "2026-09-10 18:15:06",
+      "updated_at": "2026-09-10 18:15:06"
+    },
+    {
+      "topic": "crypto futures strategy alternative to LabShort_106baf59: need higher PF and more trades",
+      "reason": "quick_screen_fail",
+      "source": "combinator",
+      "priority": 6,
+      "created_at": "2026-09-10 18:15:45",
+      "updated_at": "2026-09-10 18:15:45"
+    },
+    {
+      "topic": "crypto futures strategy alternative to LabShort_55146aaf: need higher PF and more trades",
+      "reason": "quick_screen_fail",
+      "source": "combinator",
+      "priority": 6,
+      "created_at": "2026-09-10 18:16:23",
+      "updated_at": "2026-09-10 18:16:23"
+    },
+    {
+      "topic": "crypto futures strategy alternative to LabShort_3e696d37: need higher PF and more trades",
+      "reason": "quick_screen_fail",
+      "source": "combinator",
+      "priority": 6,
+      "created_at": "2026-09-10 18:17:27",
+      "updated_at": "2026-09-10 18:17:27"
     }
   ]
 }
