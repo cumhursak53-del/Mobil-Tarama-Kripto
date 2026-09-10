@@ -6,6 +6,7 @@ import io
 import json
 import os
 import sys
+from collections import defaultdict
 from datetime import datetime
 from typing import Optional
 
@@ -339,10 +340,59 @@ def _pos_rows(active: dict) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def _ledger_rows(ledgers: dict) -> pd.DataFrame:
-    start = 100.0
-    rows = [{"Kasa": k, "Bakiye": v, "PnL": float(v) - start} for k, v in (ledgers or {}).items()]
-    return pd.DataFrame(rows)
+def ledger_summary_rows(
+    ledgers: dict | None,
+    active: dict | None = None,
+    history: list | None = None,
+    start: float | None = None,
+) -> pd.DataFrame:
+    """Kasa ozeti: Bakiye (kapanan), PnL (kapanan+acik), Total (gercek zamanli)."""
+    from engine.config import KASA_START_USD
+
+    start_val = float(start if start is not None else KASA_START_USD)
+    closed_by: dict[str, float] = defaultdict(float)
+    for h in history or []:
+        if isinstance(h, dict) and h.get("ledger"):
+            closed_by[str(h["ledger"])] += float(h.get("pnl") or 0)
+
+    unreal_by: dict[str, float] = defaultdict(float)
+    margin_by: dict[str, float] = defaultdict(float)
+    for p in (active or {}).values():
+        if not isinstance(p, dict):
+            continue
+        ledger = str(p.get("ledger_name") or "")
+        if not ledger:
+            continue
+        unreal_by[ledger] += float(p.get("unrealized_pnl") or 0)
+        margin_by[ledger] += float(p.get("margin") or 0)
+
+    all_ledgers = set(ledgers or {}) | set(closed_by) | set(unreal_by) | set(margin_by)
+    rows = []
+    for k in sorted(all_ledgers):
+        closed = closed_by.get(k, 0.0)
+        unreal = unreal_by.get(k, 0.0)
+        bakiye = start_val + closed
+        pnl = closed + unreal
+        cash = float((ledgers or {}).get(k, bakiye))
+        total = cash + margin_by.get(k, 0.0) + unreal
+        rows.append({
+            "Kasa": k,
+            "Bakiye": round(bakiye, 2),
+            "PnL": round(pnl, 2),
+            "Total": round(total, 2),
+        })
+    df = pd.DataFrame(rows)
+    if not df.empty:
+        df = df.sort_values("Total", ascending=False)
+    return df
+
+
+def _ledger_rows(data: dict) -> pd.DataFrame:
+    return ledger_summary_rows(
+        data.get("ledgers") or {},
+        data.get("active_positions") or {},
+        data.get("history") or [],
+    )
 
 
 def _history_rows(history: list) -> pd.DataFrame:
@@ -369,23 +419,42 @@ def _history_rows(history: list) -> pd.DataFrame:
     return df.rename(columns={k: v for k, v in rename.items() if k in df.columns})
 
 
-def _signal_rows(sig_log: dict) -> pd.DataFrame:
+def signal_log_rows(sig_log: dict, *, strategies_tail: int | None = 6) -> pd.DataFrame:
     rows = []
     for sym, s in (sig_log or {}).items():
-        if not isinstance(s, dict):
+        if str(sym).startswith("_") or not isinstance(s, dict):
             continue
         strats = s.get("strategies") or []
         if isinstance(strats, list):
-            strats = " | ".join(str(x) for x in strats)
+            if strategies_tail is not None and len(strats) > strategies_tail:
+                strats = ", ".join(str(x) for x in strats[-strategies_tail:])
+            else:
+                strats = ", ".join(str(x) for x in strats)
         rows.append({
             "Sembol": sym,
-            "Sinyal_sayisi": s.get("count", 0),
-            "Son_yon": s.get("last_side", "-"),
+            "Sinyal": s.get("count", 0),
+            "Son yon": s.get("last_side", "-"),
             "Kasa": s.get("last_ledger", "-"),
-            "Zaman": s.get("last_time", "-"),
+            "Ilk sinyal": s.get("first_time") or "-",
+            "Son sinyal": s.get("last_time") or "-",
             "Stratejiler": strats,
         })
-    return pd.DataFrame(rows)
+    df = pd.DataFrame(rows)
+    if not df.empty:
+        df = df.sort_values("Sinyal", ascending=False)
+    return df
+
+
+def _signal_rows(sig_log: dict) -> pd.DataFrame:
+    df = signal_log_rows(sig_log, strategies_tail=None)
+    if df.empty:
+        return df
+    return df.rename(columns={
+        "Sinyal": "Sinyal_sayisi",
+        "Son yon": "Son_yon",
+        "Ilk sinyal": "Ilk_sinyal",
+        "Son sinyal": "Son_sinyal",
+    })
 
 
 def patlama_rows(scan: dict) -> pd.DataFrame:
@@ -465,7 +534,7 @@ def build_excel_bytes(data: dict) -> bytes:
     }])
     sheets = {
         "Ozet": ozet,
-        "Kasalar": _ledger_rows(data.get("ledgers") or {}),
+        "Kasalar": _ledger_rows(data),
         "Acik_Pozisyonlar": _pos_rows(data.get("active_positions") or {}),
         "Islem_Gecmisi": _history_rows(data.get("history") or []),
         "Sinyaller": _signal_rows(data.get("signal_log") or {}),

@@ -237,7 +237,12 @@ def render() -> None:
             st.dataframe(dfh[cols], use_container_width=True, hide_index=True)
         if lab_signals:
             st.dataframe(pd.DataFrame([{
-                "Sembol": sym, "Kasa": s.get("last_ledger"), "Yon": s.get("last_side"), "Zaman": s.get("last_time"),
+                "Sembol": sym,
+                "Sinyal": s.get("count", 0),
+                "Kasa": s.get("last_ledger"),
+                "Yon": s.get("last_side"),
+                "Ilk sinyal": s.get("first_time") or "-",
+                "Son sinyal": s.get("last_time") or "-",
             } for sym, s in lab_signals]), use_container_width=True, hide_index=True)
 
     with tab5:

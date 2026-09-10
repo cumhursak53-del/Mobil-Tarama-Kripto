@@ -550,10 +550,16 @@ class Portfolio:
             self.smc_scan = dict(ranked[:500])
 
     def record_signal(self, symbol: str, sig: Signal) -> None:
-        rec = self.signal_log.setdefault(symbol, {"count": 0, "strategies": [], "last_side": "", "last_time": ""})
+        rec = self.signal_log.setdefault(
+            symbol,
+            {"count": 0, "strategies": [], "last_side": "", "last_time": "", "first_time": ""},
+        )
+        ts = now_tr()
+        if rec["count"] == 0:
+            rec["first_time"] = ts
         rec["count"] += 1
         rec["last_side"] = sig.side.value
-        rec["last_time"] = now_tr()
+        rec["last_time"] = ts
         rec["last_ledger"] = sig.ledger
         if sig.strategy not in rec["strategies"]:
             rec["strategies"].append(sig.strategy)

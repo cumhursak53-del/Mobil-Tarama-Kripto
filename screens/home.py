@@ -3,7 +3,14 @@ from datetime import datetime
 import pandas as pd
 import streamlit as st
 
-from ui_common import build_excel_bytes, format_price, get_engine_data, source_caption
+from ui_common import (
+    build_excel_bytes,
+    format_price,
+    get_engine_data,
+    ledger_summary_rows,
+    signal_log_rows,
+    source_caption,
+)
 
 
 def render() -> None:
@@ -72,12 +79,23 @@ def render() -> None:
             st.info("Acik pozisyon yok.")
 
     with tab2:
-        if ledgers:
-            start = 100.0
-            rows = [{"Kasa": k, "Bakiye": v, "PnL": v - start} for k, v in ledgers.items()]
-            df = pd.DataFrame(rows).sort_values("Bakiye", ascending=False)
-            st.dataframe(df, use_container_width=True, hide_index=True)
-            st.bar_chart(df.set_index("Kasa")["Bakiye"])
+        df = ledger_summary_rows(ledgers, active, history)
+        if not df.empty:
+            st.caption(
+                "Bakiye: kapanan islemlerden sonra kalan | "
+                "PnL: kapanan + acik | Total: gercek zamanli (nakit + marjin + acik PnL)"
+            )
+            st.dataframe(
+                df,
+                use_container_width=True,
+                hide_index=True,
+                column_config={
+                    "Bakiye": st.column_config.NumberColumn(format="$%.2f"),
+                    "PnL": st.column_config.NumberColumn(format="$%+.2f"),
+                    "Total": st.column_config.NumberColumn(format="$%.2f"),
+                },
+            )
+            st.bar_chart(df.set_index("Kasa")["Total"])
         else:
             st.info("Kasa verisi yok.")
 
@@ -103,25 +121,9 @@ def render() -> None:
             st.info("Henuz kapanan islem yok.")
 
     with tab4:
-        if sig_log:
-            rows = []
-            for sym, s in sig_log.items():
-                strats = s.get("strategies") or []
-                if isinstance(strats, list):
-                    strats = ", ".join(strats[-6:])
-                rows.append({
-                    "Sembol": sym,
-                    "Sinyal": s.get("count", 0),
-                    "Son yon": s.get("last_side", "-"),
-                    "Kasa": s.get("last_ledger", "-"),
-                    "Zaman": s.get("last_time", "-"),
-                    "Stratejiler": strats,
-                })
-            st.dataframe(
-                pd.DataFrame(rows).sort_values("Sinyal", ascending=False),
-                use_container_width=True,
-                hide_index=True,
-            )
+        df_sig = signal_log_rows(sig_log)
+        if not df_sig.empty:
+            st.dataframe(df_sig, use_container_width=True, hide_index=True)
         else:
             st.info("Sinyal gunlugu bos.")
 
