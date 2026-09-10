@@ -24,6 +24,7 @@ from engine.config import (
     TIMEFRAMES,
 )
 from engine.context import build_context
+from engine.df_utils import pick_frame
 from engine.data import fetch_dominance, fetch_klines, fetch_symbols, last_prices
 from engine.entry_timing import (
     collect_bar_closes,
@@ -156,8 +157,8 @@ def _entry_price(strat, sym: str, frames: dict, live_px: float | None) -> float:
     if strat.uses_live_entry() and live_px is not None and live_px > 0:
         return float(live_px)
     tf = strat.entry_timeframe()
-    df = frames.get(tf) or frames.get("1h")
-    if df is not None and not df.empty:
+    df = pick_frame(frames, tf, "1h")
+    if df is not None:
         return float(df["close"].iloc[-1])
     if live_px is not None and live_px > 0:
         return float(live_px)

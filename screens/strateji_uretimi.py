@@ -122,7 +122,8 @@ def render() -> None:
     c1.metric("Paper motoru", motor_label, motor_note)
     c2.metric("Lab state", f"{recipe_n} tarif", f"Guncelleme: {lab_summary.get('updated_at') or '-'}")
     c3.metric("Backtest kaydi", bt_n)
-    c4.metric("Paper aday", f"{paper_n}/{LAB_MAX_CANDIDATES}")
+    paper_label = str(paper_n) if LAB_MAX_CANDIDATES <= 0 else f"{paper_n}/{LAB_MAX_CANDIDATES}"
+    c4.metric("Paper aday", paper_label)
     c5.metric("Lab acik islem", len(lab_open))
 
     if motor_level == "ok":

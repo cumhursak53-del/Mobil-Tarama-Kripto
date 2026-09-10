@@ -124,11 +124,11 @@ def recipe_by_id(state: dict, recipe_id: str) -> dict | None:
 
 def next_lab_ledger(state: dict) -> str | None:
     active = [c for c in state.get("candidates") or [] if c.get("status") == "paper"]
-    if len(active) >= LAB_MAX_CANDIDATES:
+    if LAB_MAX_CANDIDATES > 0 and len(active) >= LAB_MAX_CANDIDATES:
         return None
     used = {c.get("ledger") for c in state.get("candidates") or []}
     n = 1
-    while n < 100:
+    while n < 10000:
         name = f"{LAB_LEDGER_PREFIX}{n:03d}"
         if name not in used:
             return name

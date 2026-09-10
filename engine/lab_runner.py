@@ -72,12 +72,14 @@ def _pending_recipes(state: dict, limit: int) -> list[dict]:
         rid = r.get("id")
         if rid and rid not in tested:
             out.append(r)
-        if len(out) >= limit:
+        if limit > 0 and len(out) >= limit:
             break
     return out
 
 
 def _paper_slots_free(state: dict) -> int:
+    if LAB_MAX_CANDIDATES <= 0:
+        return 10**9
     active = len([c for c in state.get("candidates") or [] if c.get("status") == "paper"])
     return max(0, LAB_MAX_CANDIDATES - active)
 

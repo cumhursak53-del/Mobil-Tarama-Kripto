@@ -17,6 +17,7 @@ from engine.config import (
     TAKER_FEE,
 )
 from engine.context import build_context, indicate_frame
+from engine.df_utils import pick_frame
 from engine.strategy_recipe import StrategyRecipe, evaluate_recipe
 from engine.types import Side
 from risk.sizer import PositionRisk, size_position, would_survive_all_sl
@@ -32,9 +33,13 @@ def backtest_recipe(
     warmup: int = 120,
 ) -> dict:
     rec = recipe if isinstance(recipe, StrategyRecipe) else StrategyRecipe.from_dict(recipe)
-    indicated = {tf: add_structure(indicate_frame(df)) for tf, df in frames.items()}
+    indicated: dict[str, pd.DataFrame] = {}
+    for tf, df in frames.items():
+        if df is None or df.empty:
+            continue
+        indicated[tf] = add_structure(indicate_frame(df))
     entry_tf = rec.entry_tf or "1h"
-    h1 = indicated.get(entry_tf) or indicated.get("1h")
+    h1 = pick_frame(indicated, entry_tf, "1h")
     if h1 is None or len(h1) < warmup + 20:
         return {"symbol": symbol, "recipe_id": rec.id, "trades": [], "error": "not_enough_1h"}
 

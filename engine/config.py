@@ -121,7 +121,8 @@ GITHUB_BRANCH = os.environ.get("GITHUB_BRANCH", "main")
 GITHUB_STATE_PATH = os.environ.get("GITHUB_STATE_PATH", "state.json")
 LAB_STATE_FILE = os.environ.get("LAB_STATE_FILE", "lab_state.json")
 LAB_LEDGER_PREFIX = "Kasa_Lab_"
-LAB_MAX_CANDIDATES = int(os.environ.get("LAB_MAX_CANDIDATES", "5"))
+# 0 veya negatif = paper aday sinirsiz
+LAB_MAX_CANDIDATES = int(os.environ.get("LAB_MAX_CANDIDATES", "0"))
 LAB_FREEZE = os.environ.get("LAB_FREEZE", "0") == "1"
 LAB_MIN_BACKTEST_TRADES = int(os.environ.get("LAB_MIN_BACKTEST_TRADES", "25"))
 LAB_MIN_BACKTEST_PF = float(os.environ.get("LAB_MIN_BACKTEST_PF", "1.25"))
@@ -130,7 +131,8 @@ LAB_PAPER_MIN_WR = float(os.environ.get("LAB_PAPER_MIN_WR", "0.38"))
 LAB_AUTO = os.environ.get("LAB_AUTO", "1") == "1"
 LAB_AUTO_INTERVAL_SEC = int(os.environ.get("LAB_AUTO_INTERVAL_SEC", "1800"))  # 30 dk
 LAB_GENERATE_LIMIT = int(os.environ.get("LAB_GENERATE_LIMIT", "24"))
-LAB_BACKTEST_BATCH = int(os.environ.get("LAB_BACKTEST_BATCH", "8"))
+# 0 = bekleyen tum tarifler (tek pipeline turunda)
+LAB_BACKTEST_BATCH = int(os.environ.get("LAB_BACKTEST_BATCH", "12"))
 LAB_BACKTEST_UNIVERSE = int(os.environ.get("LAB_BACKTEST_UNIVERSE", "4"))
 LAB_MIN_RECIPES = int(os.environ.get("LAB_MIN_RECIPES", "12"))
 LAB_QUICK_SCREEN_SYMBOL = os.environ.get("LAB_QUICK_SCREEN_SYMBOL", "BTCUSDT")

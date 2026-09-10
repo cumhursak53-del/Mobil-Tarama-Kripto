@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
+from engine.df_utils import pick_frame
 from engine.momentum_scan import score_momentum
 from engine.types import Side
 from strategies.base import MarketContext
@@ -58,10 +59,8 @@ class StrategyRecipe:
 
 
 def _pick_df(ctx: MarketContext, tf: str, fallback):
-    picked = ctx.tf(tf)
-    if picked is None or getattr(picked, "empty", False):
-        return fallback
-    return picked
+    picked = pick_frame(ctx.frames, tf)
+    return picked if picked is not None else fallback
 
 
 def _squeeze(df) -> bool:

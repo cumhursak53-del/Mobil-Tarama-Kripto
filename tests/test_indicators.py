@@ -321,19 +321,35 @@ def test_recipe_generator_and_eval():
     assert side is None or side in (Side.BUY, Side.SELL)
 
 
-def test_lab_promote_respects_cap():
+def test_lab_promote_respects_cap(monkeypatch):
     from engine.lab_state import empty_lab_state, next_lab_ledger, promote_recipe
-    from engine.config import LAB_MAX_CANDIDATES
+    import engine.lab_state as lab_state_mod
 
+    monkeypatch.setattr(lab_state_mod, "LAB_MAX_CANDIDATES", 3)
     state = empty_lab_state()
     recipe = {"id": "abc12345", "name": "Test", "min_votes": 2, "long_rules": [], "short_rules": []}
     bt = {"n": 25, "win_rate": 0.5, "profit_factor": 1.2, "passed": True}
-    for i in range(LAB_MAX_CANDIDATES + 2):
+    for i in range(5):
         r = dict(recipe, id=f"id{i:04d}")
         promote_recipe(state, r, bt)
     active = [c for c in state["candidates"] if c["status"] == "paper"]
-    assert len(active) <= LAB_MAX_CANDIDATES
+    assert len(active) == 3
     assert next_lab_ledger(state) is None
+
+
+def test_lab_promote_unlimited_when_cap_zero(monkeypatch):
+    from engine.lab_state import empty_lab_state, next_lab_ledger, promote_recipe
+    import engine.lab_state as lab_state_mod
+
+    monkeypatch.setattr(lab_state_mod, "LAB_MAX_CANDIDATES", 0)
+    state = empty_lab_state()
+    recipe = {"id": "abc12345", "name": "Test", "min_votes": 2, "long_rules": [], "short_rules": []}
+    bt = {"n": 25, "win_rate": 0.5, "profit_factor": 1.2, "passed": True}
+    for i in range(8):
+        promote_recipe(state, dict(recipe, id=f"id{i:04d}"), bt)
+    active = [c for c in state["candidates"] if c["status"] == "paper"]
+    assert len(active) == 8
+    assert next_lab_ledger(state) is not None
 
 
 def test_recipe_validator_accepts_known_rules():
