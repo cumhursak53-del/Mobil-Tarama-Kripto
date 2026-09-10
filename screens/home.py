@@ -82,7 +82,7 @@ def render() -> None:
         df = ledger_summary_rows(ledgers, active, history)
         if not df.empty:
             st.caption(
-                "Bakiye: kapanan islemlerden sonra kalan | "
+                "Acik/Kapali: islem sayisi | Bakiye: kapanan islemlerden sonra kalan | "
                 "PnL: kapanan + acik | Total: gercek zamanli (nakit + marjin + acik PnL)"
             )
             st.dataframe(

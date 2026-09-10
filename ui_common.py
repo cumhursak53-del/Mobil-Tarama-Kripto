@@ -350,26 +350,38 @@ def ledger_summary_rows(
     from engine.config import KASA_START_USD
 
     start_val = float(start if start is not None else KASA_START_USD)
-    closed_by: dict[str, float] = defaultdict(float)
+    closed_pnl_by: dict[str, float] = defaultdict(float)
+    closed_count_by: dict[str, int] = defaultdict(int)
     for h in history or []:
         if isinstance(h, dict) and h.get("ledger"):
-            closed_by[str(h["ledger"])] += float(h.get("pnl") or 0)
+            ledger = str(h["ledger"])
+            closed_pnl_by[ledger] += float(h.get("pnl") or 0)
+            closed_count_by[ledger] += 1
 
     unreal_by: dict[str, float] = defaultdict(float)
     margin_by: dict[str, float] = defaultdict(float)
+    open_count_by: dict[str, int] = defaultdict(int)
     for p in (active or {}).values():
         if not isinstance(p, dict):
             continue
         ledger = str(p.get("ledger_name") or "")
         if not ledger:
             continue
+        open_count_by[ledger] += 1
         unreal_by[ledger] += float(p.get("unrealized_pnl") or 0)
         margin_by[ledger] += float(p.get("margin") or 0)
 
-    all_ledgers = set(ledgers or {}) | set(closed_by) | set(unreal_by) | set(margin_by)
+    all_ledgers = (
+        set(ledgers or {})
+        | set(closed_pnl_by)
+        | set(closed_count_by)
+        | set(unreal_by)
+        | set(margin_by)
+        | set(open_count_by)
+    )
     rows = []
     for k in sorted(all_ledgers):
-        closed = closed_by.get(k, 0.0)
+        closed = closed_pnl_by.get(k, 0.0)
         unreal = unreal_by.get(k, 0.0)
         bakiye = start_val + closed
         pnl = closed + unreal
@@ -377,6 +389,8 @@ def ledger_summary_rows(
         total = cash + margin_by.get(k, 0.0) + unreal
         rows.append({
             "Kasa": k,
+            "Acik": open_count_by.get(k, 0),
+            "Kapali": closed_count_by.get(k, 0),
             "Bakiye": round(bakiye, 2),
             "PnL": round(pnl, 2),
             "Total": round(total, 2),
