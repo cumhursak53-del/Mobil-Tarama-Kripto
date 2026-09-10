@@ -101,15 +101,15 @@
     "lab_auto": true,
     "github_token": false
   },
-  "updated_at": "2026-09-10 15:26:40",
+  "updated_at": "2026-09-10 15:49:08",
   "pipeline": {
     "status": "ok",
-    "last_run_at": "2026-09-10 14:36:52",
+    "last_run_at": "2026-09-10 15:39:58",
     "last_generate_at": "2026-09-04 18:28:14",
-    "last_backtest_at": "2026-09-08 15:36:57",
-    "last_message": "Arastirma 0, kombinator 0, backtest 0, aday 0",
+    "last_backtest_at": "2026-09-10 15:39:58",
+    "last_message": "Arastirma 0, uretim 0, backtest 9, yeni aday 0",
     "last_generated": 24,
-    "last_backtested": 8,
+    "last_backtested": 9,
     "last_promoted": 0,
     "last_researched": 0,
     "last_research_at": "2026-09-10 15:21:02"
@@ -2484,6 +2484,159 @@
         "BONKUSDT"
       ],
       "run_at": "2026-09-08 15:36:57"
+    },
+    {
+      "recipe_id": "d1911a55",
+      "metrics": {
+        "n": 2,
+        "win_rate": 0.0,
+        "pnl": -7.092345420525776,
+        "profit_factor": 0.0,
+        "max_drawdown": 0.07092345420525774,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 15:33:33"
+    },
+    {
+      "recipe_id": "1b66a9f5",
+      "metrics": {
+        "n": 7,
+        "win_rate": 0.2857142857142857,
+        "pnl": -4.89532942058503,
+        "profit_factor": 0.7264660550396713,
+        "max_drawdown": 0.13852303201268687,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 15:33:52"
+    },
+    {
+      "recipe_id": "66780557",
+      "metrics": {
+        "n": 0,
+        "win_rate": 0.0,
+        "pnl": 0,
+        "profit_factor": null,
+        "max_drawdown": 0.0,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 15:34:27"
+    },
+    {
+      "recipe_id": "61f1393e",
+      "metrics": {
+        "n": 7,
+        "win_rate": 0.2857142857142857,
+        "pnl": -4.89532942058503,
+        "profit_factor": 0.7264660550396713,
+        "max_drawdown": 0.13852303201268687,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 15:37:58"
+    },
+    {
+      "recipe_id": "d99bd3f0",
+      "metrics": {
+        "n": 0,
+        "win_rate": 0.0,
+        "pnl": 0,
+        "profit_factor": null,
+        "max_drawdown": 0.0,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 15:38:23"
+    },
+    {
+      "recipe_id": "52f933ba",
+      "metrics": {
+        "n": 0,
+        "win_rate": 0.0,
+        "pnl": 0,
+        "profit_factor": null,
+        "max_drawdown": 0.0,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 15:38:44"
+    },
+    {
+      "recipe_id": "a11c6e02",
+      "metrics": {
+        "n": 0,
+        "win_rate": 0.0,
+        "pnl": 0,
+        "profit_factor": null,
+        "max_drawdown": 0.0,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 15:39:18"
+    },
+    {
+      "recipe_id": "2ca1a8f6",
+      "metrics": {
+        "n": 0,
+        "win_rate": 0.0,
+        "pnl": 0,
+        "profit_factor": null,
+        "max_drawdown": 0.0,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 15:39:39"
+    },
+    {
+      "recipe_id": "45a4304a",
+      "metrics": {
+        "n": 7,
+        "win_rate": 0.2857142857142857,
+        "pnl": -4.89532942058503,
+        "profit_factor": 0.7264660550396713,
+        "max_drawdown": 0.13852303201268687,
+        "passed": false,
+        "symbols": 1,
+        "stage": "quick_screen"
+      },
+      "symbols": [
+        "SATSUSDT"
+      ],
+      "run_at": "2026-09-10 15:39:58"
     }
   ],
   "candidates": [
@@ -2611,9 +2764,9 @@
     },
     "news": {
       "recipes_added": 0,
-      "backtests": 0,
+      "backtests": 9,
       "backtest_pass": 0,
-      "quick_screen_fail": 0,
+      "quick_screen_fail": 9,
       "paper_promoted": 0,
       "paper_rejected": 0,
       "paper_pnl": 0.0
@@ -2637,5 +2790,46 @@
       "paper_pnl": 0.0
     }
   },
-  "research_queue": []
+  "research_queue": [
+    {
+      "topic": "crypto futures strategy alternative to btc_golden_cross_bull: need higher PF and more trades",
+      "reason": "quick_screen_fail",
+      "source": "news",
+      "priority": 6,
+      "created_at": "2026-09-10 15:33:33",
+      "updated_at": "2026-09-10 15:33:33"
+    },
+    {
+      "topic": "crypto futures strategy alternative to fed_hike_pressure_bear: need higher PF and more trades",
+      "reason": "quick_screen_fail",
+      "source": "news",
+      "priority": 6,
+      "created_at": "2026-09-10 15:33:52",
+      "updated_at": "2026-09-10 15:33:52"
+    },
+    {
+      "topic": "crypto futures strategy alternative to btc_golden_cross_long: need higher PF and more trades",
+      "reason": "quick_screen_fail",
+      "source": "news",
+      "priority": 6,
+      "created_at": "2026-09-10 15:34:27",
+      "updated_at": "2026-09-10 15:39:39"
+    },
+    {
+      "topic": "crypto futures strategy alternative to macro_pressure_short: need higher PF and more trades",
+      "reason": "quick_screen_fail",
+      "source": "news",
+      "priority": 6,
+      "created_at": "2026-09-10 15:37:58",
+      "updated_at": "2026-09-10 15:39:58"
+    },
+    {
+      "topic": "crypto futures strategy alternative to fed_hike_momentum_short: need higher PF and more trades",
+      "reason": "quick_screen_fail",
+      "source": "news",
+      "priority": 6,
+      "created_at": "2026-09-10 15:39:18",
+      "updated_at": "2026-09-10 15:39:18"
+    }
+  ]
 }
