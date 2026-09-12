@@ -35,6 +35,8 @@ from engine.lab_state import (
     sync_lab_state,
 )
 from engine.state_merge import merge_trading_state
+from engine.post_exit import enqueue_watch
+from engine.trade_analysis import make_trade_id
 from engine.types import ClosedTrade, Position, Side, Signal
 from risk.sizer import (
     PositionRisk,
@@ -63,6 +65,8 @@ class Portfolio:
         self._equity_curve: list[dict] = []
         self._symbol_sl_until: dict[str, float] = {}
         self.pending_orders: list[dict] = []
+        self.post_exit_watchlist: list[dict] = []
+        self.post_exit_log: list[dict] = []
         self.state_source: str = "fresh"
         remote = pull_state()
         local_raw = None
@@ -136,6 +140,8 @@ class Portfolio:
         self.logs = raw.get("engine_logs") or []
         self._equity_curve = raw.get("equity_curve") or []
         self.pending_orders = raw.get("pending_orders") or []
+        self.post_exit_watchlist = raw.get("post_exit_watchlist") or []
+        self.post_exit_log = raw.get("post_exit_log") or []
         self.positions = {}
         for key, p in (raw.get("active_positions") or {}).items():
             try:
@@ -172,6 +178,8 @@ class Portfolio:
         self.positions.clear()
         self.history.clear()
         self.pending_orders.clear()
+        self.post_exit_watchlist.clear()
+        self.post_exit_log.clear()
         self._equity_curve.clear()
         self._symbol_sl_until.clear()
         self.ledgers = {k: KASA_START_USD for k in LEDGER_NAMES}
@@ -390,6 +398,7 @@ class Portfolio:
         if p.be_at_r and r >= p.be_at_r:
             p.sl_price = p.entry_price
         eq = sum(self.ledgers.values()) + sum(x.margin for x in self.positions.values())
+        trade_id = make_trade_id(p.ledger, p.symbol, p.entry_time)
         self.history.append({
             "symbol": p.symbol,
             "side": p.side.value,
@@ -401,6 +410,7 @@ class Portfolio:
             "ledger": p.ledger,
             "exit_time": now_tr(),
             "entry_time": p.entry_time,
+            "trade_id": trade_id,
             "partial": True,
             "new_balance": eq,
         })
@@ -521,14 +531,33 @@ class Portfolio:
             exit_time=now_tr(),
             r_multiple=r_mult,
         )
-        eq = sum(self.ledgers.values()) + sum(p.margin for p in self.positions.values())
-        self.history.append({
-            "symbol": trade.symbol, "side": trade.side, "strategy": trade.strategy,
-            "entry": trade.entry, "exit": trade.exit, "pnl": trade.pnl,
-            "close_reason": trade.close_reason, "ledger": trade.ledger,
-            "exit_time": trade.exit_time, "entry_time": p.entry_time,
-            "r": trade.r_multiple, "new_balance": eq,
-        })
+        eq = sum(self.ledgers.values()) + sum(x.margin for x in self.positions.values())
+        trade_id = make_trade_id(p.ledger, p.symbol, p.entry_time)
+        hist_row = {
+            "symbol": trade.symbol,
+            "side": trade.side,
+            "strategy": trade.strategy,
+            "entry": trade.entry,
+            "exit": trade.exit,
+            "pnl": trade.pnl,
+            "close_reason": trade.close_reason,
+            "ledger": trade.ledger,
+            "exit_time": trade.exit_time,
+            "entry_time": p.entry_time,
+            "trade_id": trade_id,
+            "initial_sl": p.initial_sl or p.sl_price,
+            "sl_price": p.sl_price,
+            "tp_price": p.tp_price,
+            "peak_price": p.peak_price,
+            "entry_tf": p.entry_tf,
+            "notional": p.notional,
+            "margin": p.margin,
+            "partial": False,
+            "r": trade.r_multiple,
+            "new_balance": eq,
+        }
+        self.history.append(hist_row)
+        enqueue_watch(self.post_exit_watchlist, trade=hist_row, log=self.log)
         self._equity_curve.append({"time": trade.exit_time, "equity": eq})
         self._equity_curve = self._equity_curve[-300:]
         self.log(f"KAPANDI {p.symbol} {reason} | {p.ledger} | PnL ${net:+.2f}")
@@ -609,6 +638,8 @@ class Portfolio:
             "closed_pnl_total": closed_pnl,
             "active_positions": pos_dicts,
             "pending_orders": self.pending_orders[-20:],
+            "post_exit_watchlist": self.post_exit_watchlist[-200:],
+            "post_exit_log": self.post_exit_log[-500:],
             "history": self.history[-HISTORY_MAX:],
             "history_count": len(self.history),
             "signal_log": {k: v for k, v in self.signal_log.items() if not str(k).startswith("_")},

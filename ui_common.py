@@ -640,6 +640,62 @@ def smc_rows(scan: dict) -> pd.DataFrame:
     return pd.DataFrame(rows).sort_values("En_iyi_skor", ascending=False)
 
 
+def post_exit_analysis_rows(log: list | None) -> pd.DataFrame:
+    if not log:
+        return pd.DataFrame()
+    rows = []
+    for a in log:
+        if not isinstance(a, dict):
+            continue
+        recs = a.get("recommendations") or []
+        rows.append({
+            "Tarih": a.get("exit_time"),
+            "Sembol": a.get("symbol"),
+            "Kasa": a.get("ledger"),
+            "Yon": a.get("side"),
+            "Kapanis": a.get("close_reason"),
+            "PnL": a.get("pnl"),
+            "MFE_islem": a.get("mfe_in_r"),
+            "MAE_islem": a.get("mae_in_r"),
+            "MFE_sonrasi": a.get("mfe_post_usd"),
+            "SL_karar": a.get("sl_verdict"),
+            "TP_karar": a.get("tp_verdict"),
+            "Kacirilan_USD": a.get("missed_upside_usd"),
+            "Optimal_fark_pct": a.get("optimal_vs_actual_pct"),
+            "Oneri": " | ".join(recs) if recs else "",
+        })
+    df = pd.DataFrame(rows)
+    if not df.empty:
+        df = df.sort_values("Tarih", ascending=False)
+    return df
+
+
+def post_exit_watch_rows(watchlist: list | None) -> pd.DataFrame:
+    if not watchlist:
+        return pd.DataFrame()
+    from datetime import datetime
+    from engine.config import TR_TZ
+    from engine.post_exit import parse_tr_ts
+
+    rows = []
+    now = datetime.now(TR_TZ)
+    for w in watchlist:
+        until = parse_tr_ts(str(w.get("watch_until") or ""))
+        remain_h = max(0.0, (until - now).total_seconds() / 3600) if until else 0.0
+        rows.append({
+            "Sembol": w.get("symbol"),
+            "Kasa": w.get("ledger"),
+            "Yon": w.get("side"),
+            "Cikis": w.get("exit"),
+            "Kapanis": w.get("close_reason"),
+            "Kalan_saat": round(remain_h, 1),
+            "Post_yuksek": w.get("post_high"),
+            "Post_dusuk": w.get("post_low"),
+            "Son_fiyat": w.get("last_price"),
+        })
+    return pd.DataFrame(rows)
+
+
 def build_excel_bytes(data: dict) -> bytes:
     buf = io.BytesIO()
     ozet = pd.DataFrame([{
@@ -654,11 +710,16 @@ def build_excel_bytes(data: dict) -> bytes:
         data.get("history") or [],
         data.get("active_positions") or {},
     )
+    from engine.trade_analysis import ledger_analysis_summary
+
+    analysis_log = data.get("post_exit_log") or []
     sheets = {
         "Ozet": ozet,
         "Kasalar": _ledger_rows(data),
         "Gunluk_Performans": daily,
         "Canli_Adaylar": ledger_live_candidate_rows(daily),
+        "Islem_Analizi": post_exit_analysis_rows(analysis_log),
+        "Kasa_Analiz_Ozeti": ledger_analysis_summary(analysis_log),
         "Acik_Pozisyonlar": _pos_rows(data.get("active_positions") or {}),
         "Islem_Gecmisi": _history_rows(data.get("history") or []),
         "Sinyaller": _signal_rows(data.get("signal_log") or {}),

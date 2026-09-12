@@ -136,6 +136,28 @@ def _cc_klines(symbol: str, interval: str, limit: int) -> pd.DataFrame:
     return _to_df(rows)
 
 
+def fetch_klines_after(
+    symbol: str,
+    interval: str,
+    since_ms: int,
+    until_ms: int | None = None,
+    limit: Optional[int] = None,
+) -> pd.DataFrame:
+    """since_ms sonrasi (ve opsiyonel until_ms oncesi) kapanmis barlar."""
+    limit = limit or KLINE_LIMITS.get(interval, 400)
+    df = fetch_klines(symbol, interval, limit=min(limit, 1000))
+    if df is None or df.empty:
+        return pd.DataFrame()
+    out = df.reset_index()
+    if "close_time" not in out.columns:
+        return pd.DataFrame()
+    ts = pd.to_datetime(out["close_time"], utc=True).astype("int64") // 10**6
+    mask = ts >= since_ms
+    if until_ms is not None:
+        mask &= ts <= until_ms
+    return out.loc[mask].copy()
+
+
 def fetch_klines(symbol: str, interval: str, limit: Optional[int] = None) -> pd.DataFrame:
     global _active_venue
     limit = limit or KLINE_LIMITS.get(interval, 400)

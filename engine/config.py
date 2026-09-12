@@ -8,6 +8,10 @@ TR_TZ = timezone(timedelta(hours=3))
 BINANCE_FAPI = os.environ.get("BINANCE_FAPI", "https://fapi.binance.com")
 STATE_FILE = os.environ.get("STATE_FILE", "state.json")
 HISTORY_MAX = int(os.environ.get("HISTORY_MAX", "500"))
+POST_EXIT_WATCH_HOURS = float(os.environ.get("POST_EXIT_WATCH_HOURS", "24"))
+POST_EXIT_KLINE_TF = os.environ.get("POST_EXIT_KLINE_TF", "15m")
+POST_EXIT_MAX_WATCH = int(os.environ.get("POST_EXIT_MAX_WATCH", "200"))
+POST_EXIT_LOG_MAX = int(os.environ.get("POST_EXIT_LOG_MAX", "500"))
 
 TIMEFRAMES = ("15m", "1h", "4h", "1d", "1w")
 KLINE_LIMITS = {"15m": 1000, "1h": 1000, "4h": 400, "1d": 400, "1w": 200}

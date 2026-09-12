@@ -37,6 +37,7 @@ from engine.lab_state import load_lab_state
 from engine.momentum_scan import score_momentum
 from engine.smc_scan import score_smc
 from engine.portfolio import Portfolio
+from engine.post_exit import run_post_exit_tick
 from strategies.registry import all_strategies
 
 _STRATS = all_strategies()
@@ -356,6 +357,17 @@ def run_paper(scan_limit: int = SCAN_SYMBOLS) -> None:
                 pf.log(f"Piyasa listesi: {len(symbols)} sembol (tum USDT perpetual)")
 
             run_price_pass(pf)
+
+            if pf.post_exit_watchlist:
+                pe_changed = run_post_exit_tick(
+                    pf.post_exit_watchlist,
+                    pf.post_exit_log,
+                    last_prices_fn=last_prices,
+                    fetch_klines=fetch_klines,
+                    log=pf.log,
+                )
+                if pe_changed:
+                    pf.save(sync_github=True)
 
             if symbols:
                 batch = max(6, min(15, len(symbols) // 30 or 6))

@@ -103,6 +103,8 @@ def merge_history(*histories: list | None) -> list[dict]:
 
 def merge_trading_state(local: Optional[dict], remote: Optional[dict]) -> tuple[Optional[dict], str]:
     """Canli state + birlestirilmis islem gecmisi."""
+    from engine.post_exit import merge_post_exit_log, merge_watchlist
+
     base, src = pick_best_state(local, remote)
     if not base:
         return None, "empty"
@@ -111,6 +113,16 @@ def merge_trading_state(local: Optional[dict], remote: Optional[dict]) -> tuple[
         (local or {}).get("history"),
         (remote or {}).get("history"),
         base.get("history"),
+    )
+    merged["post_exit_log"] = merge_post_exit_log(
+        (local or {}).get("post_exit_log"),
+        (remote or {}).get("post_exit_log"),
+        base.get("post_exit_log"),
+    )
+    merged["post_exit_watchlist"] = merge_watchlist(
+        (local or {}).get("post_exit_watchlist"),
+        (remote or {}).get("post_exit_watchlist"),
+        base.get("post_exit_watchlist"),
     )
     if merged["history"]:
         merged["closed_pnl_total"] = sum(float(h.get("pnl") or 0) for h in merged["history"])
