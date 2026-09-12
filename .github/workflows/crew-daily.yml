@@ -1,0 +1,43 @@
+name: Crew Daily Strategy Report
+
+on:
+  schedule:
+    - cron: "30 18 * * *"
+  workflow_dispatch:
+
+jobs:
+  crew-daily:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Restore crew state cache
+        uses: actions/cache@v4
+        with:
+          path: crew_state.json
+          key: crew-state-latest
+
+      - name: Run Crew daily pipeline
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_APP_PASSWORD: ${{ secrets.SMTP_APP_PASSWORD }}
+          REPORT_TO_EMAIL: ${{ secrets.REPORT_TO_EMAIL }}
+          CREW_DAILY_GROWTH_TARGET_PCT: "20"
+        run: python -m engine.crew.daily --send-email
+
+      - name: Upload crew state artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: crew-state-${{ github.run_id }}
+          path: crew_state.json
+          retention-days: 30

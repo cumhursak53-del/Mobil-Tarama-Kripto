@@ -73,6 +73,18 @@ def cmd_lab_research() -> None:
     }, indent=2))
 
 
+def cmd_crew_daily(send_email: bool, dry_run: bool) -> None:
+    from engine.crew.pipeline import run_daily_crew
+
+    out = run_daily_crew(send_email=send_email, dry_run=dry_run)
+    print(json.dumps({
+        "subject": out.get("subject"),
+        "email_sent": out.get("email_sent"),
+        "summary": out.get("summary"),
+        "errors": out.get("errors"),
+    }, ensure_ascii=False, indent=2))
+
+
 def main() -> None:
     p = argparse.ArgumentParser(description="PDF MTF trading engine")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -93,6 +105,9 @@ def main() -> None:
     lab.add_argument("--symbol", action="append", default=[])
     lab.add_argument("--universe", type=int, default=6)
     sub.add_parser("lab-research", help="Sadece arastirma fazini calistir (backtest yok)")
+    crew = sub.add_parser("crew-daily", help="CrewAI gunluk strateji + backtest + mail")
+    crew.add_argument("--send-email", action="store_true")
+    crew.add_argument("--dry-run", action="store_true")
 
     args = p.parse_args()
     if args.cmd == "validate":
@@ -109,6 +124,8 @@ def main() -> None:
         cmd_lab_backtest(args.limit, args.symbol, args.universe)
     elif args.cmd == "lab-research":
         cmd_lab_research()
+    elif args.cmd == "crew-daily":
+        cmd_crew_daily(getattr(args, "send_email", False), getattr(args, "dry_run", False))
 
 
 if __name__ == "__main__":
