@@ -13,6 +13,7 @@ from engine.config import (
     LAB_AUTO_INTERVAL_SEC,
     LEDGER_NAMES,
     PATLAMA_LEDGER,
+    PATLAMA_TOP_N,
     PRICE_POLL_SEC,
     PRIORITY_LEDGERS,
     RESEARCH_INTERVAL_SEC,
@@ -23,6 +24,7 @@ from engine.config import (
     SMT_REF_SYMBOL,
     TIMEFRAMES,
 )
+from engine.patlama_topn import run_patlama_top_n_entries
 from engine.context import build_context
 from engine.df_utils import pick_frame
 from engine.data import fetch_dominance, fetch_klines, fetch_symbols, last_prices
@@ -218,6 +220,8 @@ def _scan_one(pf: Portfolio, cache: FrameCache, sym: str, dominance: dict, force
                 and not s.ledger.startswith("Kasa_Lab_")
             ]
             for strat in priority + smc_strats + lab + others:
+                if PATLAMA_TOP_N > 0 and strat.ledger == PATLAMA_LEDGER:
+                    continue
                 if not should_evaluate_entry(strat, force=force_entry, bar_closed=bar_closed):
                     continue
                 px = _entry_price(strat, sym, frames, live_px)
@@ -325,9 +329,11 @@ def run_paper(scan_limit: int = SCAN_SYMBOLS) -> None:
     except Exception:
         pass
     start_http(pf)
+    patlama_mode = f"top-{PATLAMA_TOP_N}/tur" if PATLAMA_TOP_N > 0 else "anlik"
     pf.log(
         "Canli piyasa simulasyonu: tum USDT perpetual, "
-        f"{len(LEDGER_NAMES)} kasa | tum kasalar=anlik giris (~{PRICE_POLL_SEC}sn)"
+        f"{len(LEDGER_NAMES)} kasa | tum kasalar=anlik giris (~{PRICE_POLL_SEC}sn) | "
+        f"Patlama={patlama_mode}"
     )
     if LAB_AUTO:
         pf.log("Lab otomasyon acik: arastirma/backtest arka planda calisacak")
@@ -380,6 +386,19 @@ def run_paper(scan_limit: int = SCAN_SYMBOLS) -> None:
                 if wrapped:
                     eq = pf.snapshot()["equity"]
                     pf.log(f"Tur tamam: {len(symbols)} coin | Aktif {len(pf.positions)} | Fon ${eq:.2f}")
+                    if PATLAMA_TOP_N > 0:
+                        n = run_patlama_top_n_entries(
+                            pf,
+                            cache,
+                            dominance,
+                            symbols,
+                            refresh_strats=_refresh_strats,
+                            entry_price_fn=_entry_price,
+                            try_open_fn=_try_entry,
+                            log=pf.log,
+                        )
+                        if n:
+                            pf.save(sync_github=True)
 
             if time.time() - last_lab_refresh > 300:
                 pf.lab_state = load_lab_state()

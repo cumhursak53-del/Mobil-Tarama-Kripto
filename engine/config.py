@@ -130,6 +130,8 @@ SHORT_RATIO_MIN_POSITIONS = int(os.environ.get("SHORT_RATIO_MIN_POSITIONS", "4")
 SYMBOL_COOLDOWN_AFTER_SL_SEC = int(os.environ.get("SYMBOL_COOLDOWN_AFTER_SL_SEC", "7200"))
 PATLAMA_MIN_SCORE = int(os.environ.get("PATLAMA_MIN_SCORE", "5"))
 PATLAMA_MIN_EDGE = int(os.environ.get("PATLAMA_MIN_EDGE", "2"))
+# 0 = her coinde anlik Patlama; >0 = tam tur sonunda en iyi N long + N short
+PATLAMA_TOP_N = int(os.environ.get("PATLAMA_TOP_N", "0"))
 TAKER_FEE = 0.0004  # 0.04% each side
 PARTIAL_R = float(os.environ.get("PARTIAL_R", "2.0"))
 PARTIAL_PCT = float(os.environ.get("PARTIAL_PCT", "0.5"))

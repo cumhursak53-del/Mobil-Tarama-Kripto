@@ -16,7 +16,8 @@ def render() -> None:
     st.caption(source_caption(data))
     st.markdown(
         "Motor her coin icin **1D yon + 4H setup + 1H kirilim + hacim + 15M tetik** "
-        "uzerinden 0-7 arasi skor uretir. **Skor >= 4** ise `Kasa_PatlamaSelale` isleme girebilir."
+        "uzerinden 0-7 arasi skor uretir. **Islem icin:** kazanan taraf skor >= 5 ve rakibe +2 edge. "
+        f"`PATLAMA_TOP_N` aciksa tam tur sonunda en iyi N long + N short secilir (~20-35 dk/tur, 462 coin)."
     )
 
     min_score = st.slider("Minimum skor filtresi", 0, 7, 3)
