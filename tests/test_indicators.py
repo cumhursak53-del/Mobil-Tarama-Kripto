@@ -226,11 +226,12 @@ def test_symbol_lock_caps_and_combo_risk():
     assert pf.try_open("AAAUSDT", sig("Kasa_CCI"), 100.0)
     assert not pf.try_open("AAAUSDT", sig("Kasa_Stoch"), 100.0)
     assert pf.try_open("BBBUSDT", sig("Kasa_CCI"), 100.0)
-    assert not pf.try_open("CCCUSDT", sig("Kasa_CCI"), 100.0)
-    assert pf.try_open("DDDUSDT", sig(COMBO_LEDGER), 100.0)
+    assert pf.try_open("CCCUSDT", sig("Kasa_CCI"), 100.0)
+    assert not pf.try_open("DDDUSDT", sig("Kasa_CCI"), 100.0)
     assert pf.try_open("EEEUSDT", sig(COMBO_LEDGER), 100.0)
     combo_n = pf.ledger_position_count(COMBO_LEDGER)
-    assert combo_n >= 2
+    assert combo_n >= 1
+    assert pf.ledger_position_count("Kasa_CCI") == 3
 
 
 def test_strategy_count_and_smoke():

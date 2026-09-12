@@ -484,11 +484,14 @@ def ledger_live_candidate_rows(
     daily: pd.DataFrame,
     *,
     min_pct: float | None = None,
+    min_closed: int | None = None,
+    exclude_lab: bool = True,
 ) -> pd.DataFrame:
     """En az bir gun >= hedef % olan kasa+yon ozeti (canli aday adayi)."""
-    from engine.config import DAILY_PNL_TARGET_PCT
+    from engine.config import DAILY_CANDIDATE_MIN_CLOSED, DAILY_PNL_TARGET_PCT
 
     target = float(min_pct if min_pct is not None else DAILY_PNL_TARGET_PCT)
+    min_trades = int(min_closed if min_closed is not None else DAILY_CANDIDATE_MIN_CLOSED)
     if daily.empty:
         return pd.DataFrame()
     agg = (
@@ -501,9 +504,11 @@ def ledger_live_candidate_rows(
             Islem_kapali=("Kapali", "sum"),
         )
     )
-    agg = agg[agg["En_iyi_gun_pct"] >= target].sort_values(
-        ["Yon", "En_iyi_gun_pct"], ascending=[True, False]
-    )
+    agg = agg[agg["En_iyi_gun_pct"] >= target]
+    agg = agg[agg["Islem_kapali"] >= min_trades]
+    if exclude_lab:
+        agg = agg[~agg["Kasa"].astype(str).str.startswith("Kasa_Lab_")]
+    agg = agg.sort_values(["Yon", "En_iyi_gun_pct"], ascending=[True, False])
     agg["Lab"] = agg["Kasa"].astype(str).str.startswith("Kasa_Lab_")
     return agg.reset_index(drop=True)
 

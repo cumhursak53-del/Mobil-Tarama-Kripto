@@ -2,13 +2,32 @@ from __future__ import annotations
 
 from typing import Optional
 
-from engine.config import TRIGGER_TF
+from engine.config import SMC_ENTRY_NEAR_PCT, SMC_LIMIT_TO_MARKET, TRIGGER_TF
 from engine.smc_scan import score_smc, smc_trade_side
 from engine.types import Signal, Side
 from strategies.base import MarketContext, Strategy
 from strategies.helpers import make_signal, sl_from_swing, tp_r, valid_row
 
 SMC_LEDGER = "Kasa_SMC"
+
+
+def _in_ob_zone(price: float, ob) -> bool:
+    lo, hi = min(ob.bottom, ob.top), max(ob.bottom, ob.top)
+    return lo <= price <= hi * 1.002 if hi >= lo else False
+
+
+def _resolve_smc_entry(price: float, side: Side, entry_limit: float | None, entry_mode: str) -> tuple[str, float | None]:
+    """OB zone veya limite yakinlikta market; aksi halde limit bekle."""
+    if entry_mode != "limit" or entry_limit is None or not SMC_LIMIT_TO_MARKET:
+        return entry_mode, entry_limit
+    dist = abs(price - entry_limit) / price if price > 0 else 1.0
+    if dist <= SMC_ENTRY_NEAR_PCT:
+        return "market", None
+    if side == Side.BUY and price <= entry_limit * (1.0 + SMC_ENTRY_NEAR_PCT):
+        return "market", None
+    if side == Side.SELL and price >= entry_limit * (1.0 - SMC_ENTRY_NEAR_PCT):
+        return "market", None
+    return entry_mode, entry_limit
 
 
 class SmartMoneyConcepts(Strategy):
@@ -55,13 +74,21 @@ class SmartMoneyConcepts(Strategy):
         if side == Side.BUY and active_bull:
             ob = active_bull[-1]
             sl = min(sl or price * 0.99, ob.bottom * 0.998)
-            entry_limit = ce_level if ce_level and abs(price - ce_level) / price < 0.012 else ob.mid
-            entry_mode = "limit"
+            if _in_ob_zone(price, ob):
+                entry_mode = "market"
+                entry_limit = None
+            else:
+                entry_limit = ce_level if ce_level and abs(price - ce_level) / price < 0.012 else ob.mid
+                entry_mode = "limit"
         if side == Side.SELL and active_bear:
             ob = active_bear[-1]
             sl = max(sl or price * 1.01, ob.top * 1.002)
-            entry_limit = ce_level if ce_level and abs(price - ce_level) / price < 0.012 else ob.mid
-            entry_mode = "limit"
+            if _in_ob_zone(price, ob):
+                entry_mode = "market"
+                entry_limit = None
+            else:
+                entry_limit = ce_level if ce_level and abs(price - ce_level) / price < 0.012 else ob.mid
+                entry_mode = "limit"
 
         dr = analysis.dealing_range
         if dr and entry_limit is None:
@@ -71,6 +98,8 @@ class SmartMoneyConcepts(Strategy):
             if side == Side.SELL and analysis.in_ote_short:
                 entry_limit = (dr.ote_low + dr.ote_high) / 2.0
                 entry_mode = "limit"
+
+        entry_mode, entry_limit = _resolve_smc_entry(price, side, entry_limit, entry_mode)
 
         tag = "SMC_Long" if side == Side.BUY else "SMC_Short"
         tp_price = None

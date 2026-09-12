@@ -27,6 +27,23 @@ CASH_RESERVE_PCT = float(os.environ.get("CASH_RESERVE_PCT", "0.20"))
 RISK_PCT = float(os.environ.get("RISK_PCT", "0.035"))
 COMBO_LEDGER = "Kasa_RejimOsilator"
 COMBO_RISK_PCT = float(os.environ.get("COMBO_RISK_PCT", "0.045"))
+DAILY_CANDIDATE_MIN_CLOSED = int(os.environ.get("DAILY_CANDIDATE_MIN_CLOSED", "10"))
+
+
+def _parse_ledger_float_map(raw: str) -> dict[str, float]:
+    out: dict[str, float] = {}
+    for part in (raw or "").split(","):
+        part = part.strip()
+        if ":" not in part:
+            continue
+        name, val = part.split(":", 1)
+        name, val = name.strip(), val.strip()
+        if name and val:
+            out[name] = float(val)
+    return out
+
+
+LEDGER_RISK_PCT = _parse_ledger_float_map(os.environ.get("LEDGER_RISK_PCT", ""))
 MIN_MARGIN_USD = float(os.environ.get("MIN_MARGIN_USD", "10"))
 TP_R_DEFAULT = float(os.environ.get("TP_R_DEFAULT", "2.5"))
 MIN_TP_R = float(os.environ.get("MIN_TP_R", "2.0"))
@@ -76,9 +93,14 @@ LIVE_ENTRY_LEDGERS = tuple(
 )
 SMC_MIN_GRADE = os.environ.get("SMC_MIN_GRADE", "A")
 SMC_MIN_CONFLUENCE = int(os.environ.get("SMC_MIN_CONFLUENCE", "5"))
+SMC_MIN_TRADE_SCORE = int(os.environ.get("SMC_MIN_TRADE_SCORE", "6"))
 SMC_REQUIRE_KILLZONE = os.environ.get("SMC_REQUIRE_KILLZONE", "1") == "1"
 SMC_REQUIRE_OB_FVG = os.environ.get("SMC_REQUIRE_OB_FVG", "1") == "1"
+SMC_REQUIRE_CANDLE_CONFIRM = os.environ.get("SMC_REQUIRE_CANDLE_CONFIRM", "1") == "1"
 SMC_BODY_CLOSE = os.environ.get("SMC_BODY_CLOSE", "1") == "1"
+SMC_ENTRY_NEAR_PCT = float(os.environ.get("SMC_ENTRY_NEAR_PCT", "0.012"))
+SMC_LIMIT_TO_MARKET = os.environ.get("SMC_LIMIT_TO_MARKET", "1") == "1"
+SMC_PENDING_MAX_HOURS = float(os.environ.get("SMC_PENDING_MAX_HOURS", "8"))
 SMT_ENABLED = os.environ.get("SMT_ENABLED", "1") == "1"
 SMT_REF_SYMBOL = os.environ.get("SMT_REF_SYMBOL", "BTCUSDT")
 FIDELITY_MIN_PF = float(os.environ.get("FIDELITY_MIN_PF", "1.2"))
@@ -86,14 +108,19 @@ FIDELITY_MAX_DD = float(os.environ.get("FIDELITY_MAX_DD", "0.25"))
 FIDELITY_MIN_BACKTEST_DAYS = int(os.environ.get("FIDELITY_MIN_BACKTEST_DAYS", "90"))
 FIDELITY_PAPER_WR_DELTA = float(os.environ.get("FIDELITY_PAPER_WR_DELTA", "0.10"))
 WALK_FORWARD_TRAIN_RATIO = float(os.environ.get("WALK_FORWARD_TRAIN_RATIO", "0.7"))
-PRIORITY_LEDGERS = (COMBO_LEDGER, PATLAMA_LEDGER)
+_DEFAULT_PRIORITY = f"{COMBO_LEDGER},{PATLAMA_LEDGER},Kasa_Fib618,Kasa_MumOnay,Kasa_SMC"
+PRIORITY_LEDGERS = tuple(
+    x.strip()
+    for x in os.environ.get("PRIORITY_LEDGERS", _DEFAULT_PRIORITY).split(",")
+    if x.strip()
+)
 MIN_SURVIVAL_USD = 20.0
 LIQ_ADVERSE_PCT = 0.08  # 10x korelasyonlu dump tamponu
 MIN_LEVERAGE = float(os.environ.get("MIN_LEVERAGE", "10"))
 MAX_LEVERAGE = float(os.environ.get("MAX_LEVERAGE", "10"))
-MAX_POSITIONS_PER_KASA = int(os.environ.get("MAX_POSITIONS_PER_KASA", "2"))
+MAX_POSITIONS_PER_KASA = int(os.environ.get("MAX_POSITIONS_PER_KASA", "3"))
 MAX_COMBO_POSITIONS = int(os.environ.get("MAX_COMBO_POSITIONS", "6"))
-MAX_TOTAL_POSITIONS = int(os.environ.get("MAX_TOTAL_POSITIONS", "30"))
+MAX_TOTAL_POSITIONS = int(os.environ.get("MAX_TOTAL_POSITIONS", "45"))
 MAX_SHORT_OPEN_RATIO = float(os.environ.get("MAX_SHORT_OPEN_RATIO", "0.65"))
 SHORT_RATIO_MIN_POSITIONS = int(os.environ.get("SHORT_RATIO_MIN_POSITIONS", "4"))
 SYMBOL_COOLDOWN_AFTER_SL_SEC = int(os.environ.get("SYMBOL_COOLDOWN_AFTER_SL_SEC", "7200"))

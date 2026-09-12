@@ -3,7 +3,7 @@ from datetime import datetime
 import pandas as pd
 import streamlit as st
 
-from engine.config import DAILY_PNL_TARGET_PCT
+from engine.config import DAILY_CANDIDATE_MIN_CLOSED, DAILY_PNL_TARGET_PCT
 from ui_common import (
     build_excel_bytes,
     format_price,
@@ -111,11 +111,15 @@ def render() -> None:
             daily = ledger_daily_performance_rows(history, active)
             st.caption(
                 f"Kapali islemler cikis gunune; acik islemler giris gunune yazilir. "
-                f"Gunluk % = Gunluk_PnL / $100 kasa baslangici. Hedef: >= {DAILY_PNL_TARGET_PCT:.0f}%"
+                f"Gunluk % = Gunluk_PnL / $100 kasa baslangici. Hedef: >= {DAILY_PNL_TARGET_PCT:.0f}%, "
+                f"canli aday: min {DAILY_CANDIDATE_MIN_CLOSED} kapali islem, Lab haric."
             )
             cands = ledger_live_candidate_rows(daily)
             if not cands.empty:
-                st.markdown(f"**Canli aday adaylari (>= {DAILY_PNL_TARGET_PCT:.0f}% en az bir gun)**")
+                st.markdown(
+                    f"**Canli aday adaylari (>= {DAILY_PNL_TARGET_PCT:.0f}% en az bir gun, "
+                    f"min {DAILY_CANDIDATE_MIN_CLOSED} kapali islem)**"
+                )
                 st.dataframe(
                     cands,
                     use_container_width=True,

@@ -20,6 +20,7 @@ from engine.config import (
     RESEARCH_ENABLED,
     SHORT_RATIO_MIN_POSITIONS,
     HISTORY_MAX,
+    SMC_PENDING_MAX_HOURS,
     STATE_FILE,
     SYMBOL_COOLDOWN_AFTER_SL_SEC,
     SYMBOL_LOCK_MODE,
@@ -451,10 +452,25 @@ class Portfolio:
             closed.append(self._close(key, price, reason))
         return closed
 
+    def _pending_expired(self, po: dict) -> bool:
+        if SMC_PENDING_MAX_HOURS <= 0:
+            return False
+        created = po.get("created_at")
+        if not created:
+            return False
+        try:
+            ts = datetime.strptime(str(created), "%Y-%m-%d %H:%M:%S")
+            age_h = (datetime.now(TR_TZ) - ts.replace(tzinfo=TR_TZ)).total_seconds() / 3600.0
+            return age_h >= SMC_PENDING_MAX_HOURS
+        except Exception:
+            return False
+
     def try_pending_orders(self, symbol: str, price: float) -> bool:
         opened = False
         remain = []
         for po in self.pending_orders:
+            if self._pending_expired(po):
+                continue
             if po.get("symbol") != symbol:
                 remain.append(po)
                 continue

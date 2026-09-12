@@ -30,6 +30,13 @@ def test_daily_performance_and_candidates():
     mum = daily[(daily["Kasa"] == "Kasa_MumOnay") & (daily["Yon"] == "LONG")]
     assert float(mum.iloc[0]["Gunluk_pct"]) == 20.0
 
-    cands = ledger_live_candidate_rows(daily, min_pct=15.0)
+    cands = ledger_live_candidate_rows(daily, min_pct=15.0, min_closed=0, exclude_lab=False)
     assert len(cands) == 2
     assert set(cands["Yon"]) == {"LONG", "SHORT"}
+
+    with_closed = ledger_live_candidate_rows(daily, min_pct=15.0, min_closed=1, exclude_lab=False)
+    assert len(with_closed) == 1
+    assert with_closed.iloc[0]["Kasa"] == "Kasa_Fib618"
+
+    strict = ledger_live_candidate_rows(daily, min_pct=15.0, min_closed=10)
+    assert strict.empty

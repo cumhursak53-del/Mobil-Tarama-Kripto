@@ -5,7 +5,7 @@ from typing import Optional
 
 import pandas as pd
 
-from engine.config import LEDGER_NAMES, TAKER_FEE
+from engine.config import BE_AT_R, LEDGER_NAMES, PARTIAL_PCT, PARTIAL_R, TAKER_FEE
 from engine.context import build_context, indicate_frame
 from engine.types import Side, Signal
 from risk.sizer import (
@@ -44,6 +44,110 @@ def _intrabar_exit(side: Side, sl: float, tp: Optional[float], high: float, low:
     return None
 
 
+def _risk_dist(p: dict) -> float:
+    initial = p.get("initial_sl") or p["sl"]
+    return abs(p["entry"] - initial) if initial else abs(p["entry"] - p["sl"])
+
+
+def _current_r(p: dict, price: float) -> float:
+    dist = _risk_dist(p)
+    if dist <= 0:
+        return 0.0
+    if p["side"] == Side.BUY:
+        return (price - p["entry"]) / dist
+    return (p["entry"] - price) / dist
+
+
+def _maybe_trail(p: dict, high: float, low: float) -> None:
+    trail_at = p.get("trail_at_r")
+    if not trail_at:
+        return
+    price = high if p["side"] == Side.BUY else low
+    if p["side"] == Side.BUY:
+        p["peak"] = max(p.get("peak", p["entry"]), high)
+    else:
+        peak = p.get("peak", p["entry"])
+        p["peak"] = min(peak, low) if peak else low
+    r = _current_r(p, price)
+    if r < trail_at:
+        return
+    dist = _risk_dist(p)
+    if dist <= 0:
+        return
+    if p["side"] == Side.BUY:
+        new_sl = p["peak"] - dist * 0.5
+        if new_sl > p["sl"]:
+            p["sl"] = new_sl
+    else:
+        new_sl = p["peak"] + dist * 0.5
+        if new_sl < p["sl"]:
+            p["sl"] = new_sl
+
+
+def _maybe_partial(
+    p: dict,
+    price: float,
+    ledgers: dict[str, float],
+    trades: list[dict],
+    ts,
+) -> None:
+    if p.get("partial_taken") or PARTIAL_R <= 0:
+        return
+    r = _current_r(p, price)
+    if r < PARTIAL_R:
+        return
+    close_notional = p["remaining_notional"] * p.get("partial_pct", PARTIAL_PCT)
+    if close_notional <= 0:
+        return
+    ratio = (price - p["entry"]) / p["entry"] if p["side"] == Side.BUY else (p["entry"] - price) / p["entry"]
+    net = close_notional * ratio - close_notional * TAKER_FEE * 2
+    ledgers[p["ledger"]] = max(ledgers[p["ledger"]] + net, 0.0)
+    p["remaining_notional"] -= close_notional
+    p["partial_taken"] = True
+    be_at = p.get("be_at_r") or BE_AT_R
+    if be_at and r >= be_at:
+        p["sl"] = p["entry"]
+    trades.append({
+        "symbol": p["symbol"], "ledger": p["ledger"], "strategy": p["strategy"],
+        "side": p["side"].value, "entry": p["entry"], "exit": price,
+        "pnl": net, "reason": "PARTIAL_TP", "time": str(ts), "partial": True,
+    })
+
+
+def _process_open_position(
+    key: str,
+    p: dict,
+    high: float,
+    low: float,
+    close: float,
+    ts,
+    ledgers: dict[str, float],
+    trades: list[dict],
+    open_pos: dict,
+) -> None:
+    if p["side"] == Side.BUY:
+        p["peak"] = max(p.get("peak", p["entry"]), high)
+    else:
+        peak = p.get("peak", p["entry"])
+        p["peak"] = min(peak, low) if peak else low
+    _maybe_trail(p, high, low)
+    _maybe_partial(p, close, ledgers, trades, ts)
+    hit = _intrabar_exit(p["side"], p["sl"], p.get("tp"), high, low)
+    if not hit:
+        return
+    reason, fill = hit
+    notional = p.get("remaining_notional") or p["notional"]
+    ratio = (fill - p["entry"]) / p["entry"] if p["side"] == Side.BUY else (p["entry"] - fill) / p["entry"]
+    net = notional * ratio - notional * TAKER_FEE * 2
+    ledgers[p["ledger"]] = max(ledgers[p["ledger"]] + p["margin"] + net, 0.0)
+    trades.append({
+        "symbol": p["symbol"], "ledger": p["ledger"], "strategy": p["strategy"],
+        "side": p["side"].value, "entry": p["entry"], "exit": fill,
+        "pnl": net, "reason": reason, "time": str(ts),
+    })
+    del open_pos[key]
+
+
 def backtest_symbol(symbol: str, frames: dict[str, pd.DataFrame], dominance: Optional[dict] = None, warmup: int = 120) -> dict:
     strats = all_strategies()
     indicated = {tf: add_structure(indicate_frame(df)) for tf, df in frames.items()}
@@ -62,20 +166,7 @@ def backtest_symbol(symbol: str, frames: dict[str, pd.DataFrame], dominance: Opt
         high, low = float(row["high"]), float(row["low"])
 
         for key in list(open_pos):
-            p = open_pos[key]
-            hit = _intrabar_exit(p["side"], p["sl"], p.get("tp"), high, low)
-            if not hit:
-                continue
-            reason, fill = hit
-            ratio = (fill - p["entry"]) / p["entry"] if p["side"] == Side.BUY else (p["entry"] - fill) / p["entry"]
-            net = p["notional"] * ratio - p["notional"] * TAKER_FEE * 2
-            ledgers[p["ledger"]] = max(ledgers[p["ledger"]] + p["margin"] + net, 0.0)
-            trades.append({
-                "symbol": symbol, "ledger": p["ledger"], "strategy": p["strategy"],
-                "side": p["side"].value, "entry": p["entry"], "exit": fill,
-                "pnl": net, "reason": reason, "time": str(ts),
-            })
-            del open_pos[key]
+            _process_open_position(key, open_pos[key], high, low, price, ts, ledgers, trades, open_pos)
 
         sliced = _slice_closed(indicated, ts)
         if "1h" not in sliced or "1d" not in sliced:
@@ -101,10 +192,11 @@ def backtest_symbol(symbol: str, frames: dict[str, pd.DataFrame], dominance: Opt
                 continue
             if not ctx.aligned(sig.side):
                 continue
+            entry = float(sig.entry_limit) if sig.entry_mode == "limit" and sig.entry_limit else price
             cash = ledgers[sig.ledger]
             sized = size_position(
                 ledger_balance=cash,
-                entry=price,
+                entry=entry,
                 sl=sig.sl_price,
                 risk_pct=risk_pct_for_ledger(sig.ledger),
             )
@@ -115,23 +207,27 @@ def backtest_symbol(symbol: str, frames: dict[str, pd.DataFrame], dominance: Opt
                 for p in open_pos.values()
                 if p["ledger"] == sig.ledger
             ]
-            new_risk = PositionRisk(entry=price, sl=sig.sl_price, notional=sized.notional, margin=sized.margin)
+            new_risk = PositionRisk(entry=entry, sl=sig.sl_price, notional=sized.notional, margin=sized.margin)
             if not would_survive_all_sl(cash=cash, open_positions=existing, new=new_risk):
                 continue
             ledgers[sig.ledger] -= sized.margin
             open_pos[f"{sig.ledger}|{symbol}"] = {
-                "side": sig.side, "entry": price, "sl": sig.sl_price, "tp": sig.tp_price,
+                "side": sig.side, "entry": entry, "sl": sig.sl_price, "tp": sig.tp_price,
                 "margin": sized.margin, "notional": sized.notional, "ledger": sig.ledger,
                 "strategy": sig.strategy, "symbol": symbol,
+                "initial_sl": sig.sl_price, "remaining_notional": sized.notional,
+                "partial_taken": False, "partial_pct": sig.partial_pct or PARTIAL_PCT,
+                "trail_at_r": sig.trail_at_r, "be_at_r": sig.be_at_r or BE_AT_R,
+                "peak": entry,
             }
             counts[sig.ledger] += 1
             break
 
-    # flatten remaining at last close
     last = float(h1["close"].iloc[-1])
     for p in open_pos.values():
+        notional = p.get("remaining_notional") or p["notional"]
         ratio = (last - p["entry"]) / p["entry"] if p["side"] == Side.BUY else (p["entry"] - last) / p["entry"]
-        net = p["notional"] * ratio - p["notional"] * TAKER_FEE * 2
+        net = notional * ratio - notional * TAKER_FEE * 2
         ledgers[p["ledger"]] = max(ledgers[p["ledger"]] + p["margin"] + net, 0.0)
         trades.append({
             "symbol": symbol, "ledger": p["ledger"], "strategy": p["strategy"],

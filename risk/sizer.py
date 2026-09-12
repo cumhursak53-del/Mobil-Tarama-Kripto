@@ -8,6 +8,7 @@ from engine.config import (
     COMBO_LEDGER,
     COMBO_RISK_PCT,
     KASA_START_USD,
+    LEDGER_RISK_PCT,
     LIQ_ADVERSE_PCT,
     MAX_COMBO_POSITIONS,
     MAX_LEVERAGE,
@@ -46,6 +47,8 @@ class PositionRisk:
 
 
 def risk_pct_for_ledger(ledger: str) -> float:
+    if ledger in LEDGER_RISK_PCT:
+        return LEDGER_RISK_PCT[ledger]
     return COMBO_RISK_PCT if ledger == COMBO_LEDGER else RISK_PCT
 
 
