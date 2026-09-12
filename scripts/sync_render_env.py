@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 ENV_FILE = ROOT / "render.env"
 SERVICE_NAME = os.environ.get("RENDER_SERVICE_NAME", "mobil-tarama-kripto")
 API_BASE = "https://api.render.com/v1"
+STATE_IGNORE_PATHS = ("state.json", "lab_state.json", "crew_state.json")
 
 
 def _load_render_env(path: Path) -> dict[str, str]:
@@ -48,6 +49,17 @@ def _api(method: str, path: str, api_key: str, body: dict | list | None = None) 
     with urllib.request.urlopen(req, timeout=60) as resp:
         raw = resp.read().decode("utf-8")
         return json.loads(raw) if raw else {}
+
+
+def _ensure_build_filters(api_key: str, sid: str) -> None:
+    """State sync commit'leri Render'da gereksiz deploy tetiklemesin."""
+    _api(
+        "PATCH",
+        f"/services/{sid}",
+        api_key,
+        {"buildFilter": {"paths": [], "ignoredPaths": list(STATE_IGNORE_PATHS)}},
+    )
+    print(f"Build filter: {', '.join(STATE_IGNORE_PATHS)} ignore")
 
 
 def _find_service(api_key: str) -> dict:
@@ -103,6 +115,11 @@ def sync(*, deploy: bool = False) -> None:
     payload = [{"key": k, "value": v} for k, v in sorted(merged.items())]
     _api("PUT", f"/services/{sid}/env-vars", api_key, payload)
     print(f"Env guncellendi: {len(file_vars)} dosya + mevcut birlestirme (toplam {len(payload)})")
+
+    try:
+        _ensure_build_filters(api_key, sid)
+    except Exception as e:
+        print(f"Build filter uyarisi (atlandi): {e}", file=sys.stderr)
 
     if deploy:
         _api("POST", f"/services/{sid}/deploys", api_key, {})
