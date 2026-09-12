@@ -187,6 +187,10 @@ RESEARCH_DEDUP_TTL_SEC = int(os.environ.get("RESEARCH_DEDUP_TTL_SEC", "172800"))
 LAB_COMBINATOR_ON_IDLE = os.environ.get("LAB_COMBINATOR_ON_IDLE", "1") == "1"
 LAB_MAX_RECIPES = int(os.environ.get("LAB_MAX_RECIPES", "120"))
 ENGINE_URL = os.environ.get("ENGINE_URL", "")
+CREW_STATE_FILE = os.environ.get("CREW_STATE_FILE", "crew_state.json")
+CREW_AUTO = os.environ.get("CREW_AUTO", "1") == "1"
+CREW_INTERVAL_SEC = int(os.environ.get("CREW_INTERVAL_SEC", "86400"))
+CREW_SEND_EMAIL = os.environ.get("CREW_SEND_EMAIL", "0") == "1"
 
 # Gemini + arastirma
 def _normalize_secret(raw: str) -> str:

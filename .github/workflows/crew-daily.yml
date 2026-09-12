@@ -1,8 +1,8 @@
+# Crew artik Render worker uzerinde calisir (CREW_AUTO=1).
+# Manuel tetikleme icin workflow_dispatch — mail kapali.
 name: Crew Daily Strategy Report
 
 on:
-  schedule:
-    - cron: "30 18 * * *"
   workflow_dispatch:
 
 jobs:
@@ -19,20 +19,11 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Restore crew state cache
-        uses: actions/cache@v4
-        with:
-          path: crew_state.json
-          key: crew-state-latest
-
-      - name: Run Crew daily pipeline
+      - name: Run Crew daily pipeline (no email)
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          SMTP_USER: ${{ secrets.SMTP_USER }}
-          SMTP_APP_PASSWORD: ${{ secrets.SMTP_APP_PASSWORD }}
-          REPORT_TO_EMAIL: ${{ secrets.REPORT_TO_EMAIL }}
-          CREW_DAILY_GROWTH_TARGET_PCT: "20"
-        run: python -m engine.crew.daily --send-email
+          CREW_SEND_EMAIL: "0"
+        run: python -m engine.crew.daily
 
       - name: Upload crew state artifact
         uses: actions/upload-artifact@v4

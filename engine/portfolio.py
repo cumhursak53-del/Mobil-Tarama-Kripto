@@ -7,6 +7,7 @@ from typing import Optional
 
 from engine.config import (
     BE_AT_R,
+    CREW_AUTO,
     GEMINI_API_KEY,
     GITHUB_TOKEN,
     KASA_START_USD,
@@ -61,6 +62,7 @@ class Portfolio:
         self.patlama_scan: dict[str, dict] = {}
         self.smc_scan: dict[str, dict] = {}
         self.lab_state: dict = {}
+        self.crew_state: dict = {}
         self.logs: list[str] = []
         self._equity_curve: list[dict] = []
         self._symbol_sl_until: dict[str, float] = {}
@@ -84,6 +86,9 @@ class Portfolio:
         else:
             self.load()
         self.lab_state = load_lab_state()
+        from engine.crew.sync import load_crew_state
+
+        self.crew_state = load_crew_state()
         self._ensure_lab_ledgers()
         if os.environ.get("RESET_TRADING_ON_START", "0") == "1":
             self.reset_trading(keep_scans=True, keep_signals=True)
@@ -674,7 +679,14 @@ class Portfolio:
                 "research_enabled": RESEARCH_ENABLED,
                 "gemini_configured": bool(GEMINI_API_KEY),
                 "lab_auto": LAB_AUTO,
+                "crew_auto": CREW_AUTO,
                 "github_token": bool(GITHUB_TOKEN),
             },
+            "crew_summary": self._crew_summary(),
             "updated_at": now_tr(),
         }
+
+    def _crew_summary(self) -> dict:
+        from engine.crew.summary import crew_summary_from_state
+
+        return crew_summary_from_state(self.crew_state)

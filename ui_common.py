@@ -60,6 +60,7 @@ GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 GITHUB_BRANCH = os.environ.get("GITHUB_BRANCH", "main")
 STATE_FILE = os.environ.get("STATE_FILE", "state.json")
 LAB_STATE_FILE = os.environ.get("LAB_STATE_FILE", "lab_state.json")
+CREW_STATE_FILE = os.environ.get("CREW_STATE_FILE", "crew_state.json")
 
 
 def _get_json(url: str, headers: Optional[dict] = None, timeout: int = 12):
@@ -172,6 +173,73 @@ def load_lab_data(force_version: int = 0) -> dict:
         "updated_at": "",
         "_source": "lab verisi yok",
     }
+
+
+@st.cache_data(ttl=8, show_spinner=False)
+def load_crew_data(force_version: int = 0) -> dict:
+    del force_version
+    data = _fetch_github_json(CREW_STATE_FILE)
+    if data:
+        data["_source"] = "GitHub crew_state.json"
+        return data
+    if os.path.exists(CREW_STATE_FILE):
+        try:
+            with open(CREW_STATE_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            data["_source"] = "local crew_state.json"
+            return data
+        except Exception:
+            pass
+    return {
+        "schema_version": 1,
+        "recipes": [],
+        "backtests": [],
+        "daily_runs": [],
+        "pipeline": {},
+        "updated_at": "",
+        "_source": "crew verisi yok",
+    }
+
+
+def crew_result_rows(results: list | None, target_pct: float = 20.0) -> pd.DataFrame:
+    rows = []
+    for r in results or []:
+        if not isinstance(r, dict):
+            continue
+        pct = float(r.get("test_best_day_pct") or 0)
+        rows.append({
+            "Strateji": r.get("recipe_name", r.get("recipe_id", "-")),
+            "En_iyi_gun_pct": pct,
+            "Gun_ge_20": r.get("days_ge_target", 0),
+            "Test_PF": r.get("test_pf"),
+            "Trades": r.get("test_trades"),
+            "Max_DD_pct": round(float(r.get("max_dd") or 0) * 100, 1),
+            "Sembol": r.get("best_symbol", "-"),
+            "Gecti": "Evet" if r.get("passed") else "Hayir",
+            "Neden": r.get("reason", "-"),
+            "Hedef": f">={target_pct:.0f}%",
+        })
+    if not rows:
+        return pd.DataFrame()
+    df = pd.DataFrame(rows)
+    return df.sort_values("En_iyi_gun_pct", ascending=False)
+
+
+def crew_recipe_rows(recipes: list | None) -> pd.DataFrame:
+    rows = []
+    for r in recipes or []:
+        if not isinstance(r, dict):
+            continue
+        rows.append({
+            "ID": r.get("id"),
+            "Ad": r.get("name"),
+            "Kaynak": r.get("source", "-"),
+            "Entry_TF": r.get("entry_tf", "1h"),
+            "TP_R": r.get("tp_r", "-"),
+            "Long_kural": len(r.get("long_rules") or []),
+            "Short_kural": len(r.get("short_rules") or []),
+        })
+    return pd.DataFrame(rows)
 
 
 def minutes_since_update(ts: Optional[str]) -> Optional[float]:

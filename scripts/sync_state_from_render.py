@@ -58,6 +58,16 @@ def main() -> int:
     except Exception as e:
         print(f"lab_state atlandi (henuz deploy olmamis olabilir): {e}")
 
+    try:
+        crew = fetch(ENGINE_URL.rstrip("/") + "/export/crew_state")
+        with open("crew_state.json", "w", encoding="utf-8") as f:
+            json.dump(crew, f, indent=2, ensure_ascii=False)
+            f.write("\n")
+        runs = len(crew.get("daily_runs") or [])
+        print(f"crew_state: recipes={len(crew.get('recipes') or [])} runs={runs}")
+    except Exception as e:
+        print(f"crew_state atlandi (henuz deploy olmamis olabilir): {e}")
+
     return 0
 
 

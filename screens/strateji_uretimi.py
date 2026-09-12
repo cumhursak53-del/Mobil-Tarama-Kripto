@@ -4,11 +4,16 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from engine.config import LAB_AUTO, LAB_AUTO_INTERVAL_SEC, LAB_LEDGER_PREFIX, LAB_MAX_CANDIDATES
+from engine.config import CREW_AUTO, CREW_INTERVAL_SEC, LAB_AUTO, LAB_AUTO_INTERVAL_SEC, LAB_LEDGER_PREFIX, LAB_MAX_CANDIDATES
+from engine.crew.config import CREW_DAILY_GROWTH_TARGET_PCT
+from engine.crew.summary import crew_summary_from_state
 from engine.lab_backtest_view import backtest_summary
 from ui_common import (
+    crew_recipe_rows,
+    crew_result_rows,
     engine_status,
     get_engine_data,
+    load_crew_data,
     load_lab_data,
     minutes_since_update,
     source_caption,
@@ -159,8 +164,47 @@ def render() -> None:
     for title, ok, detail in steps:
         st.markdown(f"**{'✅' if ok else '⏳'} {title}** — {detail}")
 
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
-        ["Aday kasalar", "Backtest", "Kaynak metrikleri", "Lab islemleri", "Reddedilenler", "Motor log"]
+    # --- Crew AI (%20 gunluk hedef) ---
+    crew_remote = load_crew_data(force_version=st.session_state.get("refresh_version", 0))
+    crew_sum = engine_data.get("crew_summary") or {}
+    crew_mins = minutes_since_update(crew_sum.get("updated_at") or crew_remote.get("updated_at"))
+    if crew_mins is not None and (crew_sum.get("updated_at") or "") < (crew_remote.get("updated_at") or ""):
+        crew_sum = crew_summary_from_state(crew_remote)
+    crew_pipe = crew_sum.get("pipeline") or crew_remote.get("pipeline") or {}
+    crew_target = float(crew_sum.get("target_pct") or CREW_DAILY_GROWTH_TARGET_PCT)
+
+    st.subheader(f"Crew AI — gunluk kasa +{crew_target:.0f}% hedef")
+    if CREW_AUTO:
+        st.caption(
+            f"Motor uzerinde otomatik (~{max(1, CREW_INTERVAL_SEC // 3600)} saatte bir). "
+            "Canli kasaya baglanmaz; sadece arastirma + backtest."
+        )
+    else:
+        st.warning("Crew otomasyon kapali (`CREW_AUTO=0`).")
+
+    cc1, cc2, cc3, cc4, cc5 = st.columns(5)
+    cc1.metric("Crew durum", crew_pipe.get("status", "bekleniyor"))
+    cc2.metric("Son calisma", crew_pipe.get("last_run_at") or "-")
+    cc3.metric("Son tur gecen", int(crew_sum.get("recipes_passed") or crew_pipe.get("last_passed") or 0))
+    cc4.metric("Tarif havuzu", int(crew_sum.get("recipes_total") or len(crew_remote.get("recipes") or [])))
+    cc5.metric("Guncelleme", f"{crew_mins:.0f} dk once" if crew_mins is not None else "-")
+
+    if crew_pipe.get("status") == "running":
+        st.info(f"Crew calisiyor… {crew_pipe.get('last_message', '')}")
+    elif crew_pipe.get("status") == "ok":
+        st.success(crew_pipe.get("last_message") or "Son tur tamamlandi.")
+    elif crew_pipe.get("status") == "error":
+        st.error(crew_pipe.get("last_message") or "Crew hatasi")
+
+    if crew_sum.get("narrative"):
+        with st.expander("Crew ozet yorumu", expanded=False):
+            st.write(crew_sum.get("narrative"))
+
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(
+        [
+            "Aday kasalar", "Backtest", "Kaynak metrikleri", "Lab islemleri",
+            "Reddedilenler", "Motor log", "Crew AI",
+        ]
     )
 
     with tab1:
@@ -278,8 +322,36 @@ def render() -> None:
             st.info(f"Reddedilen aday yok. (Toplam: {rejected_n})")
 
     with tab6:
-        lab_logs = [ln for ln in logs if "Lab" in ln or "lab" in ln.lower() or "Arastirma" in ln]
-        st.code("\n".join(lab_logs[-40:] if lab_logs else logs[-40:] or ["Log yok"]))
+        motor_logs = [ln for ln in logs if any(k in ln for k in ("Lab", "lab", "Arastirma", "Crew"))]
+        st.code("\n".join(motor_logs[-50:] if motor_logs else logs[-40:] or ["Log yok"]))
+
+    with tab7:
+        last_results = crew_sum.get("last_results") or []
+        if not last_results and crew_remote.get("daily_runs"):
+            last_results = (crew_remote.get("daily_runs") or [])[-1].get("results") or []
+        st.caption(
+            f"Hedef: tek gun backtest simulasyonunda >= {crew_target:.0f}% ($100 kasa). "
+            f"Son tur: {crew_sum.get('last_run_date') or '-'}"
+        )
+        df_crew = crew_result_rows(last_results, target_pct=crew_target)
+        if not df_crew.empty:
+            st.dataframe(df_crew, use_container_width=True, hide_index=True, height=360)
+        else:
+            st.info("Henuz Crew backtest sonucu yok. Motor ilk calismadan sonra dolacak.")
+
+        recipes_crew = crew_remote.get("recipes") or []
+        if recipes_crew:
+            st.markdown("**Uretilen tarifler**")
+            st.dataframe(
+                crew_recipe_rows(recipes_crew[-20:][::-1]),
+                use_container_width=True,
+                hide_index=True,
+            )
+
+        crew_logs = [ln for ln in logs if "Crew" in ln]
+        if crew_logs:
+            st.markdown("**Crew motor log**")
+            st.code("\n".join(crew_logs[-30:]))
 
 
 render()

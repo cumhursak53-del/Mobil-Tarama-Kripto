@@ -9,6 +9,8 @@ import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 from engine.config import (
+    CREW_AUTO,
+    CREW_INTERVAL_SEC,
     LAB_AUTO,
     LAB_AUTO_INTERVAL_SEC,
     LEDGER_NAMES,
@@ -24,6 +26,8 @@ from engine.config import (
     SMT_REF_SYMBOL,
     TIMEFRAMES,
 )
+from engine.crew.runner import maybe_run_crew
+from engine.crew.sync import load_crew_state
 from engine.patlama_topn import run_patlama_top_n_entries
 from engine.setup_invalidation import check_setup_invalidations
 from engine.context import build_context
@@ -56,6 +60,8 @@ class _Handler(BaseHTTPRequestHandler):
         path = (self.path or "/").split("?", 1)[0]
         if path in ("/export/lab", "/export/lab_state"):
             body = self.portfolio.lab_state
+        elif path in ("/export/crew", "/export/crew_state"):
+            body = self.portfolio.crew_state
         else:
             body = self.portfolio.snapshot()
         self.send_response(200)
@@ -347,12 +353,17 @@ def run_paper(scan_limit: int = SCAN_SYMBOLS) -> None:
         if RESEARCH_SEPARATE:
             threading.Thread(target=lambda: maybe_run_research(pf, force=True), daemon=True).start()
         threading.Thread(target=lambda: maybe_run_lab_pipeline(pf, force=True), daemon=True).start()
+    if CREW_AUTO:
+        pf.log(f"Crew otomasyon acik: gunluk %20 hedef strateji (~{CREW_INTERVAL_SEC // 3600}h)")
+        threading.Thread(target=lambda: maybe_run_crew(pf, force=True), daemon=True).start()
     cache = FrameCache()
     cursor = 0
     last_universe_refresh = 0.0
     last_lab_refresh = 0.0
     last_lab_pipeline = 0.0
     last_research_pipeline = 0.0
+    last_crew_pipeline = 0.0
+    last_crew_refresh = 0.0
     last_github_heartbeat = 0.0
     symbols: list[str] = []
     dominance: dict = {}
@@ -412,6 +423,14 @@ def run_paper(scan_limit: int = SCAN_SYMBOLS) -> None:
                 pf._ensure_lab_ledgers()
                 _refresh_strats(pf)
                 last_lab_refresh = time.time()
+
+            if time.time() - last_crew_refresh > 300:
+                pf.crew_state = load_crew_state()
+                last_crew_refresh = time.time()
+
+            if CREW_AUTO and time.time() - last_crew_pipeline > CREW_INTERVAL_SEC:
+                maybe_run_crew(pf)
+                last_crew_pipeline = time.time()
 
             if LAB_AUTO and RESEARCH_SEPARATE and time.time() - last_research_pipeline > RESEARCH_INTERVAL_SEC:
                 threading.Thread(target=lambda: maybe_run_research(pf), daemon=True).start()

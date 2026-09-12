@@ -50,10 +50,15 @@ def load_state(path: str | None = None) -> dict:
         return default_state()
 
 
-def save_state(state: dict, path: str | None = None) -> None:
-    p = path or CREW_STATE_FILE
+def save_state(state: dict, path: str | None = None, *, sync_github: bool = True) -> None:
     state = deepcopy(state)
     state["updated_at"] = now_tr()
+    if sync_github:
+        from engine.crew.sync import sync_crew_state
+
+        sync_crew_state(state)
+        return
+    p = path or CREW_STATE_FILE
     with open(p, "w", encoding="utf-8") as f:
         json.dump(state, f, ensure_ascii=False, indent=2)
 
