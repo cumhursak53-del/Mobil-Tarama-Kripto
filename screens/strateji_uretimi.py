@@ -5,6 +5,7 @@ import pandas as pd
 import streamlit as st
 
 from engine.config import LAB_AUTO, LAB_AUTO_INTERVAL_SEC, LAB_LEDGER_PREFIX, LAB_MAX_CANDIDATES
+from engine.lab_backtest_view import backtest_summary
 from ui_common import (
     engine_status,
     get_engine_data,
@@ -28,19 +29,23 @@ def render() -> None:
     remote_mins = minutes_since_update(lab_remote.get("updated_at"))
     summary_mins = minutes_since_update(lab_summary.get("updated_at"))
     if remote_mins is not None and (summary_mins is None or remote_mins <= summary_mins):
+        bt = backtest_summary(lab_remote.get("recipes") or [], lab_remote.get("backtests") or [])
         lab_summary = {
             "updated_at": lab_remote.get("updated_at"),
-            "recipe_count": len(lab_remote.get("recipes") or []),
-            "backtest_count": len(lab_remote.get("backtests") or []),
+            "recipe_count": bt["recipe_total"],
+            "backtest_count": bt["total_runs"],
+            "backtest_unique": bt["unique_tested"],
+            "backtest_pending": bt["pending_test"],
+            "backtest_passed": bt["passed_count"],
             "paper_count": len([c for c in lab_remote.get("candidates") or [] if c.get("status") == "paper"]),
             "rejected_count": len([c for c in lab_remote.get("candidates") or [] if c.get("status") == "rejected"]),
-            "recent_backtests": (lab_remote.get("backtests") or [])[-10:],
+            "recent_backtests": bt["latest_results"],
+            "all_backtests_latest": bt["latest_results"],
             "all_candidates": lab_remote.get("candidates") or [],
             "pipeline": lab_remote.get("pipeline") or {},
             "research": lab_remote.get("research") or {},
             "source_metrics": lab_remote.get("source_metrics") or {},
             "research_queue_len": len(lab_remote.get("research_queue") or []),
-            "research": lab_remote.get("research") or {},
         }
         lab_candidates = [c for c in lab_remote.get("candidates") or [] if c.get("status") == "paper"]
 
@@ -107,7 +112,10 @@ def render() -> None:
     motor_label, motor_level, motor_note = engine_status(engine_data)
     lab_mins = minutes_since_update(lab_summary.get("updated_at"))
     recipe_n = int(lab_summary.get("recipe_count") or 0)
-    bt_n = int(lab_summary.get("backtest_count") or 0)
+    bt_runs = int(lab_summary.get("backtest_count") or 0)
+    bt_unique = int(lab_summary.get("backtest_unique") or bt_runs)
+    bt_pending = int(lab_summary.get("backtest_pending") or 0)
+    bt_passed = int(lab_summary.get("backtest_passed") or 0)
     paper_n = int(lab_summary.get("paper_count") or 0)
     rejected_n = int(lab_summary.get("rejected_count") or 0)
 
@@ -121,7 +129,7 @@ def render() -> None:
     c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("Paper motoru", motor_label, motor_note)
     c2.metric("Lab state", f"{recipe_n} tarif", f"Guncelleme: {lab_summary.get('updated_at') or '-'}")
-    c3.metric("Backtest kaydi", bt_n)
+    c3.metric("Backtest", f"{bt_unique}/{recipe_n} tarif", f"{bt_runs} calisma, {bt_passed} gecti")
     paper_label = str(paper_n) if LAB_MAX_CANDIDATES <= 0 else f"{paper_n}/{LAB_MAX_CANDIDATES}"
     c4.metric("Paper aday", paper_label)
     c5.metric("Lab acik islem", len(lab_open))
@@ -143,7 +151,7 @@ def render() -> None:
         ),
         ("1. Otomasyon motoru", LAB_AUTO and pipe_status in ("ok", "running"), f"Durum: {pipe_status} | Son: {pipe_run}"),
         ("2. Tarif havuzu", recipe_n > 0, f"{recipe_n} tarif" if recipe_n else "Ilk calismada uretilecek"),
-        ("3. Backtest", bt_n > 0, f"{bt_n} kayit" if bt_n else "Bekleniyor"),
+        ("3. Backtest", bt_unique > 0, f"{bt_unique}/{recipe_n} tarif test, {bt_pending} bekliyor" if bt_unique else "Bekleniyor"),
         ("4. Paper aday", paper_n > 0, f"{paper_n} kasa" if paper_n else "Bekleniyor"),
         ("5. Lab islem", len(lab_open) > 0 or len(lab_hist) > 0, f"{len(lab_open)} acik, {len(lab_hist)} kapali"),
         ("6. GitHub sync", lab_mins is not None and lab_mins <= 30, lab_summary.get("updated_at") or "yok"),
@@ -176,19 +184,32 @@ def render() -> None:
             st.info("Henuz aday yok; motor otomasyonu birkaç dakika icinde baslayacak.")
 
     with tab2:
-        backtests = lab_summary.get("recent_backtests") or lab_remote.get("backtests") or []
+        backtests = (
+            lab_summary.get("all_backtests_latest")
+            or lab_summary.get("recent_backtests")
+            or backtest_summary(
+                lab_remote.get("recipes") or [],
+                lab_remote.get("backtests") or [],
+            )["latest_results"]
+        )
+        st.caption(
+            f"Toplam {bt_runs} backtest calismasi | "
+            f"{bt_unique} farkli tarif | {bt_passed} gecti | {bt_pending} bekliyor"
+        )
         if backtests:
             bt_rows = []
-            for b in backtests[-30:][::-1]:
+            for b in backtests:
                 m = b.get("metrics") or {}
                 bt_rows.append({
                     "Tarif": b.get("recipe_id"),
+                    "Asama": m.get("stage") or b.get("stage") or "-",
                     "Islem": m.get("n"),
                     "WR": f"{100 * float(m.get('win_rate') or 0):.0f}%",
                     "PF": m.get("profit_factor"),
                     "Gecti": "Evet" if m.get("passed") else "Hayir",
+                    "Tarih": b.get("run_at") or "-",
                 })
-            st.dataframe(pd.DataFrame(bt_rows), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(bt_rows), use_container_width=True, hide_index=True, height=420)
         else:
             st.info("Backtest sonucu henuz yok.")
 

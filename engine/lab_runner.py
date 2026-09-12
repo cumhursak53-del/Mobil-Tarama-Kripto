@@ -117,7 +117,42 @@ def _run_research_phase(state: dict, *, log=None, force: bool = False) -> int:
     return researched
 
 
+def _prune_failed_combinator_recipes(state: dict, *, log=None) -> int:
+    """Basarisiz combinator tariflerini budayarak havuza yer ac."""
+    recipes = state.get("recipes") or []
+    if len(recipes) < LAB_MAX_RECIPES:
+        return 0
+    latest: dict[str, dict] = {}
+    for b in state.get("backtests") or []:
+        rid = b.get("recipe_id")
+        if rid:
+            latest[str(rid)] = b
+    paper_ids = {
+        str(c.get("recipe_id"))
+        for c in state.get("candidates") or []
+        if c.get("status") == "paper" and c.get("recipe_id")
+    }
+    removable = []
+    for r in recipes:
+        rid = str(r.get("id") or "")
+        if not rid or r.get("source") != "combinator" or rid in paper_ids:
+            continue
+        bt = latest.get(rid)
+        if not bt:
+            continue
+        if not (bt.get("metrics") or {}).get("passed"):
+            removable.append(rid)
+    if not removable:
+        return 0
+    drop = set(removable[: max(10, len(recipes) - LAB_MAX_RECIPES + 5)])
+    state["recipes"] = [r for r in recipes if str(r.get("id") or "") not in drop]
+    if log:
+        log(f"Lab: {len(drop)} basarisiz combinator tarifi budandi (havuza yer)")
+    return len(drop)
+
+
 def _maybe_combinator(state: dict, *, log=None, force: bool = False) -> int:
+    _prune_failed_combinator_recipes(state, log=log)
     recipes = state.get("recipes") or []
     if len(recipes) >= LAB_MAX_RECIPES:
         return 0

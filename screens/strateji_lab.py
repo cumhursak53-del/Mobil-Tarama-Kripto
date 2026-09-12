@@ -57,11 +57,14 @@ def render() -> None:
         st.info("Henuz lab adayi yok; motor otomasyonu uretince burada gorunur.")
 
     lab_local = load_lab_data(force_version=st.session_state.get("refresh_version", 0))
-    backtests = lab_local.get("backtests") or []
+    from engine.lab_backtest_view import backtest_summary
+
+    bt = backtest_summary(lab_local.get("recipes") or [], lab_local.get("backtests") or [])
+    backtests = bt["latest_results"]
     if backtests:
-        st.subheader("Son backtest sonuclari")
+        st.subheader(f"Backtest ozeti ({bt['unique_tested']}/{bt['recipe_total']} tarif, {bt['total_runs']} calisma)")
         bt_rows = []
-        for b in backtests[-30:]:
+        for b in backtests:
             m = b.get("metrics") or {}
             bt_rows.append({
                 "Tarif": b.get("recipe_id"),

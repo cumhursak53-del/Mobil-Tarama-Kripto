@@ -583,6 +583,9 @@ class Portfolio:
         paper = [c for c in candidates if c.get("status") == "paper"]
         rejected = [c for c in candidates if c.get("status") == "rejected"]
         closed_pnl = sum(float(h.get("pnl") or 0) for h in self.history)
+        from engine.lab_backtest_view import backtest_summary
+
+        bt_summary = backtest_summary(recipes, backtests)
         return {
             "ledgers": self.ledgers,
             "balance": cash,
@@ -602,10 +605,14 @@ class Portfolio:
             "lab_summary": {
                 "updated_at": self.lab_state.get("updated_at"),
                 "recipe_count": len(recipes),
-                "backtest_count": len(backtests),
+                "backtest_count": bt_summary["total_runs"],
+                "backtest_unique": bt_summary["unique_tested"],
+                "backtest_pending": bt_summary["pending_test"],
+                "backtest_passed": bt_summary["passed_count"],
                 "paper_count": len(paper),
                 "rejected_count": len(rejected),
-                "recent_backtests": backtests[-10:],
+                "recent_backtests": bt_summary["latest_results"],
+                "all_backtests_latest": bt_summary["latest_results"],
                 "all_candidates": candidates,
                 "pipeline": self.lab_state.get("pipeline") or {},
                 "research": {

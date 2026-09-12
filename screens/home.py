@@ -81,10 +81,17 @@ def render() -> None:
     with tab2:
         df = ledger_summary_rows(ledgers, active, history)
         if not df.empty:
+            idle = df[(df["Acik"] == 0) & (df["Kapali"] == 0)]
             st.caption(
                 "Acik/Kapali: islem sayisi | Bakiye: kapanan islemlerden sonra kalan | "
                 "PnL: kapanan + acik | Total: gercek zamanli (nakit + marjin + acik PnL)"
             )
+            if not idle.empty:
+                st.warning(
+                    f"Hic islem almayan {len(idle)} kasa: "
+                    + ", ".join(idle["Kasa"].head(8).tolist())
+                    + ("..." if len(idle) > 8 else "")
+                )
             st.dataframe(
                 df,
                 use_container_width=True,
@@ -121,11 +128,17 @@ def render() -> None:
             st.info("Henuz kapanan islem yok.")
 
     with tab4:
+        from engine.config import SIGNAL_LOG_RESET_HOUR
+
+        st.caption(
+            f"Gunluk oturum: her gece {SIGNAL_LOG_RESET_HOUR:02d}:00 TR'de sifirlanir "
+            f"(1d mum baslangicindan beri sinyaller)."
+        )
         df_sig = signal_log_rows(sig_log)
         if not df_sig.empty:
             st.dataframe(df_sig, use_container_width=True, hide_index=True)
         else:
-            st.info("Sinyal gunlugu bos.")
+            st.info("Sinyal gunlugu bos (oturum basi veya henuz sinyal yok).")
 
     with tab5:
         if logs:

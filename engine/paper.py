@@ -32,6 +32,7 @@ from engine.entry_timing import (
     should_evaluate_entry,
 )
 from engine.lab_runner import maybe_run_lab_pipeline, maybe_run_research
+from engine.signal_reset import maybe_reset_signal_log
 from engine.lab_state import load_lab_state
 from engine.momentum_scan import score_momentum
 from engine.smc_scan import score_smc
@@ -223,7 +224,6 @@ def _scan_one(pf: Portfolio, cache: FrameCache, sym: str, dominance: dict, force
                     continue
                 if _try_entry(pf, strat, ctx, sym, px):
                     pf.save(sync_github=True)
-                    break
     except Exception as e:
         pf.log(f"{sym} hata: {e}")
 
@@ -346,6 +346,9 @@ def run_paper(scan_limit: int = SCAN_SYMBOLS) -> None:
     while True:
         loop_start = time.time()
         try:
+            if maybe_reset_signal_log(pf.signal_log, log=pf.log):
+                pf.save(sync_github=True)
+
             if time.time() - last_universe_refresh > 900 or not symbols:
                 symbols = fetch_symbols(scan_limit)
                 dominance = _update_dominance(pf, fetch_dominance())

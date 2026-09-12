@@ -31,6 +31,43 @@ def run_research(state: dict, *, log=None) -> list[dict]:
     except Exception as e:
         if log:
             log(f"Research genel hata: {e}")
+    if not out:
+        out = _research_from_queue(state, log=log)
+    return out
+
+
+def _research_from_queue(state: dict, *, log=None) -> list[dict]:
+    """Kaynaklar bos kaldiginda kuyruk konularindan tarif uret."""
+    from engine.gemini_client import generate_recipes_from_text
+    from engine.recipe_validator import validate_recipes
+    from engine.research_queue import dequeue_research_topics
+
+    topics = dequeue_research_topics(state, limit=2)
+    if not topics:
+        return []
+    existing_ids = {r.get("id") for r in (state.get("recipes") or []) if r.get("id")}
+    body = "\n\n".join(f"Arastirma konusu: {t}" for t in topics)
+    if log:
+        log(f"Arastirma kuyrugu fallback: {len(topics)} konu -> Gemini")
+    try:
+        raw = generate_recipes_from_text(
+            source_label="arastirma kuyrugu (backtest basarisiz/konu)",
+            title=topics[0][:120],
+            body=body,
+            max_recipes=2,
+            log=log,
+        )
+    except Exception as e:
+        if log:
+            log(f"Kuyruk arastirma hatasi: {e}")
+        return []
+    valid = validate_recipes(raw, source="queue", state=state, log=log)
+    out = []
+    for r in valid:
+        if r.get("id") and r["id"] not in existing_ids:
+            r["source"] = r.get("source") or "queue"
+            out.append(r)
+            existing_ids.add(r["id"])
     return out
 
 
