@@ -7,6 +7,7 @@ from engine.gemini_client import gemini_available, generate_smc_commentary, gene
 from structure.smc import analyze_smc
 from ui.chart_export import fig_to_png_bytes
 from ui.smc_chart import build_smc_chart
+from engine.smc_trade_analysis import smc_diagnostics_rows, smc_summary_stats
 from ui_common import get_engine_data, smc_rows, source_caption
 
 SMC_LEDGER = "Kasa_SMC"
@@ -167,8 +168,8 @@ def render() -> None:
         c3.metric("Long adayi (>=5)", int((df["Long_skoru"] >= 5).sum()) if len(df) else 0)
         c4.metric("Short adayi (>=5)", int((df["Short_skoru"] >= 5).sum()) if len(df) else 0)
 
-        tab_a, tab_b, tab_c, tab_d, tab_chart = st.tabs(
-            ["Tum liste", "Long", "Short", "Kasa islemleri", "Grafik inceleme"]
+        tab_a, tab_b, tab_c, tab_d, tab_e, tab_chart = st.tabs(
+            ["Tum liste", "Long", "Short", "Kasa islemleri", "Trade analizi", "Grafik inceleme"]
         )
         with tab_a:
             st.dataframe(df, use_container_width=True, hide_index=True, height=520)
@@ -193,6 +194,35 @@ def render() -> None:
             if hist:
                 st.subheader("Kapanan islemler")
                 st.dataframe(pd.DataFrame(hist).iloc[::-1], use_container_width=True, hide_index=True)
+        with tab_e:
+            pending = data.get("pending_orders") or []
+            stats = smc_summary_stats(scan, pending=pending, active=active)
+            s1, s2, s3, s4 = st.columns(4)
+            s1.metric("Trade hazir", stats.get("trade_ok", 0))
+            s2.metric("Bekleyen limit", stats.get("pending", 0))
+            s3.metric("Acik SMC", stats.get("acik", 0))
+            s4.metric("Taranan", stats.get("taranan", 0))
+            engel = stats.get("engel") or {}
+            if engel:
+                st.caption(
+                    "Engel dagilimi: "
+                    + ", ".join(f"{k}={v}" for k, v in sorted(engel.items(), key=lambda x: -x[1])[:8])
+                )
+            diag = smc_diagnostics_rows(scan, pending=pending, active=active)
+            if diag.empty:
+                st.info("Analiz icin tarama verisi yok.")
+            else:
+                show_diag = diag.copy()
+                filt = st.selectbox(
+                    "Durum filtresi",
+                    ["Tumu", "TRADE_OK", "Engelli"],
+                    key="smc_diag_filter",
+                )
+                if filt == "TRADE_OK":
+                    show_diag = show_diag[show_diag["Durum"] == "TRADE_OK"]
+                elif filt == "Engelli":
+                    show_diag = show_diag[show_diag["Durum"] != "TRADE_OK"]
+                st.dataframe(show_diag, use_container_width=True, hide_index=True, height=480)
         with tab_chart:
             _render_chart_tab(symbols, scan)
 

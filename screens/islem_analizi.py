@@ -47,7 +47,7 @@ def render() -> None:
     st.subheader("Detay analiz")
     df = post_exit_analysis_rows(log)
     kasalar = ["Tumu"] + sorted(df["Kasa"].dropna().unique().tolist())
-    kapanis = ["Tumu", "SL", "TP", "PARTIAL_TP"]
+    kapanis = ["Tumu", "SL", "TP", "PARTIAL_TP", "INVALIDATED"]
     col_a, col_b, col_c = st.columns(3)
     kasa_f = col_a.selectbox("Kasa", kasalar, key="analiz_kasa")
     kapanis_f = col_b.selectbox("Kapanis", kapanis, key="analiz_kapanis")

@@ -132,6 +132,13 @@ PATLAMA_MIN_SCORE = int(os.environ.get("PATLAMA_MIN_SCORE", "5"))
 PATLAMA_MIN_EDGE = int(os.environ.get("PATLAMA_MIN_EDGE", "2"))
 # 0 = her coinde anlik Patlama; >0 = tam tur sonunda en iyi N long + N short
 PATLAMA_TOP_N = int(os.environ.get("PATLAMA_TOP_N", "0"))
+SETUP_INVALIDATION = os.environ.get("SETUP_INVALIDATION", "1") == "1"
+SETUP_INVALIDATION_GRACE_MIN = float(os.environ.get("SETUP_INVALIDATION_GRACE_MIN", "30"))
+SETUP_INVALIDATION_LEDGERS = tuple(
+    x.strip()
+    for x in os.environ.get("SETUP_INVALIDATION_LEDGERS", "").split(",")
+    if x.strip()
+)
 TAKER_FEE = 0.0004  # 0.04% each side
 PARTIAL_R = float(os.environ.get("PARTIAL_R", "2.0"))
 PARTIAL_PCT = float(os.environ.get("PARTIAL_PCT", "0.5"))

@@ -25,6 +25,7 @@ from engine.config import (
     TIMEFRAMES,
 )
 from engine.patlama_topn import run_patlama_top_n_entries
+from engine.setup_invalidation import check_setup_invalidations
 from engine.context import build_context
 from engine.df_utils import pick_frame
 from engine.data import fetch_dominance, fetch_klines, fetch_symbols, last_prices
@@ -206,6 +207,12 @@ def _scan_one(pf: Portfolio, cache: FrameCache, sym: str, dominance: dict, force
         ctx = build_context(sym, frames, dominance, indicated=False, ref_frames=ref_frames)
         pf.record_patlama_scan(sym, score_momentum(ctx).to_dict())
         pf.record_smc_scan(sym, score_smc(ctx).to_dict())
+
+        inv = check_setup_invalidations(
+            pf, sym, strats, ctx, bar_closed=bar_closed, price=mark, force=force_entry
+        )
+        if inv:
+            pf.save(sync_github=True)
 
         if SCAN_MODE == "best_signal":
             _scan_best_signal(pf, strats, ctx, sym, frames, live_px, force_entry, bar_closed)
