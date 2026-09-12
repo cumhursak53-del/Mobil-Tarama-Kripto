@@ -3,10 +3,13 @@ from datetime import datetime
 import pandas as pd
 import streamlit as st
 
+from engine.config import DAILY_PNL_TARGET_PCT
 from ui_common import (
     build_excel_bytes,
     format_price,
     get_engine_data,
+    ledger_daily_performance_rows,
+    ledger_live_candidate_rows,
     ledger_summary_rows,
     signal_log_rows,
     source_caption,
@@ -103,6 +106,56 @@ def render() -> None:
                 },
             )
             st.bar_chart(df.set_index("Kasa")["Total"])
+
+            st.subheader("Gunluk performans (Long / Short)")
+            daily = ledger_daily_performance_rows(history, active)
+            st.caption(
+                f"Kapali islemler cikis gunune; acik islemler giris gunune yazilir. "
+                f"Gunluk % = Gunluk_PnL / $100 kasa baslangici. Hedef: >= {DAILY_PNL_TARGET_PCT:.0f}%"
+            )
+            cands = ledger_live_candidate_rows(daily)
+            if not cands.empty:
+                st.markdown(f"**Canli aday adaylari (>= {DAILY_PNL_TARGET_PCT:.0f}% en az bir gun)**")
+                st.dataframe(
+                    cands,
+                    use_container_width=True,
+                    hide_index=True,
+                    column_config={
+                        "Toplam_PnL": st.column_config.NumberColumn(format="$%+.2f"),
+                        "En_iyi_gun_pct": st.column_config.NumberColumn(format="%.1f%%"),
+                    },
+                )
+            hot = daily[daily["Gunluk_pct"] >= DAILY_PNL_TARGET_PCT] if not daily.empty else daily
+            if not hot.empty:
+                st.markdown(f"**{DAILY_PNL_TARGET_PCT:.0f}%+ gunler**")
+                st.dataframe(
+                    hot,
+                    use_container_width=True,
+                    hide_index=True,
+                    column_config={
+                        "Kapali_PnL": st.column_config.NumberColumn(format="$%+.2f"),
+                        "Acik_PnL": st.column_config.NumberColumn(format="$%+.2f"),
+                        "Gunluk_PnL": st.column_config.NumberColumn(format="$%+.2f"),
+                        "Gunluk_pct": st.column_config.NumberColumn(format="%.1f%%"),
+                    },
+                )
+            if not daily.empty:
+                yon_f = st.selectbox("Yon filtresi", ["Tumu", "LONG", "SHORT"], key="daily_yon_filter")
+                show = daily if yon_f == "Tumu" else daily[daily["Yon"] == yon_f]
+                st.dataframe(
+                    show,
+                    use_container_width=True,
+                    hide_index=True,
+                    height=min(420, 35 * len(show) + 38),
+                    column_config={
+                        "Kapali_PnL": st.column_config.NumberColumn(format="$%+.2f"),
+                        "Acik_PnL": st.column_config.NumberColumn(format="$%+.2f"),
+                        "Gunluk_PnL": st.column_config.NumberColumn(format="$%+.2f"),
+                        "Gunluk_pct": st.column_config.NumberColumn(format="%.1f%%"),
+                    },
+                )
+            elif not history and not active:
+                st.info("Gunluk performans icin islem gecmisi gerekli.")
         else:
             st.info("Kasa verisi yok.")
 

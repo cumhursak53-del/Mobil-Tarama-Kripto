@@ -22,6 +22,7 @@ TRIGGER_TF = os.environ.get("TRIGGER_TF", "15m")
 ENTRY_MODE_DEFAULT = os.environ.get("ENTRY_MODE_DEFAULT", "live")
 
 KASA_START_USD = 100.0
+DAILY_PNL_TARGET_PCT = float(os.environ.get("DAILY_PNL_TARGET_PCT", "15"))
 CASH_RESERVE_PCT = float(os.environ.get("CASH_RESERVE_PCT", "0.20"))
 RISK_PCT = float(os.environ.get("RISK_PCT", "0.035"))
 COMBO_LEDGER = "Kasa_RejimOsilator"

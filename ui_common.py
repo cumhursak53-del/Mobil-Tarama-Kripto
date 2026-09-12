@@ -409,6 +409,105 @@ def _ledger_rows(data: dict) -> pd.DataFrame:
     )
 
 
+def _side_label(side: str) -> str:
+    return "LONG" if str(side).upper() == "BUY" else "SHORT"
+
+
+def _parse_trade_date(value) -> str | None:
+    if value is None or value == "":
+        return None
+    try:
+        return pd.to_datetime(value).date().isoformat()
+    except Exception:
+        return None
+
+
+def ledger_daily_performance_rows(
+    history: list | None,
+    active: dict | None = None,
+    start: float | None = None,
+) -> pd.DataFrame:
+    """Kasa + yon + gun: kapali ve acik PnL (acik = giris gunune yazilir)."""
+    from engine.config import KASA_START_USD
+
+    start_val = float(start if start is not None else KASA_START_USD)
+    buckets: dict[tuple[str, str, str], dict] = {}
+
+    def _bucket(day: str, kasa: str, yon: str) -> dict:
+        key = (day, kasa, yon)
+        return buckets.setdefault(
+            key,
+            {"Kapali": 0, "Acik": 0, "Kapali_PnL": 0.0, "Acik_PnL": 0.0},
+        )
+
+    for h in history or []:
+        if not isinstance(h, dict) or not h.get("ledger"):
+            continue
+        day = _parse_trade_date(h.get("exit_time"))
+        if not day:
+            continue
+        row = _bucket(day, str(h["ledger"]), _side_label(h.get("side", "")))
+        row["Kapali"] += 1
+        row["Kapali_PnL"] += float(h.get("pnl") or 0)
+
+    for p in (active or {}).values():
+        if not isinstance(p, dict) or not p.get("ledger_name"):
+            continue
+        day = _parse_trade_date(p.get("entry_time"))
+        if not day:
+            continue
+        row = _bucket(day, str(p["ledger_name"]), _side_label(p.get("side", "")))
+        row["Acik"] += 1
+        row["Acik_PnL"] += float(p.get("unrealized_pnl") or 0)
+
+    rows = []
+    for (day, kasa, yon), v in buckets.items():
+        gunluk = v["Kapali_PnL"] + v["Acik_PnL"]
+        rows.append({
+            "Tarih": day,
+            "Kasa": kasa,
+            "Yon": yon,
+            "Kapali": v["Kapali"],
+            "Acik": v["Acik"],
+            "Kapali_PnL": round(v["Kapali_PnL"], 2),
+            "Acik_PnL": round(v["Acik_PnL"], 2),
+            "Gunluk_PnL": round(gunluk, 2),
+            "Gunluk_pct": round(gunluk / start_val * 100, 2),
+        })
+    df = pd.DataFrame(rows)
+    if not df.empty:
+        df = df.sort_values(["Tarih", "Gunluk_pct"], ascending=[False, False])
+    return df
+
+
+def ledger_live_candidate_rows(
+    daily: pd.DataFrame,
+    *,
+    min_pct: float | None = None,
+) -> pd.DataFrame:
+    """En az bir gun >= hedef % olan kasa+yon ozeti (canli aday adayi)."""
+    from engine.config import DAILY_PNL_TARGET_PCT
+
+    target = float(min_pct if min_pct is not None else DAILY_PNL_TARGET_PCT)
+    if daily.empty:
+        return pd.DataFrame()
+    agg = (
+        daily.groupby(["Kasa", "Yon"], as_index=False)
+        .agg(
+            Gun=("Tarih", "nunique"),
+            Toplam_PnL=("Gunluk_PnL", "sum"),
+            En_iyi_gun_pct=("Gunluk_pct", "max"),
+            Gun_15plus=("Gunluk_pct", lambda s: int((s >= target).sum())),
+            Islem_kapali=("Kapali", "sum"),
+        )
+    )
+    agg = agg[agg["En_iyi_gun_pct"] >= target].sort_values(
+        ["Yon", "En_iyi_gun_pct"], ascending=[True, False]
+    )
+    agg["Lab"] = agg["Kasa"].astype(str).str.startswith("Kasa_Lab_")
+    return agg.reset_index(drop=True)
+
+
 def _history_rows(history: list) -> pd.DataFrame:
     if not history:
         return pd.DataFrame()
@@ -546,9 +645,15 @@ def build_excel_bytes(data: dict) -> bytes:
         "Acik_islem": len(data.get("active_positions") or {}),
         "Kapanan_islem": len(data.get("history") or []),
     }])
+    daily = ledger_daily_performance_rows(
+        data.get("history") or [],
+        data.get("active_positions") or {},
+    )
     sheets = {
         "Ozet": ozet,
         "Kasalar": _ledger_rows(data),
+        "Gunluk_Performans": daily,
+        "Canli_Adaylar": ledger_live_candidate_rows(daily),
         "Acik_Pozisyonlar": _pos_rows(data.get("active_positions") or {}),
         "Islem_Gecmisi": _history_rows(data.get("history") or []),
         "Sinyaller": _signal_rows(data.get("signal_log") or {}),
