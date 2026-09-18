@@ -324,6 +324,8 @@ class Portfolio:
         ]
 
     def try_open(self, symbol: str, sig: Signal, price: float) -> bool:
+        if self.live_mode and not is_live_exchange():
+            return False
         if MAX_TOTAL_POSITIONS > 0 and len(self.positions) >= MAX_TOTAL_POSITIONS:
             return False
         if self.symbol_in_cooldown(symbol):

@@ -16,6 +16,7 @@ from engine.config import (
     BYBIT_BASE_URL,
     LIVE_COMBO_LEDGER,
     LIVE_HTTP_PORT,
+    LIVE_KASA_BALANCES,
     LIVE_KASA_USD,
     LIVE_LEDGERS,
     LIVE_LONG_ONLY,
@@ -117,6 +118,8 @@ def _try_entry(pf: Portfolio, strat, ctx, sym: str, last: float, sig=None) -> bo
     if not ctx.aligned(sig.side):
         return False
     combo = _to_combo_signal(sig)
+    if not is_live_exchange():
+        return False
     opened = pf.try_open(sym, combo, last)
     if opened and combo.entry_tf:
         key = pf.pos_key(LIVE_COMBO_LEDGER, sym)
@@ -144,9 +147,10 @@ def _scan_one(pf: Portfolio, cache: FrameCache, sym: str, dominance: dict, force
         if mark <= 0:
             return
 
-        closed = pf.check_exits(sym, mark)
-        if closed:
-            pf.save(sync_github=False)
+        if is_live_exchange():
+            closed = pf.check_exits(sym, mark)
+            if closed:
+                pf.save(sync_github=False)
 
         bar_closed = collect_bar_closes(cache, sym, strats, force=force_entry)
         if not force_entry and not any(bar_closed.values()) and not any(
@@ -176,9 +180,16 @@ def _scan_one(pf: Portfolio, cache: FrameCache, sym: str, dominance: dict, force
             return
         candidates.sort(key=lambda x: x[0], reverse=True)
         best_strength, best_strat, best_px, best_sig = candidates[0]
-        if _try_entry(pf, best_strat, ctx, sym, best_px, sig=best_sig):
+        if is_live_exchange():
+            if _try_entry(pf, best_strat, ctx, sym, best_px, sig=best_sig):
+                pf.log(
+                    f"canli_giris {sym} | {best_sig.strategy} -> {LIVE_COMBO_LEDGER} | skor {best_strength:.2f}"
+                )
+                pf.save(sync_github=False)
+        else:
+            pf.record_signal(sym, _to_combo_signal(best_sig))
             pf.log(
-                f"canli_giris {sym} | {best_sig.strategy} -> {LIVE_COMBO_LEDGER} | skor {best_strength:.2f}"
+                f"sinyal {sym} | {best_sig.strategy} | {best_sig.side.value} | skor {best_strength:.2f} | emir kapali"
             )
             pf.save(sync_github=False)
     except Exception as e:
@@ -193,8 +204,25 @@ def _shutdown_save(pf: Portfolio) -> None:
         print(f"Kapanis kayit hatasi: {e}", flush=True)
 
 
+def _clear_simulated_positions(pf: Portfolio) -> None:
+    """Tarama modunda (emir kapali) eski paper pozisyonlari temizle."""
+    if is_live_exchange():
+        return
+    n = len(pf.positions)
+    if not n and not pf.pending_orders:
+        return
+    pf.positions.clear()
+    pf.pending_orders.clear()
+    pf.ledgers = {k: float(LIVE_KASA_BALANCES.get(k, LIVE_KASA_USD)) for k in LIVE_LEDGERS}
+    pf.log(
+        f"Tarama modu — {n} simule pozisyon silindi (Bybit'te acik degil, yalnizca sinyal kaydi)"
+    )
+    pf.save(sync_github=False)
+
+
 def run_live(scan_limit: int = SCAN_SYMBOLS) -> None:
     pf = Portfolio(live_mode=True)
+    _clear_simulated_positions(pf)
     atexit.register(_shutdown_save, pf)
     try:
         signal.signal(signal.SIGTERM, lambda *_: _shutdown_save(pf))

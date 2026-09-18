@@ -224,9 +224,12 @@ class LiveMonitorApp:
         label, _kind, detail = engine_status(data)
         self.metric_vars["status"].set(label)
         mode = str(data.get("trading_mode") or "-")
-        exchange = "Bybit" if data.get("live_exchange") else "sim"
+        live = bool(data.get("live_exchange"))
+        exchange = "Bybit emir ACIK" if live else "Tarama only (emir yok)"
         kasa = data.get("live_combo_ledger") or "-"
         self.metric_vars["mode"].set(f"{mode} | {exchange} | {kasa}")
+        if not live and active:
+            self.metric_vars["open"].set(f"{len(active)} (simule — Bybit'te yok)")
         self.metric_vars["equity"].set(f"${equity:,.2f}")
         self.metric_vars["cash"].set(f"${cash:,.2f}")
         self.metric_vars["open"].set(str(len(active)))
