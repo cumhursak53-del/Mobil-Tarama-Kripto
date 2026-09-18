@@ -50,6 +50,12 @@ class _LiveHandler(BaseHTTPRequestHandler):
             body["live_combo_ledger"] = LIVE_COMBO_LEDGER
             body["live_strategies"] = ["Kasa_Hacim", "Kasa_PiyasaEvresi"]
             body["live_exchange"] = is_live_exchange()
+            if not body["live_exchange"]:
+                body["active_positions"] = {}
+                body["pending_orders"] = []
+                cash = float(body.get("balance") or LIVE_KASA_USD)
+                body["balance"] = cash
+                body["equity"] = cash
             payload = json.dumps(body, default=str).encode("utf-8")
             code = 200
         except Exception as exc:

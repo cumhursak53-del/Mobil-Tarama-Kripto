@@ -212,11 +212,18 @@ class LiveMonitorApp:
         )
 
     def _render(self, data: dict) -> None:
+        live = bool(data.get("live_exchange"))
         active = data.get("active_positions") or {}
+        if not live:
+            active = {}
         history = data.get("history") or []
-        equity = float(data.get("equity") or 0)
         cash = float(data.get("balance") or 0)
-        unreal = sum(float(p.get("unrealized_pnl") or 0) for p in active.values() if isinstance(p, dict))
+        equity = float(data.get("equity") or cash)
+        if not live:
+            equity = cash
+        unreal = 0.0 if not live else sum(
+            float(p.get("unrealized_pnl") or 0) for p in active.values() if isinstance(p, dict)
+        )
         closed = float(data.get("closed_pnl_total") or 0)
         if closed == 0 and history:
             closed = sum(float(h.get("pnl") or 0) for h in history if isinstance(h, dict))
@@ -224,16 +231,13 @@ class LiveMonitorApp:
         label, _kind, detail = engine_status(data)
         self.metric_vars["status"].set(label)
         mode = str(data.get("trading_mode") or "-")
-        live = bool(data.get("live_exchange"))
         exchange = "Bybit emir ACIK" if live else "Tarama only (emir yok)"
         kasa = data.get("live_combo_ledger") or "-"
         self.metric_vars["mode"].set(f"{mode} | {exchange} | {kasa}")
-        if not live and active:
-            self.metric_vars["open"].set(f"{len(active)} (simule — Bybit'te yok)")
         self.metric_vars["equity"].set(f"${equity:,.2f}")
         self.metric_vars["cash"].set(f"${cash:,.2f}")
-        self.metric_vars["open"].set(str(len(active)))
-        self.metric_vars["unreal"].set(f"${unreal:+,.2f}")
+        self.metric_vars["open"].set("0" if not live else str(len(active)))
+        self.metric_vars["unreal"].set("$+0.00" if not live else f"${unreal:+,.2f}")
         self.metric_vars["closed"].set(f"${closed:+,.2f}")
         self.metric_vars["updated"].set(str(data.get("updated_at") or "-"))
 
