@@ -703,6 +703,8 @@ class Portfolio:
     def snapshot(self) -> dict:
         eq = sum(self.ledgers.values()) + sum(p.margin for p in self.positions.values())
         cash = sum(self.ledgers.values())
+        if self.live_mode:
+            return self._live_snapshot(eq, cash)
         pos_dicts = {k: self._pos_dict(p) for k, p in self.positions.items()}
         for d in pos_dicts.values():
             entry, cur, side = d["entry_price"], d["current_price"], d["side"]
@@ -776,17 +778,52 @@ class Portfolio:
             "updated_at": now_tr(),
         }
 
+    def _live_snapshot(self, eq: float, cash: float) -> dict:
+        pos_dicts = {k: self._pos_dict(p) for k, p in self.positions.items()}
+        for d in pos_dicts.values():
+            entry, cur, side = d["entry_price"], d["current_price"], d["side"]
+            if entry:
+                ratio = (cur - entry) / entry if side == "BUY" else (entry - cur) / entry
+                d["unrealized_pnl"] = d["notional"] * ratio
+                d["roe_pct"] = ratio * d["leverage"] * 100
+            else:
+                d["unrealized_pnl"] = 0.0
+                d["roe_pct"] = 0.0
+        closed_pnl = sum(float(h.get("pnl") or 0) for h in self.history)
+        return {
+            "ledgers": self.ledgers,
+            "balance": cash,
+            "equity": eq,
+            "closed_pnl_total": closed_pnl,
+            "active_positions": pos_dicts,
+            "pending_orders": self.pending_orders[-20:],
+            "history": self.history[-HISTORY_MAX:],
+            "history_count": len(self.history),
+            "signal_log": {k: v for k, v in self.signal_log.items() if not str(k).startswith("_")},
+            "engine_logs": self.logs[-100:],
+            "equity_curve": self._equity_curve[-300:],
+            "kasa_count": len(self.ledgers),
+            "engine_flags": {"live_mode": True},
+            "updated_at": now_tr(),
+        }
+
     @staticmethod
     def _llm_configured() -> bool:
-        from engine.llm_client import llm_available
+        try:
+            from engine.llm_client import llm_available
 
-        return llm_available()
+            return llm_available()
+        except ImportError:
+            return False
 
     @staticmethod
     def _llm_provider_name() -> str:
-        from engine.llm_client import llm_provider
+        try:
+            from engine.llm_client import llm_provider
 
-        return llm_provider()
+            return llm_provider()
+        except ImportError:
+            return "none"
 
     def _crew_summary(self) -> dict:
         from engine.crew.summary import crew_summary_from_state

@@ -90,10 +90,11 @@ class BybitClient:
                 ret_code=data.get("retCode"),
                 payload=data,
             )
-        if int(data.get("retCode", 0)) != 0:
+        ret_code = int(data.get("retCode", 0))
+        if ret_code != 0:
             raise BybitError(
                 data.get("retMsg") or "Bybit API hatasi",
-                ret_code=int(data.get("retCode", -1)),
+                ret_code=ret_code,
                 payload=data,
             )
         return data.get("result") or {}
@@ -158,16 +159,22 @@ class BybitClient:
         return f"{p:.{decimals}f}"
 
     def set_leverage(self, symbol: str, leverage: int) -> None:
-        self._request(
-            "POST",
-            "/v5/position/set-leverage",
-            body={
-                "category": "linear",
-                "symbol": symbol.upper(),
-                "buyLeverage": str(leverage),
-                "sellLeverage": str(leverage),
-            },
-        )
+        try:
+            self._request(
+                "POST",
+                "/v5/position/set-leverage",
+                body={
+                    "category": "linear",
+                    "symbol": symbol.upper(),
+                    "buyLeverage": str(leverage),
+                    "sellLeverage": str(leverage),
+                },
+            )
+        except BybitError as e:
+            # 110043: leverage zaten ayarli — sorun degil
+            if e.ret_code == 110043 or "not modified" in str(e).lower():
+                return
+            raise
 
     def place_market_order(
         self,

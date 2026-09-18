@@ -42,17 +42,25 @@ class _LiveHandler(BaseHTTPRequestHandler):
     portfolio: Portfolio
 
     def do_GET(self):
-        body = self.portfolio.snapshot()
-        body["trading_mode"] = TRADING_MODE
-        body["live_ledgers"] = list(LIVE_LEDGERS)
-        body["live_combo_ledger"] = LIVE_COMBO_LEDGER
-        body["live_strategies"] = ["Kasa_Hacim", "Kasa_PiyasaEvresi"]
-        body["live_exchange"] = is_live_exchange()
-        self.send_response(200)
+        try:
+            body = self.portfolio.snapshot()
+            body["trading_mode"] = TRADING_MODE
+            body["live_ledgers"] = list(LIVE_LEDGERS)
+            body["live_combo_ledger"] = LIVE_COMBO_LEDGER
+            body["live_strategies"] = ["Kasa_Hacim", "Kasa_PiyasaEvresi"]
+            body["live_exchange"] = is_live_exchange()
+            payload = json.dumps(body, default=str).encode("utf-8")
+            code = 200
+        except Exception as exc:
+            payload = json.dumps({"error": str(exc), "engine_logs": self.portfolio.logs[-20:]}).encode(
+                "utf-8"
+            )
+            code = 500
+        self.send_response(code)
         self.send_header("Content-type", "application/json")
         self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
-        self.wfile.write(json.dumps(body, default=str).encode("utf-8"))
+        self.wfile.write(payload)
 
     def log_message(self, format, *args):
         return
