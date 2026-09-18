@@ -107,7 +107,9 @@ def _sync_exchange_on_start(pf: Portfolio) -> None:
 
 def _to_combo_signal(sig):
     """Hacim / PiyasaEvresi sinyallerini tek kasaya yonlendir."""
-    return replace(sig, ledger=LIVE_COMBO_LEDGER)
+    extra = dict(sig.extra or {})
+    extra["source_ledger"] = sig.ledger
+    return replace(sig, ledger=LIVE_COMBO_LEDGER, extra=extra)
 
 
 def _try_entry(pf: Portfolio, strat, ctx, sym: str, last: float, sig=None) -> bool:
@@ -185,7 +187,15 @@ def _scan_one(pf: Portfolio, cache: FrameCache, sym: str, dominance: dict, force
         if not candidates:
             return
         candidates.sort(key=lambda x: x[0], reverse=True)
-        best_strength, best_strat, best_px, best_sig = candidates[0]
+        picked = None
+        for strength, strat, px, sig in candidates:
+            if not pf.live_strategy_has_slot(sig.ledger):
+                continue
+            picked = (strength, strat, px, sig)
+            break
+        if picked is None:
+            return
+        best_strength, best_strat, best_px, best_sig = picked
         if is_live_exchange():
             if _try_entry(pf, best_strat, ctx, sym, best_px, sig=best_sig):
                 pf.log(

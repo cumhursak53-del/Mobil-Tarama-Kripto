@@ -47,6 +47,22 @@ def _parse_ledger_float_map(raw: str) -> dict[str, float]:
     return out
 
 
+def _parse_ledger_int_map(raw: str) -> dict[str, int]:
+    out: dict[str, int] = {}
+    for part in (raw or "").split(","):
+        part = part.strip()
+        if ":" not in part:
+            continue
+        name, val = part.split(":", 1)
+        name, val = name.strip(), val.strip()
+        if name and val:
+            try:
+                out[name] = int(val)
+            except ValueError:
+                continue
+    return out
+
+
 LEDGER_RISK_PCT = _parse_ledger_float_map(os.environ.get("LEDGER_RISK_PCT", ""))
 MIN_MARGIN_USD = float(os.environ.get("MIN_MARGIN_USD", "10"))
 TP_R_DEFAULT = float(os.environ.get("TP_R_DEFAULT", "2.5"))
@@ -269,6 +285,10 @@ LIVE_LEDGERS = (LIVE_COMBO_LEDGER,)
 LIVE_LONG_ONLY = os.environ.get("LIVE_LONG_ONLY", "0") == "1"
 LIVE_MAX_NOTIONAL_USD = float(os.environ.get("LIVE_MAX_NOTIONAL_USD", "500"))
 LIVE_HTTP_PORT = int(os.environ.get("LIVE_HTTP_PORT", "10001"))
+# Canli motor: strateji basina max pozisyon (toplam MAX_TOTAL_POSITIONS ile birlikte)
+LIVE_STRATEGY_MAX_POSITIONS = _parse_ledger_int_map(
+    os.environ.get("LIVE_STRATEGY_MAX_POSITIONS", "Kasa_Hacim:2,Kasa_PiyasaEvresi:1")
+)
 
 
 def _default_bybit_base_url() -> str:

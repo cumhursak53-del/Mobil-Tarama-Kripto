@@ -69,6 +69,7 @@ class Position:
     remaining_notional: float = 0.0
     remaining_qty: float = 0.0
     exchange_order_id: str = ""
+    source_ledger: str = ""
 
 
 @dataclass

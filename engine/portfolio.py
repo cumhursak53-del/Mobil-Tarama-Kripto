@@ -19,6 +19,7 @@ from engine.config import (
     LIVE_LEGACY_LEDGERS,
     LIVE_LEDGERS,
     LIVE_STATE_FILE,
+    LIVE_STRATEGY_MAX_POSITIONS,
     MAX_SHORT_OPEN_RATIO,
     MAX_TOTAL_POSITIONS,
     PARTIAL_PCT,
@@ -209,6 +210,7 @@ class Portfolio:
                     remaining_notional=float(p.get("remaining_notional") or p.get("notional") or 0),
                     remaining_qty=float(p.get("remaining_qty") or p.get("qty") or 0),
                     exchange_order_id=str(p.get("exchange_order_id") or ""),
+                    source_ledger=str(p.get("source_ledger") or ""),
                 )
             except Exception:
                 continue
@@ -285,7 +287,52 @@ class Portfolio:
             "remaining_notional": p.remaining_notional or p.notional,
             "remaining_qty": p.remaining_qty or p.qty,
             "exchange_order_id": p.exchange_order_id,
+            "source_ledger": p.source_ledger or self._infer_source_ledger(p),
         }
+
+    @staticmethod
+    def _infer_source_ledger(p: Position | Signal) -> str:
+        src = getattr(p, "source_ledger", "") or ""
+        if src:
+            return src
+        if isinstance(p, Signal):
+            ledger = p.ledger
+            if ledger and ledger != LIVE_COMBO_LEDGER:
+                return ledger
+            strat = p.strategy or ""
+        else:
+            ledger = p.ledger
+            if ledger and ledger not in (LIVE_COMBO_LEDGER, *LIVE_LEGACY_LEDGERS):
+                return ledger
+            strat = p.strategy or ""
+        if "Hacim" in strat:
+            return "Kasa_Hacim"
+        if "Evre_" in strat or "Wyckoff" in strat:
+            return "Kasa_PiyasaEvresi"
+        return ledger if ledger in LIVE_LEGACY_LEDGERS else ""
+
+    def _signal_source_ledger(self, sig: Signal) -> str:
+        src = (sig.extra or {}).get("source_ledger") or sig.ledger
+        if src and src != LIVE_COMBO_LEDGER:
+            return str(src)
+        return self._infer_source_ledger(sig)
+
+    def strategy_position_count(self, source_ledger: str) -> int:
+        if not source_ledger:
+            return 0
+        return sum(
+            1
+            for p in self.positions.values()
+            if self._infer_source_ledger(p) == source_ledger
+        )
+
+    def live_strategy_has_slot(self, source_ledger: str) -> bool:
+        if not self.live_mode or not LIVE_STRATEGY_MAX_POSITIONS:
+            return True
+        cap = LIVE_STRATEGY_MAX_POSITIONS.get(source_ledger)
+        if cap is None:
+            return True
+        return self.strategy_position_count(source_ledger) < cap
 
     def log(self, msg: str) -> None:
         line = f"[{now_tr('%H:%M:%S')}] {msg}"
@@ -339,6 +386,9 @@ class Portfolio:
             return False
         cap = max_positions_for_ledger(sig.ledger)
         if cap is not None and self.ledger_position_count(sig.ledger) >= cap:
+            return False
+        source_ledger = self._signal_source_ledger(sig)
+        if self.live_mode and not self.live_strategy_has_slot(source_ledger):
             return False
         if self.symbol_open(symbol, sig.ledger):
             return False
@@ -418,9 +468,11 @@ class Portfolio:
             remaining_notional=sized.notional,
             remaining_qty=fill_qty,
             exchange_order_id=order_id,
+            source_ledger=source_ledger,
         )
         self.log(
             f"YENI {sig.side.value} {symbol} | {sig.strategy} | {sig.ledger} "
+            f"| kaynak {source_ledger or '-'} "
             f"| {sized.leverage:.0f}x | marjin ${sized.margin:.2f} | notional ${sized.notional:.2f}"
         )
         return True
