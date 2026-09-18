@@ -172,6 +172,8 @@ NEAR_PCT = 0.004  # 0.4% proximity to level
 VOLUME_SMA = 20
 ATR_PERIOD = 14
 SCAN_SYMBOLS = int(os.environ.get("SCAN_SYMBOLS", "0"))  # 0 = tum USDT perpetual
+# Bybit TradFi (hisse/ emtia/ forex) haric — yalnizca kripto USDT perpetual
+SCAN_CRYPTO_ONLY = os.environ.get("SCAN_CRYPTO_ONLY", "1") == "1"
 PRICE_POLL_SEC = int(os.environ.get("PRICE_POLL_SEC", "20"))
 GITHUB_REPO = os.environ.get("GITHUB_REPO", "cumhursak53-del/Mobil-Tarama-Kripto")
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")

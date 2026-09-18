@@ -5,7 +5,7 @@ from typing import Optional
 
 import pandas as pd
 
-from engine.config import EXCLUDED_SYMBOLS, KLINE_LIMITS, SCAN_SYMBOLS, TIMEFRAMES
+from engine.config import EXCLUDED_SYMBOLS, KLINE_LIMITS, SCAN_CRYPTO_ONLY, SCAN_SYMBOLS, TIMEFRAMES
 
 _UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
@@ -186,16 +186,68 @@ def fetch_klines(symbol: str, interval: str, limit: Optional[int] = None) -> pd.
     raise RuntimeError(f"klines failed {symbol} {interval}: {last_err}")
 
 
-def fetch_symbols(limit: int = SCAN_SYMBOLS) -> list[str]:
+_BYBIT_TRADFI_SYMBOL_TYPES = frozenset({"stock", "commodity", "forex", "ETF", "xstocks", "mstocks"})
+_crypto_linear_cache: dict = {"ts": 0.0, "symbols": set()}
+
+
+def is_crypto_linear_instrument(info: dict) -> bool:
+    """Bybit linear enstruman kripto USDT perpetual mi (TradFi degil)."""
+    sym = str(info.get("symbol") or "")
+    if not _is_tradeable_usdt(sym):
+        return False
+    if (info.get("contractType") or "") != "LinearPerpetual":
+        return False
+    symbol_type = str(info.get("symbolType") or "").strip()
+    if symbol_type in _BYBIT_TRADFI_SYMBOL_TYPES:
+        return False
+    return True
+
+
+def _fetch_bybit_crypto_linear_symbols() -> set[str]:
+    """Bybit instruments-info: yalnizca kripto USDT perpetual semboller."""
+    now = time.time()
+    cached = _crypto_linear_cache.get("symbols") or set()
+    if cached and now - float(_crypto_linear_cache.get("ts") or 0) < 900:
+        return cached
+    symbols: set[str] = set()
+    cursor = ""
+    while True:
+        params: dict = {"category": "linear", "limit": "1000", "status": "Trading"}
+        if cursor:
+            params["cursor"] = cursor
+        raw = _get("https://api.bybit.com/v5/market/instruments-info", params, timeout=20)
+        result = raw.get("result") or {}
+        for item in result.get("list") or []:
+            if isinstance(item, dict) and is_crypto_linear_instrument(item):
+                symbols.add(str(item["symbol"]))
+        cursor = str(result.get("nextPageCursor") or "")
+        if not cursor:
+            break
+    _crypto_linear_cache["ts"] = now
+    _crypto_linear_cache["symbols"] = symbols
+    return symbols
+
+
+def fetch_symbols(limit: int = SCAN_SYMBOLS, *, crypto_only: bool | None = None) -> list[str]:
     """USDT perpetual evreni. limit<=0 ise hacmi olan tum sozlesmeler."""
     global _active_venue
+    if crypto_only is None:
+        crypto_only = SCAN_CRYPTO_ONLY
     rows: list[tuple[str, float]] = []
+    crypto_set: set[str] | None = None
+    if crypto_only:
+        try:
+            crypto_set = _fetch_bybit_crypto_linear_symbols()
+        except Exception:
+            crypto_set = None
     try:
         raw = _get("https://api.bybit.com/v5/market/tickers", {"category": "linear"}, timeout=10)
         lst = (raw.get("result") or {}).get("list") or []
         for t in lst:
             sym = t.get("symbol") or ""
             if not _is_tradeable_usdt(sym):
+                continue
+            if crypto_set is not None and sym not in crypto_set:
                 continue
             rows.append((sym, float(t.get("turnover24h") or 0)))
         if rows:

@@ -264,7 +264,7 @@ def run_live(scan_limit: int = SCAN_SYMBOLS) -> None:
                 symbols = fetch_symbols(scan_limit)
                 dominance = _update_dominance(pf, fetch_dominance())
                 last_universe_refresh = time.time()
-                pf.log(f"Piyasa listesi: {len(symbols)} sembol")
+                pf.log(f"Piyasa listesi: {len(symbols)} sembol (kripto USDT perpetual)")
 
             run_price_pass(pf)
 
