@@ -192,6 +192,12 @@ CREW_AUTO = os.environ.get("CREW_AUTO", "1") == "1"
 CREW_INTERVAL_SEC = int(os.environ.get("CREW_INTERVAL_SEC", "86400"))
 CREW_SEND_EMAIL = os.environ.get("CREW_SEND_EMAIL", "0") == "1"
 
+# LLM provider (gemini | ollama)
+LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "gemini").strip().lower()
+OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434").rstrip("/")
+OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "llama3.2")
+OLLAMA_VISION_MODEL = os.environ.get("OLLAMA_VISION_MODEL", "llava")
+
 # Gemini + arastirma
 def _normalize_secret(raw: str) -> str:
     k = (raw or "").strip()
@@ -248,3 +254,42 @@ EXCLUDED_SYMBOLS = {
     "USDCUSDT", "FDUSDUSDT", "USDPUSDT", "BTCDOMUSDT", "DEFIUSDT", "UBERUSDT",
     "BTCSTUSDT", "USDPUSDT",
 }
+
+# Live Bybit — Hacim + PiyasaEvresi tek kasada (Kasa_Canli)
+TRADING_MODE = os.environ.get("TRADING_MODE", "paper").strip().lower()
+LIVE_TRADING_ENABLED = os.environ.get("LIVE_TRADING_ENABLED", "0") == "1"
+BYBIT_MAINNET_CONFIRM = os.environ.get("BYBIT_MAINNET_CONFIRM", "")
+BYBIT_API_KEY = _normalize_secret(os.environ.get("BYBIT_API_KEY", ""))
+BYBIT_API_SECRET = _normalize_secret(os.environ.get("BYBIT_API_SECRET", ""))
+BYBIT_RECV_WINDOW = int(os.environ.get("BYBIT_RECV_WINDOW", "5000"))
+LIVE_STATE_FILE = os.environ.get("LIVE_STATE_FILE", "live_state.json")
+LIVE_COMBO_LEDGER = os.environ.get("LIVE_COMBO_LEDGER", "Kasa_Canli")
+LIVE_KASA_USD = float(os.environ.get("LIVE_KASA_USD", "100"))
+LIVE_LEDGERS = (LIVE_COMBO_LEDGER,)
+LIVE_LONG_ONLY = os.environ.get("LIVE_LONG_ONLY", "0") == "1"
+LIVE_MAX_NOTIONAL_USD = float(os.environ.get("LIVE_MAX_NOTIONAL_USD", "500"))
+LIVE_HTTP_PORT = int(os.environ.get("LIVE_HTTP_PORT", "10001"))
+
+
+def _default_bybit_base_url() -> str:
+    if TRADING_MODE == "bybit_mainnet":
+        return "https://api.bybit.com"
+    if TRADING_MODE == "bybit_testnet":
+        return "https://api-testnet.bybit.com"
+    return os.environ.get("BYBIT_BASE_URL", "https://api-testnet.bybit.com")
+
+
+BYBIT_BASE_URL = os.environ.get("BYBIT_BASE_URL", _default_bybit_base_url()).rstrip("/")
+LIVE_KASA_BALANCES = {LIVE_COMBO_LEDGER: LIVE_KASA_USD}
+# Eski ayirim kasalari — sadece state gocu icin
+LIVE_LEGACY_LEDGERS = ("Kasa_Hacim", "Kasa_PiyasaEvresi")
+
+
+def is_live_exchange() -> bool:
+    if not LIVE_TRADING_ENABLED:
+        return False
+    if TRADING_MODE == "bybit_testnet":
+        return True
+    if TRADING_MODE == "bybit_mainnet":
+        return BYBIT_MAINNET_CONFIRM == "YES_I_UNDERSTAND"
+    return False

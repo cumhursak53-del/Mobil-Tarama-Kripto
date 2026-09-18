@@ -68,6 +68,7 @@ class Position:
     initial_sl: float = 0.0
     remaining_notional: float = 0.0
     remaining_qty: float = 0.0
+    exchange_order_id: str = ""
 
 
 @dataclass

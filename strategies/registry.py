@@ -67,6 +67,11 @@ _CLASSES: list[type[Strategy]] = [
 ]
 
 
+def live_strategies() -> list[Strategy]:
+    """Canli Bybit motoru: yalnizca Hacim + PiyasaEvresi."""
+    return [Hacim(), PiyasaEvresi()]
+
+
 def all_strategies(lab_state: dict | None = None) -> list[Strategy]:
     base = [cls() for cls in _CLASSES]
     if not lab_state:

@@ -1,0 +1,18 @@
+[Unit]
+Description=Krpito Live Bybit Motor (Hacim + PiyasaEvresi)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=krpito
+WorkingDirectory=/opt/krpito
+EnvironmentFile=/opt/krpito/live.env
+ExecStart=/opt/krpito/.venv/bin/python /opt/krpito/start_live.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

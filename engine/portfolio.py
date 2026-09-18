@@ -8,12 +8,17 @@ from typing import Optional
 from engine.config import (
     BE_AT_R,
     CREW_AUTO,
-    GEMINI_API_KEY,
     GITHUB_TOKEN,
     KASA_START_USD,
     LAB_AUTO,
     LAB_LEDGER_PREFIX,
     LEDGER_NAMES,
+    LIVE_COMBO_LEDGER,
+    LIVE_KASA_BALANCES,
+    LIVE_KASA_USD,
+    LIVE_LEGACY_LEDGERS,
+    LIVE_LEDGERS,
+    LIVE_STATE_FILE,
     MAX_SHORT_OPEN_RATIO,
     MAX_TOTAL_POSITIONS,
     PARTIAL_PCT,
@@ -27,6 +32,7 @@ from engine.config import (
     SYMBOL_LOCK_MODE,
     TAKER_FEE,
     TR_TZ,
+    is_live_exchange,
 )
 from engine.github_sync import pull_state, push_state
 from engine.lab_state import (
@@ -53,9 +59,15 @@ def now_tr(fmt: str = "%Y-%m-%d %H:%M:%S") -> str:
 
 
 class Portfolio:
-    def __init__(self, path: str = STATE_FILE):
-        self.path = path
-        self.ledgers: dict[str, float] = {k: KASA_START_USD for k in LEDGER_NAMES}
+    def __init__(self, path: str | None = None, *, live_mode: bool = False):
+        self.live_mode = live_mode or is_live_exchange()
+        self.path = path or (LIVE_STATE_FILE if self.live_mode else STATE_FILE)
+        if self.live_mode:
+            self.ledgers = {
+                k: float(LIVE_KASA_BALANCES.get(k, KASA_START_USD)) for k in LIVE_LEDGERS
+            }
+        else:
+            self.ledgers = {k: KASA_START_USD for k in LEDGER_NAMES}
         self.positions: dict[str, Position] = {}  # key: ledger|symbol
         self.history: list[dict] = []
         self.signal_log: dict = {}
@@ -70,40 +82,51 @@ class Portfolio:
         self.post_exit_watchlist: list[dict] = []
         self.post_exit_log: list[dict] = []
         self.state_source: str = "fresh"
-        remote = pull_state()
-        local_raw = None
-        if os.path.exists(self.path):
-            try:
-                with open(self.path, "r", encoding="utf-8") as f:
-                    local_raw = json.load(f)
-            except Exception:
-                local_raw = None
-        merged, self.state_source = merge_trading_state(local_raw, remote)
-        pre_hist = len((local_raw or {}).get("history") or [])
-        pre_remote_hist = len((remote or {}).get("history") or [])
-        if merged:
-            self._apply_raw(merged)
-        else:
+        if self.live_mode:
             self.load()
-        self.lab_state = load_lab_state()
-        from engine.crew.sync import load_crew_state
+            n_pos = len(self.positions)
+            n_hist = len(self.history)
+            self.log(
+                f"Canli state yuklendi | acik {n_pos} | kapanan {n_hist} | "
+                f"kasa={LIVE_COMBO_LEDGER} ${self.ledgers.get(LIVE_COMBO_LEDGER, 0):.2f}"
+            )
+            if n_pos or n_hist:
+                self.save(sync_github=False)
+        else:
+            remote = pull_state()
+            local_raw = None
+            if os.path.exists(self.path):
+                try:
+                    with open(self.path, "r", encoding="utf-8") as f:
+                        local_raw = json.load(f)
+                except Exception:
+                    local_raw = None
+            merged, self.state_source = merge_trading_state(local_raw, remote)
+            pre_hist = len((local_raw or {}).get("history") or [])
+            pre_remote_hist = len((remote or {}).get("history") or [])
+            if merged:
+                self._apply_raw(merged)
+            else:
+                self.load()
+            self.lab_state = load_lab_state()
+            from engine.crew.sync import load_crew_state
 
-        self.crew_state = load_crew_state()
-        self._ensure_lab_ledgers()
-        if os.environ.get("RESET_TRADING_ON_START", "0") == "1":
-            self.reset_trading(keep_scans=True, keep_signals=True)
-            self.save(sync_github=bool(GITHUB_TOKEN))
-        n_pos = len(self.positions)
-        n_hist = len(self.history)
-        if merged and n_hist > max(pre_hist, pre_remote_hist):
-            self.log(f"Islem gecmisi birlestirildi: {n_hist} kayit (local {pre_hist}, github {pre_remote_hist})")
-        sync_mode = "token" if GITHUB_TOKEN else "actions"
-        self.log(
-            f"State yuklendi [{self.state_source}] | acik {n_pos} | kapanan {n_hist} | "
-            f"github={'ok' if remote else 'yok'} | sync={sync_mode}"
-        )
-        if n_pos or n_hist:
-            self.save(sync_github=bool(GITHUB_TOKEN))
+            self.crew_state = load_crew_state()
+            self._ensure_lab_ledgers()
+            if os.environ.get("RESET_TRADING_ON_START", "0") == "1":
+                self.reset_trading(keep_scans=True, keep_signals=True)
+                self.save(sync_github=bool(GITHUB_TOKEN))
+            n_pos = len(self.positions)
+            n_hist = len(self.history)
+            if merged and n_hist > max(pre_hist, pre_remote_hist):
+                self.log(f"Islem gecmisi birlestirildi: {n_hist} kayit (local {pre_hist}, github {pre_remote_hist})")
+            sync_mode = "token" if GITHUB_TOKEN else "actions"
+            self.log(
+                f"State yuklendi [{self.state_source}] | acik {n_pos} | kapanan {n_hist} | "
+                f"github={'ok' if remote else 'yok'} | sync={sync_mode}"
+            )
+            if n_pos or n_hist:
+                self.save(sync_github=bool(GITHUB_TOKEN))
 
     @staticmethod
     def pos_key(ledger: str, symbol: str) -> str:
@@ -135,9 +158,20 @@ class Portfolio:
         self._apply_raw(raw)
 
     def _apply_raw(self, raw: dict) -> None:
-        self.ledgers.update(raw.get("ledgers") or {})
-        for k in LEDGER_NAMES:
-            self.ledgers.setdefault(k, KASA_START_USD)
+        ledger_keys = LIVE_LEDGERS if self.live_mode else LEDGER_NAMES
+        saved_ledgers = raw.get("ledgers") or {}
+        if self.live_mode:
+            if LIVE_COMBO_LEDGER in saved_ledgers:
+                cash = float(saved_ledgers[LIVE_COMBO_LEDGER])
+            else:
+                cash = sum(float(saved_ledgers.get(k, 0)) for k in LIVE_LEGACY_LEDGERS)
+                if cash <= 0:
+                    cash = LIVE_KASA_USD
+            self.ledgers = {LIVE_COMBO_LEDGER: cash}
+        else:
+            self.ledgers.update(saved_ledgers)
+            for k in LEDGER_NAMES:
+                self.ledgers.setdefault(k, KASA_START_USD)
         self.history = raw.get("history") or []
         self.signal_log = raw.get("signal_log") or {}
         self.patlama_scan = raw.get("patlama_selale_scan") or {}
@@ -174,9 +208,19 @@ class Portfolio:
                     initial_sl=float(p.get("initial_sl") or p["sl_price"]),
                     remaining_notional=float(p.get("remaining_notional") or p.get("notional") or 0),
                     remaining_qty=float(p.get("remaining_qty") or p.get("qty") or 0),
+                    exchange_order_id=str(p.get("exchange_order_id") or ""),
                 )
             except Exception:
                 continue
+        if self.live_mode:
+            migrated: dict[str, Position] = {}
+            for key, p in self.positions.items():
+                if p.ledger in LIVE_LEGACY_LEDGERS:
+                    p.ledger = LIVE_COMBO_LEDGER
+                    migrated[self.pos_key(LIVE_COMBO_LEDGER, p.symbol)] = p
+                else:
+                    migrated[key] = p
+            self.positions = migrated
 
     def reset_trading(self, *, keep_scans: bool = True, keep_signals: bool = True) -> None:
         """Acik pozisyonlari ve islem gecmisini sifirla; kasa bakiyelerini baslangica cek."""
@@ -240,6 +284,7 @@ class Portfolio:
             "initial_sl": p.initial_sl,
             "remaining_notional": p.remaining_notional or p.notional,
             "remaining_qty": p.remaining_qty or p.qty,
+            "exchange_order_id": p.exchange_order_id,
         }
 
     def log(self, msg: str) -> None:
@@ -333,29 +378,44 @@ class Portfolio:
         new_risk = PositionRisk(entry=price, sl=sig.sl_price, notional=sized.notional, margin=sized.margin)
         if not would_survive_all_sl(cash=cash, open_positions=self._ledger_risks(sig.ledger), new=new_risk):
             return False
+        fill_price = price
+        fill_qty = sized.qty
+        order_id = ""
+        if is_live_exchange():
+            from engine.exchange.executor import get_executor
+
+            fill = get_executor().open_position(symbol, sig, sized, price)
+            if not fill.ok:
+                self.log(f"Bybit acilis basarisiz {symbol} | {sig.ledger} | {fill.message}")
+                return False
+            fill_price = fill.fill_price or price
+            fill_qty = fill.fill_qty or sized.qty
+            order_id = fill.order_id
+            self.log(f"Bybit acildi {symbol} | {sig.ledger} | order={order_id or '-'}")
         self.ledgers[sig.ledger] -= sized.margin
         self.positions[key] = Position(
             symbol=symbol,
             side=sig.side,
             ledger=sig.ledger,
             strategy=sig.strategy,
-            entry_price=price,
+            entry_price=fill_price,
             sl_price=sig.sl_price,
             tp_price=sig.tp_price,
             margin=sized.margin,
             notional=sized.notional,
             leverage=sized.leverage,
-            qty=sized.qty,
+            qty=fill_qty,
             entry_time=now_tr(),
-            peak_price=price,
-            current_price=price,
+            peak_price=fill_price,
+            current_price=fill_price,
             tp_levels=list(sig.tp_levels or []),
             trail_at_r=sig.trail_at_r,
             be_at_r=sig.be_at_r or BE_AT_R,
             partial_pct=sig.partial_pct,
             initial_sl=sig.sl_price,
             remaining_notional=sized.notional,
-            remaining_qty=sized.qty,
+            remaining_qty=fill_qty,
+            exchange_order_id=order_id,
         )
         self.log(
             f"YENI {sig.side.value} {symbol} | {sig.strategy} | {sig.ledger} "
@@ -392,6 +452,15 @@ class Portfolio:
         close_notional = p.remaining_notional * p.partial_pct
         if close_notional <= 0:
             return False
+        partial_qty = (p.remaining_qty or p.qty) * p.partial_pct
+        if is_live_exchange() and partial_qty > 0:
+            from engine.exchange.executor import get_executor
+
+            fill = get_executor().reduce_position(p, partial_qty, price)
+            if not fill.ok:
+                self.log(f"Bybit kismi kapanis basarisiz {p.symbol} | {fill.message}")
+                return False
+            price = fill.fill_price or price
         ratio = (price - p.entry_price) / p.entry_price if p.side == Side.BUY else (p.entry_price - price) / p.entry_price
         gross = close_notional * ratio
         fee = close_notional * TAKER_FEE * 2
@@ -435,10 +504,18 @@ class Portfolio:
             new_sl = p.peak_price - dist * 0.5
             if new_sl > p.sl_price:
                 p.sl_price = new_sl
+                if is_live_exchange():
+                    from engine.exchange.executor import get_executor
+
+                    get_executor().amend_sl(p, new_sl)
         else:
             new_sl = p.peak_price + dist * 0.5
             if new_sl < p.sl_price:
                 p.sl_price = new_sl
+                if is_live_exchange():
+                    from engine.exchange.executor import get_executor
+
+                    get_executor().amend_sl(p, new_sl)
 
     def _exit_reason(self, p: Position, price: float) -> Optional[str]:
         self._maybe_trail(p, price)
@@ -515,6 +592,15 @@ class Portfolio:
         return opened
 
     def _close(self, key: str, price: float, reason: str) -> ClosedTrade:
+        p = self.positions[key]
+        if is_live_exchange():
+            from engine.exchange.executor import get_executor
+
+            fill = get_executor().close_position(p, price, reason)
+            if not fill.ok:
+                self.log(f"Bybit kapanis basarisiz {p.symbol} | {fill.message}")
+            else:
+                price = fill.fill_price or price
         p = self.positions.pop(key)
         notional = p.remaining_notional or p.notional
         ratio = (price - p.entry_price) / p.entry_price if p.side == Side.BUY else (p.entry_price - price) / p.entry_price
@@ -669,7 +755,9 @@ class Portfolio:
                 "pipeline": self.lab_state.get("pipeline") or {},
                 "research": {
                     **(self.lab_state.get("research") or {}),
-                    "gemini_configured": bool(GEMINI_API_KEY),
+                    "gemini_configured": self._llm_configured(),
+                    "llm_configured": self._llm_configured(),
+                    "llm_provider": self._llm_provider_name(),
                     "research_enabled": RESEARCH_ENABLED,
                 },
                 "source_metrics": self.lab_state.get("source_metrics") or {},
@@ -677,7 +765,9 @@ class Portfolio:
             },
             "engine_flags": {
                 "research_enabled": RESEARCH_ENABLED,
-                "gemini_configured": bool(GEMINI_API_KEY),
+                "gemini_configured": self._llm_configured(),
+                "llm_configured": self._llm_configured(),
+                "llm_provider": self._llm_provider_name(),
                 "lab_auto": LAB_AUTO,
                 "crew_auto": CREW_AUTO,
                 "github_token": bool(GITHUB_TOKEN),
@@ -685,6 +775,18 @@ class Portfolio:
             "crew_summary": self._crew_summary(),
             "updated_at": now_tr(),
         }
+
+    @staticmethod
+    def _llm_configured() -> bool:
+        from engine.llm_client import llm_available
+
+        return llm_available()
+
+    @staticmethod
+    def _llm_provider_name() -> str:
+        from engine.llm_client import llm_provider
+
+        return llm_provider()
 
     def _crew_summary(self) -> dict:
         from engine.crew.summary import crew_summary_from_state
