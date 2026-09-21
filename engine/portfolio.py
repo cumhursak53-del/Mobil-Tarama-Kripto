@@ -880,7 +880,10 @@ class Portfolio:
             "engine_logs": self.logs[-100:],
             "equity_curve": self._equity_curve[-300:],
             "kasa_count": len(self.ledgers),
-            "engine_flags": {"live_mode": True},
+            "engine_flags": {
+                "live_mode": True,
+                "signal_analysis": True,
+            },
             "updated_at": now_tr(),
         }
 

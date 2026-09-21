@@ -77,6 +77,12 @@ def _render_trade_analysis(data: dict) -> None:
 
 
 def _render_signal_analysis(data: dict) -> None:
+    flags = data.get("engine_flags") or {}
+    if not flags.get("signal_analysis") and "signal_watchlist" not in data:
+        st.warning(
+            "Bu motor surumu sinyal analizini desteklemiyor (eski kod). "
+            "Hostinger: git pull + deploy_vps.sh | Render: worker yeniden deploy."
+        )
     log = data.get("signal_outcome_log") or []
     watch = data.get("signal_watchlist") or []
 

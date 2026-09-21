@@ -250,8 +250,22 @@ class LiveMonitorApp:
         self._fill_tree(self.pos_tree, pos_rows(active))
         self._fill_tree(self.hist_tree, history_rows(history))
         self._fill_tree(self.sig_tree, signal_log_rows(data.get("signal_log") or {}))
-        self._fill_tree(self.sig_analysis_tree, signal_outcome_rows(data.get("signal_outcome_log") or []))
-        self._fill_tree(self.sig_watch_tree, signal_watch_rows(data.get("signal_watchlist") or []))
+        flags = data.get("engine_flags") or {}
+        if not flags.get("signal_analysis") and "signal_watchlist" not in data:
+            import pandas as pd
+
+            self._fill_tree(
+                self.sig_analysis_tree,
+                pd.DataFrame(
+                    [{"mesaj": "VPS guncel degil — Hostinger terminalde git pull + deploy_vps.sh calistirin"}]
+                ),
+            )
+            self._fill_tree(self.sig_watch_tree, None)
+        else:
+            self._fill_tree(
+                self.sig_analysis_tree, signal_outcome_rows(data.get("signal_outcome_log") or [])
+            )
+            self._fill_tree(self.sig_watch_tree, signal_watch_rows(data.get("signal_watchlist") or []))
 
         logs = data.get("engine_logs") or []
         self.log_text.delete("1.0", tk.END)
