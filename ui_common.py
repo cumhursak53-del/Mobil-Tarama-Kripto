@@ -16,6 +16,7 @@ from shared.ui_data import (  # noqa: F401
     crew_result_rows,
     engine_status,
     format_price,
+    format_price_symbol,
     ledger_daily_performance_rows,
     ledger_live_candidate_rows,
     ledger_summary_rows,

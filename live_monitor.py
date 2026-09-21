@@ -178,10 +178,10 @@ class LiveMonitorApp:
     def _fmt(v) -> str:
         if v is None:
             return "-"
-        if isinstance(v, float):
-            if abs(v) >= 1000 or (abs(v) < 0.01 and v != 0):
-                return f"{v:,.4f}".rstrip("0").rstrip(".")
-            return f"{v:,.2f}"
+        if isinstance(v, (int, float)):
+            from shared.price_format import format_price
+
+            return format_price(float(v))
         return str(v)
 
     def refresh(self) -> None:

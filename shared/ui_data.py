@@ -38,27 +38,15 @@ def _desktop_mode() -> bool:
 
 
 def format_price(v: float | None) -> str:
-    if v is None:
-        return "-"
-    try:
-        val = float(v)
-    except (TypeError, ValueError):
-        return str(v)
-    if val == 0:
-        return "0"
-    av = abs(val)
-    if av >= 1000:
-        return f"{val:,.4f}".rstrip("0").rstrip(".")
-    if av >= 1:
-        decimals = 6
-    elif av >= 0.0001:
-        decimals = 8
-    else:
-        decimals = 12
-    text = f"{val:.{decimals}f}"
-    if "." in text:
-        text = text.rstrip("0").rstrip(".")
-    return text
+    from shared.price_format import format_price as _fmt
+
+    return _fmt(v)
+
+
+def format_price_symbol(symbol: str | None, price: float | None) -> str:
+    from shared.price_format import format_price_symbol as _fmt_sym
+
+    return _fmt_sym(symbol, price)
 
 
 def _get_json(url: str, headers: Optional[dict] = None, timeout: int = 12):
@@ -353,14 +341,15 @@ def _pos_rows(active: dict) -> pd.DataFrame:
     for key, p in (active or {}).items():
         if not isinstance(p, dict):
             continue
+        sym = p.get("symbol", key)
         rows.append({
-            "Sembol": p.get("symbol", key),
+            "Sembol": sym,
             "Kasa": p.get("ledger_name", "-"),
             "Yon": p.get("side"),
-            "Giris": format_price(p.get("entry_price")),
-            "Anlik": format_price(p.get("current_price")),
-            "SL": format_price(p.get("sl_price")),
-            "TP": format_price(p.get("tp_price")),
+            "Giris": format_price_symbol(sym, p.get("entry_price")),
+            "Anlik": format_price_symbol(sym, p.get("current_price")),
+            "SL": format_price_symbol(sym, p.get("sl_price")),
+            "TP": format_price_symbol(sym, p.get("tp_price")),
             "ROE_%": p.get("roe_pct"),
             "Acik_PnL": p.get("unrealized_pnl"),
             "Marjin": p.get("margin"),
@@ -697,15 +686,15 @@ def signal_outcome_rows(log: list | None) -> pd.DataFrame:
             "Strateji": a.get("strategy"),
             "Kasa": a.get("ledger"),
             "Yon": a.get("side"),
-            "Giris": a.get("entry"),
-            "SL": a.get("sl_price"),
-            "TP": a.get("tp_price"),
+            "Giris": format_price_symbol(a.get("symbol"), a.get("entry")),
+            "SL": format_price_symbol(a.get("symbol"), a.get("sl_price")),
+            "TP": format_price_symbol(a.get("symbol"), a.get("tp_price")),
             "Skor": a.get("strength"),
             "Sonuc": a.get("outcome"),
             "Karar": a.get("verdict"),
             "MFE_R": a.get("mfe_r"),
             "MAE_R": a.get("mae_r"),
-            "24s_fiyat": a.get("price_at_24h"),
+            "24s_fiyat": format_price_symbol(a.get("symbol"), a.get("price_at_24h")),
             "24s_hareket_pct": a.get("move_pct"),
             "TP_vurdu": a.get("hit_tp"),
             "SL_vurdu": a.get("hit_sl"),
@@ -733,13 +722,13 @@ def signal_watch_rows(watchlist: list | None) -> pd.DataFrame:
             "Sembol": w.get("symbol"),
             "Strateji": w.get("strategy"),
             "Yon": w.get("side"),
-            "Giris": w.get("entry"),
-            "SL": w.get("sl_price"),
-            "TP": w.get("tp_price"),
+            "Giris": format_price_symbol(w.get("symbol"), w.get("entry")),
+            "SL": format_price_symbol(w.get("symbol"), w.get("sl_price")),
+            "TP": format_price_symbol(w.get("symbol"), w.get("tp_price")),
             "Kalan_saat": round(remain_h, 1),
-            "Yuksek": w.get("post_high"),
-            "Dusuk": w.get("post_low"),
-            "Son_fiyat": w.get("last_price"),
+            "Yuksek": format_price_symbol(w.get("symbol"), w.get("post_high")),
+            "Dusuk": format_price_symbol(w.get("symbol"), w.get("post_low")),
+            "Son_fiyat": format_price_symbol(w.get("symbol"), w.get("last_price")),
             "Sinyal": w.get("signal_time"),
         })
     return pd.DataFrame(rows)
@@ -760,12 +749,12 @@ def post_exit_watch_rows(watchlist: list | None) -> pd.DataFrame:
             "Sembol": w.get("symbol"),
             "Kasa": w.get("ledger"),
             "Yon": w.get("side"),
-            "Cikis": w.get("exit"),
+            "Cikis": format_price_symbol(w.get("symbol"), w.get("exit")),
             "Kapanis": w.get("close_reason"),
             "Kalan_saat": round(remain_h, 1),
-            "Post_yuksek": w.get("post_high"),
-            "Post_dusuk": w.get("post_low"),
-            "Son_fiyat": w.get("last_price"),
+            "Post_yuksek": format_price_symbol(w.get("symbol"), w.get("post_high")),
+            "Post_dusuk": format_price_symbol(w.get("symbol"), w.get("post_low")),
+            "Son_fiyat": format_price_symbol(w.get("symbol"), w.get("last_price")),
         })
     return pd.DataFrame(rows)
 
