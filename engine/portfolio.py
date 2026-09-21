@@ -82,6 +82,8 @@ class Portfolio:
         self.pending_orders: list[dict] = []
         self.post_exit_watchlist: list[dict] = []
         self.post_exit_log: list[dict] = []
+        self.signal_watchlist: list[dict] = []
+        self.signal_outcome_log: list[dict] = []
         self.state_source: str = "fresh"
         if self.live_mode:
             self.load()
@@ -182,6 +184,8 @@ class Portfolio:
         self.pending_orders = raw.get("pending_orders") or []
         self.post_exit_watchlist = raw.get("post_exit_watchlist") or []
         self.post_exit_log = raw.get("post_exit_log") or []
+        self.signal_watchlist = raw.get("signal_watchlist") or []
+        self.signal_outcome_log = raw.get("signal_outcome_log") or []
         self.positions = {}
         for key, p in (raw.get("active_positions") or {}).items():
             try:
@@ -231,6 +235,8 @@ class Portfolio:
         self.pending_orders.clear()
         self.post_exit_watchlist.clear()
         self.post_exit_log.clear()
+        self.signal_watchlist.clear()
+        self.signal_outcome_log.clear()
         self._equity_curve.clear()
         self._symbol_sl_until.clear()
         self.ledgers = {k: KASA_START_USD for k in LEDGER_NAMES}
@@ -739,7 +745,7 @@ class Portfolio:
             )
             self.smc_scan = dict(ranked[:500])
 
-    def record_signal(self, symbol: str, sig: Signal) -> None:
+    def record_signal(self, symbol: str, sig: Signal, *, entry_price: float = 0) -> None:
         rec = self.signal_log.setdefault(
             symbol,
             {"count": 0, "strategies": [], "last_side": "", "last_time": "", "first_time": ""},
@@ -753,6 +759,17 @@ class Portfolio:
         rec["last_ledger"] = sig.ledger
         if sig.strategy not in rec["strategies"]:
             rec["strategies"].append(sig.strategy)
+        if entry_price > 0 and sig.sl_price > 0:
+            from engine.signal_outcome import enqueue_signal_watch
+
+            enqueue_signal_watch(
+                self.signal_watchlist,
+                symbol=symbol,
+                sig=sig,
+                entry_price=entry_price,
+                signal_time=ts,
+                log=self.log,
+            )
 
     def snapshot(self) -> dict:
         eq = sum(self.ledgers.values()) + sum(p.margin for p in self.positions.values())
@@ -787,6 +804,8 @@ class Portfolio:
             "pending_orders": self.pending_orders[-20:],
             "post_exit_watchlist": self.post_exit_watchlist[-200:],
             "post_exit_log": self.post_exit_log[-500:],
+            "signal_watchlist": self.signal_watchlist[-200:],
+            "signal_outcome_log": self.signal_outcome_log[-500:],
             "history": self.history[-HISTORY_MAX:],
             "history_count": len(self.history),
             "signal_log": {k: v for k, v in self.signal_log.items() if not str(k).startswith("_")},
@@ -854,6 +873,10 @@ class Portfolio:
             "history": self.history[-HISTORY_MAX:],
             "history_count": len(self.history),
             "signal_log": {k: v for k, v in self.signal_log.items() if not str(k).startswith("_")},
+            "signal_watchlist": self.signal_watchlist[-200:],
+            "signal_outcome_log": self.signal_outcome_log[-500:],
+            "post_exit_watchlist": self.post_exit_watchlist[-200:],
+            "post_exit_log": self.post_exit_log[-500:],
             "engine_logs": self.logs[-100:],
             "equity_curve": self._equity_curve[-300:],
             "kasa_count": len(self.ledgers),

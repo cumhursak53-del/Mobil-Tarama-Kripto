@@ -115,6 +115,8 @@ def _empty_data() -> dict:
         "active_positions": {},
         "history": [],
         "signal_log": {},
+        "signal_watchlist": [],
+        "signal_outcome_log": [],
         "patlama_selale_scan": {},
         "engine_logs": [],
         "lab_candidates": [],
@@ -681,6 +683,68 @@ def post_exit_analysis_rows(log: list | None) -> pd.DataFrame:
     return df
 
 
+def signal_outcome_rows(log: list | None) -> pd.DataFrame:
+    if not log:
+        return pd.DataFrame()
+    rows = []
+    for a in log:
+        if not isinstance(a, dict):
+            continue
+        recs = a.get("recommendations") or []
+        rows.append({
+            "Sinyal_zamani": a.get("signal_time"),
+            "Sembol": a.get("symbol"),
+            "Strateji": a.get("strategy"),
+            "Kasa": a.get("ledger"),
+            "Yon": a.get("side"),
+            "Giris": a.get("entry"),
+            "SL": a.get("sl_price"),
+            "TP": a.get("tp_price"),
+            "Skor": a.get("strength"),
+            "Sonuc": a.get("outcome"),
+            "Karar": a.get("verdict"),
+            "MFE_R": a.get("mfe_r"),
+            "MAE_R": a.get("mae_r"),
+            "24s_fiyat": a.get("price_at_24h"),
+            "24s_hareket_pct": a.get("move_pct"),
+            "TP_vurdu": a.get("hit_tp"),
+            "SL_vurdu": a.get("hit_sl"),
+            "Hipotetik_PnL": a.get("pnl_hypo_usd"),
+            "Oneri": " | ".join(recs) if recs else "",
+        })
+    df = pd.DataFrame(rows)
+    if not df.empty:
+        df = df.sort_values("Sinyal_zamani", ascending=False)
+    return df
+
+
+def signal_watch_rows(watchlist: list | None) -> pd.DataFrame:
+    if not watchlist:
+        return pd.DataFrame()
+    from engine.config import TR_TZ
+    from engine.signal_outcome import parse_tr_ts
+
+    rows = []
+    now = datetime.now(TR_TZ)
+    for w in watchlist:
+        until = parse_tr_ts(str(w.get("watch_until") or ""))
+        remain_h = max(0.0, (until - now).total_seconds() / 3600) if until else 0.0
+        rows.append({
+            "Sembol": w.get("symbol"),
+            "Strateji": w.get("strategy"),
+            "Yon": w.get("side"),
+            "Giris": w.get("entry"),
+            "SL": w.get("sl_price"),
+            "TP": w.get("tp_price"),
+            "Kalan_saat": round(remain_h, 1),
+            "Yuksek": w.get("post_high"),
+            "Dusuk": w.get("post_low"),
+            "Son_fiyat": w.get("last_price"),
+            "Sinyal": w.get("signal_time"),
+        })
+    return pd.DataFrame(rows)
+
+
 def post_exit_watch_rows(watchlist: list | None) -> pd.DataFrame:
     if not watchlist:
         return pd.DataFrame()
@@ -720,9 +784,11 @@ def build_excel_bytes(data: dict) -> bytes:
         data.get("history") or [],
         data.get("active_positions") or {},
     )
+    from engine.signal_analysis import strategy_signal_summary
     from engine.trade_analysis import ledger_analysis_summary
 
     analysis_log = data.get("post_exit_log") or []
+    signal_log_analysis = data.get("signal_outcome_log") or []
     sheets = {
         "Ozet": ozet,
         "Kasalar": _ledger_rows(data),
@@ -730,6 +796,8 @@ def build_excel_bytes(data: dict) -> bytes:
         "Canli_Adaylar": ledger_live_candidate_rows(daily),
         "Islem_Analizi": post_exit_analysis_rows(analysis_log),
         "Kasa_Analiz_Ozeti": ledger_analysis_summary(analysis_log),
+        "Sinyal_Analizi": signal_outcome_rows(signal_log_analysis),
+        "Strateji_Sinyal_Ozeti": strategy_signal_summary(signal_log_analysis),
         "Acik_Pozisyonlar": _pos_rows(data.get("active_positions") or {}),
         "Islem_Gecmisi": _history_rows(data.get("history") or []),
         "Sinyaller": _signal_rows(data.get("signal_log") or {}),

@@ -1,15 +1,18 @@
 import streamlit as st
 
+from engine.signal_analysis import strategy_signal_summary
 from engine.trade_analysis import ledger_analysis_summary
-from ui_common import get_engine_data, post_exit_analysis_rows, post_exit_watch_rows, source_caption
+from ui_common import (
+    get_engine_data,
+    post_exit_analysis_rows,
+    post_exit_watch_rows,
+    signal_outcome_rows,
+    signal_watch_rows,
+    source_caption,
+)
 
 
-def render() -> None:
-    st.title("Islem Analizi")
-    st.caption("Kapanan islemler 24 saat daha izlenir; SL/TP kararlari ve kacirilan firsatlar analiz edilir.")
-    data = get_engine_data()
-    st.caption(source_caption(data))
-
+def _render_trade_analysis(data: dict) -> None:
     log = data.get("post_exit_log") or []
     watch = data.get("post_exit_watchlist") or []
 
@@ -18,22 +21,17 @@ def render() -> None:
     sl_tight = sum(1 for x in sl_items if x.get("sl_verdict") == "too_tight")
     sl_ok = sum(1 for x in sl_items if x.get("sl_verdict") == "correct")
     tp_early = sum(1 for x in tp_items if x.get("tp_verdict") == "too_early")
-    tp_ok = sum(1 for x in tp_items if x.get("tp_verdict") == "correct")
 
     c1, c2, c3, c4, c5 = st.columns(5)
-    c1.metric("Analiz edilen", len(log))
-    c2.metric("Aktif izleme", len(watch))
+    c1.metric("Analiz edilen islem", len(log))
+    c2.metric("Aktif islem izleme", len(watch))
     c3.metric("SL siki", sl_tight)
     c4.metric("SL dogru", sl_ok)
     c5.metric("TP erken", tp_early)
 
     if watch:
-        st.subheader("Aktif izleme (24s)")
-        st.dataframe(
-            post_exit_watch_rows(watch),
-            use_container_width=True,
-            hide_index=True,
-        )
+        st.subheader("Aktif islem izleme (24s)")
+        st.dataframe(post_exit_watch_rows(watch), use_container_width=True, hide_index=True)
 
     if not log:
         st.info("Henuz tamamlanmis islem analizi yok. Islem kapandiktan 24 saat sonra sonuclar burada gorunur.")
@@ -44,7 +42,7 @@ def render() -> None:
     if not summary.empty:
         st.dataframe(summary, use_container_width=True, hide_index=True)
 
-    st.subheader("Detay analiz")
+    st.subheader("Islem detay")
     df = post_exit_analysis_rows(log)
     kasalar = ["Tumu"] + sorted(df["Kasa"].dropna().unique().tolist())
     kapanis = ["Tumu", "SL", "TP", "PARTIAL_TP", "INVALIDATED"]
@@ -60,9 +58,7 @@ def render() -> None:
     if kapanis_f != "Tumu":
         show = show[show["Kapanis"] == kapanis_f]
     if verdict_f != "Tumu":
-        show = show[
-            (show["SL_karar"] == verdict_f) | (show["TP_karar"] == verdict_f)
-        ]
+        show = show[(show["SL_karar"] == verdict_f) | (show["TP_karar"] == verdict_f)]
 
     st.dataframe(
         show,
@@ -79,5 +75,80 @@ def render() -> None:
         },
     )
 
-    if tp_ok:
-        st.caption(f"TP dogru karar: {tp_ok} islem")
+
+def _render_signal_analysis(data: dict) -> None:
+    log = data.get("signal_outcome_log") or []
+    watch = data.get("signal_watchlist") or []
+
+    correct = sum(1 for x in log if x.get("verdict") == "correct")
+    wrong = sum(1 for x in log if x.get("verdict") == "wrong")
+    tp_hit = sum(1 for x in log if x.get("outcome") == "tp_hit")
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Analiz edilen sinyal", len(log))
+    c2.metric("Aktif sinyal izleme", len(watch))
+    c3.metric("Dogru / guclu", correct)
+    c4.metric("Yanlis / zayif", wrong)
+
+    if watch:
+        st.subheader("Aktif sinyal izleme (24s)")
+        st.caption("Her benzersiz sembol+strateji+yon icin bir kez izleme baslar; tekrarlayan loglar sayilmaz.")
+        st.dataframe(signal_watch_rows(watch), use_container_width=True, hide_index=True)
+
+    if not log:
+        st.info(
+            "Henuz tamamlanmis sinyal analizi yok. Motor sinyal urettikten 24 saat sonra "
+            "TP/SL ve yon dogrulugu burada raporlanir."
+        )
+        return
+
+    st.subheader("Strateji ozeti")
+    summary = strategy_signal_summary(log)
+    if not summary.empty:
+        st.dataframe(summary, use_container_width=True, hide_index=True)
+
+    st.subheader("Sinyal detay")
+    df = signal_outcome_rows(log)
+    strats = ["Tumu"] + sorted(df["Strateji"].dropna().unique().tolist())
+    verdicts = ["Tumu", "correct", "wrong", "neutral"]
+    outcomes = ["Tumu"] + sorted(df["Sonuc"].dropna().unique().tolist())
+    col_a, col_b, col_c = st.columns(3)
+    strat_f = col_a.selectbox("Strateji", strats, key="sig_strat")
+    verdict_f = col_b.selectbox("Karar", verdicts, key="sig_verdict")
+    outcome_f = col_c.selectbox("Sonuc", outcomes, key="sig_outcome")
+
+    show = df.copy()
+    if strat_f != "Tumu":
+        show = show[show["Strateji"] == strat_f]
+    if verdict_f != "Tumu":
+        show = show[show["Karar"] == verdict_f]
+    if outcome_f != "Tumu":
+        show = show[show["Sonuc"] == outcome_f]
+
+    st.dataframe(
+        show,
+        use_container_width=True,
+        hide_index=True,
+        height=min(520, 35 * len(show) + 38),
+        column_config={
+            "Hipotetik_PnL": st.column_config.NumberColumn(format="$%+.2f"),
+            "24s_hareket_pct": st.column_config.NumberColumn(format="%.2f%%"),
+            "MFE_R": st.column_config.NumberColumn(format="%.2fR"),
+            "MAE_R": st.column_config.NumberColumn(format="%.2fR"),
+        },
+    )
+
+
+def render() -> None:
+    st.title("Sinyal ve Islem Analiz Merkezi")
+    st.caption(
+        "Sinyaller ve kapanan islemler 24 saat izlenir; TP/SL, yon dogrulugu ve strateji performansi otomatik analiz edilir."
+    )
+    data = get_engine_data()
+    st.caption(source_caption(data))
+
+    tab_sig, tab_trade = st.tabs(["Sinyal analizi (24s)", "Islem analizi (24s)"])
+    with tab_sig:
+        _render_signal_analysis(data)
+    with tab_trade:
+        _render_trade_analysis(data)

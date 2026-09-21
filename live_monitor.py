@@ -37,6 +37,8 @@ from shared.ui_data import (  # noqa: E402
     load_remote_live_data,
     pos_rows,
     signal_log_rows,
+    signal_outcome_rows,
+    signal_watch_rows,
 )
 
 
@@ -103,6 +105,8 @@ class LiveMonitorApp:
         self.pos_tree = self._make_tree(nb, "Acik pozisyonlar")
         self.hist_tree = self._make_tree(nb, "Islem gecmisi")
         self.sig_tree = self._make_tree(nb, "Sinyal gunlugu")
+        self.sig_analysis_tree = self._make_tree(nb, "Sinyal analizi (24s)")
+        self.sig_watch_tree = self._make_tree(nb, "Aktif sinyal izleme")
 
         log_frame = ttk.Frame(nb)
         nb.add(log_frame, text="Motor log")
@@ -201,6 +205,8 @@ class LiveMonitorApp:
         self._fill_tree(self.pos_tree, None)
         self._fill_tree(self.hist_tree, None)
         self._fill_tree(self.sig_tree, None)
+        self._fill_tree(self.sig_analysis_tree, None)
+        self._fill_tree(self.sig_watch_tree, None)
         self.log_text.delete("1.0", tk.END)
         self.log_text.insert(
             tk.END,
@@ -244,6 +250,8 @@ class LiveMonitorApp:
         self._fill_tree(self.pos_tree, pos_rows(active))
         self._fill_tree(self.hist_tree, history_rows(history))
         self._fill_tree(self.sig_tree, signal_log_rows(data.get("signal_log") or {}))
+        self._fill_tree(self.sig_analysis_tree, signal_outcome_rows(data.get("signal_outcome_log") or []))
+        self._fill_tree(self.sig_watch_tree, signal_watch_rows(data.get("signal_watchlist") or []))
 
         logs = data.get("engine_logs") or []
         self.log_text.delete("1.0", tk.END)

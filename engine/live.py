@@ -32,7 +32,10 @@ from engine.entry_timing import collect_bar_closes, refresh_tfs_for_scan, should
 from engine.exchange.bybit_client import BybitClient
 from engine.exchange.executor import get_executor
 from engine.paper import FrameCache, _entry_price, _mark_price, _update_dominance, run_price_pass
+from engine.post_exit import run_post_exit_tick
+from engine.signal_outcome import run_signal_outcome_tick
 from engine.portfolio import Portfolio
+from engine.signal_reset import maybe_reset_signal_log
 from strategies.registry import live_strategies
 
 _STRATS = live_strategies()
@@ -122,7 +125,7 @@ def _try_entry(pf: Portfolio, strat, ctx, sym: str, last: float, sig=None) -> bo
         return False
     if LIVE_LONG_ONLY and sig.side.value == "SELL":
         return False
-    pf.record_signal(sym, sig)
+    pf.record_signal(sym, sig, entry_price=last)
     if not ctx.aligned(sig.side):
         return False
     combo = _to_combo_signal(sig)
@@ -203,7 +206,7 @@ def _scan_one(pf: Portfolio, cache: FrameCache, sym: str, dominance: dict, force
                 )
                 pf.save(sync_github=False)
         else:
-            pf.record_signal(sym, _to_combo_signal(best_sig))
+            pf.record_signal(sym, _to_combo_signal(best_sig), entry_price=best_px)
             pf.log(
                 f"sinyal {sym} | {best_sig.strategy} | {best_sig.side.value} | skor {best_strength:.2f} | emir kapali"
             )
@@ -260,6 +263,9 @@ def run_live(scan_limit: int = SCAN_SYMBOLS) -> None:
     while True:
         loop_start = time.time()
         try:
+            if maybe_reset_signal_log(pf.signal_log, log=pf.log):
+                pf.save(sync_github=False)
+
             if time.time() - last_universe_refresh > 900 or not symbols:
                 symbols = fetch_symbols(scan_limit)
                 dominance = _update_dominance(pf, fetch_dominance())
@@ -267,6 +273,26 @@ def run_live(scan_limit: int = SCAN_SYMBOLS) -> None:
                 pf.log(f"Piyasa listesi: {len(symbols)} sembol (kripto USDT perpetual)")
 
             run_price_pass(pf)
+
+            if pf.post_exit_watchlist:
+                if run_post_exit_tick(
+                    pf.post_exit_watchlist,
+                    pf.post_exit_log,
+                    last_prices_fn=last_prices,
+                    fetch_klines=fetch_klines,
+                    log=pf.log,
+                ):
+                    pf.save(sync_github=False)
+
+            if pf.signal_watchlist:
+                if run_signal_outcome_tick(
+                    pf.signal_watchlist,
+                    pf.signal_outcome_log,
+                    last_prices_fn=last_prices,
+                    fetch_klines=fetch_klines,
+                    log=pf.log,
+                ):
+                    pf.save(sync_github=False)
 
             if symbols:
                 batch = max(6, min(15, len(symbols) // 30 or 6))

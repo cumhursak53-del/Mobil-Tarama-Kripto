@@ -45,6 +45,7 @@ from engine.momentum_scan import score_momentum
 from engine.smc_scan import score_smc
 from engine.portfolio import Portfolio
 from engine.post_exit import run_post_exit_tick
+from engine.signal_outcome import run_signal_outcome_tick
 from strategies.registry import all_strategies
 
 _STRATS = all_strategies()
@@ -281,7 +282,7 @@ def _scan_best_signal(
         return
     if sig is None:
         return
-    pf.record_signal(sym, sig)
+    pf.record_signal(sym, sig, entry_price=best_px)
     if pf.try_open(sym, sig, best_px):
         pf.log(f"best_signal {sym} | {best_strat.ledger} | skor {best_strength:.2f}")
         if sig.entry_tf:
@@ -297,7 +298,7 @@ def _try_entry(pf: Portfolio, strat, ctx, sym: str, last: float) -> bool:
         return False
     if sig is None:
         return False
-    pf.record_signal(sym, sig)
+    pf.record_signal(sym, sig, entry_price=last)
     if not ctx.aligned(sig.side):
         return False
     opened = pf.try_open(sym, sig, last)
@@ -391,6 +392,17 @@ def run_paper(scan_limit: int = SCAN_SYMBOLS) -> None:
                     log=pf.log,
                 )
                 if pe_changed:
+                    pf.save(sync_github=True)
+
+            if pf.signal_watchlist:
+                sig_changed = run_signal_outcome_tick(
+                    pf.signal_watchlist,
+                    pf.signal_outcome_log,
+                    last_prices_fn=last_prices,
+                    fetch_klines=fetch_klines,
+                    log=pf.log,
+                )
+                if sig_changed:
                     pf.save(sync_github=True)
 
             if symbols:
