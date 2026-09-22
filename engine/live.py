@@ -31,10 +31,11 @@ from engine.df_utils import pick_frame
 from engine.entry_timing import collect_bar_closes, refresh_tfs_for_scan, should_evaluate_entry
 from engine.exchange.bybit_client import BybitClient
 from engine.exchange.executor import get_executor
+from engine.live_round_pick import RoundCandidate, collect_round_candidate, flush_round_entries
 from engine.paper import FrameCache, _entry_price, _mark_price, _update_dominance, run_price_pass
+from engine.portfolio import Portfolio, now_tr
 from engine.post_exit import run_post_exit_tick
 from engine.signal_outcome import run_signal_outcome_tick
-from engine.portfolio import Portfolio
 from engine.signal_reset import maybe_reset_signal_log
 from strategies.registry import live_strategies
 
@@ -139,7 +140,14 @@ def _try_entry(pf: Portfolio, strat, ctx, sym: str, last: float, sig=None) -> bo
     return opened
 
 
-def _scan_one(pf: Portfolio, cache: FrameCache, sym: str, dominance: dict, force_entry: bool) -> None:
+def _scan_one(
+    pf: Portfolio,
+    cache: FrameCache,
+    sym: str,
+    dominance: dict,
+    force_entry: bool,
+    round_candidates: list[RoundCandidate] | None = None,
+) -> None:
     try:
         strats = _STRATS
         scan_tfs = refresh_tfs_for_scan(strats)
@@ -190,6 +198,20 @@ def _scan_one(pf: Portfolio, cache: FrameCache, sym: str, dominance: dict, force
         if not candidates:
             return
         candidates.sort(key=lambda x: x[0], reverse=True)
+        if is_live_exchange() and round_candidates is not None:
+            for strength, strat, px, sig in candidates:
+                cand = collect_round_candidate(
+                    pf,
+                    symbol=sym,
+                    strategy=strat,
+                    ctx=ctx,
+                    entry=px,
+                    sig=sig,
+                    strength=strength,
+                )
+                if cand is not None:
+                    round_candidates.append(cand)
+            return
         picked = None
         for strength, strat, px, sig in candidates:
             if not pf.live_strategy_has_slot(sig.ledger):
@@ -259,6 +281,8 @@ def run_live(scan_limit: int = SCAN_SYMBOLS) -> None:
     last_heartbeat = 0.0
     symbols: list[str] = []
     dominance: dict = {}
+    round_candidates: list[RoundCandidate] = []
+    round_started_at: str | None = None
 
     while True:
         loop_start = time.time()
@@ -299,12 +323,42 @@ def run_live(scan_limit: int = SCAN_SYMBOLS) -> None:
                 end = min(cursor + batch, len(symbols))
                 chunk = symbols[cursor:end]
                 wrapped = end >= len(symbols)
+                if cursor == 0 and chunk:
+                    round_started_at = now_tr()
+                    round_candidates.clear()
                 cursor = 0 if wrapped else end
+                defer_entries = is_live_exchange()
                 for sym in chunk:
-                    _scan_one(pf, cache, sym, dominance, force_entry=False)
+                    _scan_one(
+                        pf,
+                        cache,
+                        sym,
+                        dominance,
+                        force_entry=False,
+                        round_candidates=round_candidates if defer_entries else None,
+                    )
                 if wrapped:
                     eq = pf.snapshot()["equity"]
-                    pf.log(f"Tur tamam: {len(symbols)} coin | Aktif {len(pf.positions)} | Fon ${eq:.2f}")
+                    window = ""
+                    if round_started_at:
+                        window = f" | Sinyal penceresi {round_started_at} - {now_tr()}"
+                    pf.log(
+                        f"Tur tamam: {len(symbols)} coin | Aktif {len(pf.positions)} | "
+                        f"Fon ${eq:.2f}{window}"
+                    )
+                    if defer_entries:
+                        opened = flush_round_entries(
+                            pf,
+                            cache,
+                            dominance,
+                            round_candidates,
+                            try_entry_fn=_try_entry,
+                            entry_price_fn=_entry_price,
+                            log=pf.log,
+                        )
+                        if opened:
+                            pf.save(sync_github=False)
+                    round_started_at = None
 
             if time.time() - last_heartbeat > 60:
                 eq = pf.snapshot()["equity"]
