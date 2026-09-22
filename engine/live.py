@@ -211,6 +211,21 @@ def _scan_one(
                 )
                 if cand is not None:
                     round_candidates.append(cand)
+            if not is_live_exchange():
+                picked = None
+                for strength, strat, px, sig in candidates:
+                    if not pf.live_strategy_has_slot(sig.ledger):
+                        continue
+                    picked = (strength, strat, px, sig)
+                    break
+                if picked is not None:
+                    best_strength, _best_strat, best_px, best_sig = picked
+                    pf.record_signal(sym, _to_combo_signal(best_sig), entry_price=best_px)
+                    pf.log(
+                        f"sinyal {sym} | {best_sig.strategy} | {best_sig.side.value} | "
+                        f"skor {best_strength:.2f} | emir kapali"
+                    )
+                    pf.save(sync_github=False)
             return
     except Exception as e:
         pf.log(f"{sym} hata: {e}")
@@ -336,7 +351,7 @@ def run_live(scan_limit: int = SCAN_SYMBOLS) -> None:
                         entry_price_fn=_entry_price if live_exchange else None,
                         log=pf.log,
                     )
-                    if changed or not live_exchange:
+                    if changed:
                         pf.save(sync_github=False)
                     round_started_at = None
 

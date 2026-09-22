@@ -68,15 +68,13 @@ def collect_round_candidate(
     if not ctx.aligned(sig.side):
         return None
     exp = expected_profit_usd(pf, entry, sig)
-    if exp <= 0:
-        return None
     return RoundCandidate(
         symbol=symbol,
         strategy=strategy,
         sig=sig,
         entry=entry,
         strength=strength,
-        expected_profit_usd=exp,
+        expected_profit_usd=max(0.0, exp),
     )
 
 
@@ -201,8 +199,7 @@ def finalize_round_candidates(
         candidates.clear()
         return opened
 
-    for cand in ranked:
-        pf.record_signal(cand.symbol, to_combo_signal_fn(cand.sig), entry_price=cand.entry)
+    # Tarama modunda sinyaller tur icinde kaydedilir; burada yalnizca ozet loglanir.
     candidates.clear()
     return 0
 
