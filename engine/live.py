@@ -31,7 +31,7 @@ from engine.df_utils import pick_frame
 from engine.entry_timing import collect_bar_closes, refresh_tfs_for_scan, should_evaluate_entry
 from engine.exchange.bybit_client import BybitClient
 from engine.exchange.executor import get_executor
-from engine.live_round_pick import RoundCandidate, collect_round_candidate, flush_round_entries
+from engine.live_round_pick import RoundCandidate, collect_round_candidate, finalize_round_candidates
 from engine.paper import FrameCache, _entry_price, _mark_price, _update_dominance, run_price_pass
 from engine.portfolio import Portfolio, now_tr
 from engine.post_exit import run_post_exit_tick
@@ -198,7 +198,7 @@ def _scan_one(
         if not candidates:
             return
         candidates.sort(key=lambda x: x[0], reverse=True)
-        if is_live_exchange() and round_candidates is not None:
+        if round_candidates is not None:
             for strength, strat, px, sig in candidates:
                 cand = collect_round_candidate(
                     pf,
@@ -212,27 +212,6 @@ def _scan_one(
                 if cand is not None:
                     round_candidates.append(cand)
             return
-        picked = None
-        for strength, strat, px, sig in candidates:
-            if not pf.live_strategy_has_slot(sig.ledger):
-                continue
-            picked = (strength, strat, px, sig)
-            break
-        if picked is None:
-            return
-        best_strength, best_strat, best_px, best_sig = picked
-        if is_live_exchange():
-            if _try_entry(pf, best_strat, ctx, sym, best_px, sig=best_sig):
-                pf.log(
-                    f"canli_giris {sym} | {best_sig.strategy} -> {LIVE_COMBO_LEDGER} | skor {best_strength:.2f}"
-                )
-                pf.save(sync_github=False)
-        else:
-            pf.record_signal(sym, _to_combo_signal(best_sig), entry_price=best_px)
-            pf.log(
-                f"sinyal {sym} | {best_sig.strategy} | {best_sig.side.value} | skor {best_strength:.2f} | emir kapali"
-            )
-            pf.save(sync_github=False)
     except Exception as e:
         pf.log(f"{sym} hata: {e}")
 
@@ -327,7 +306,6 @@ def run_live(scan_limit: int = SCAN_SYMBOLS) -> None:
                     round_started_at = now_tr()
                     round_candidates.clear()
                 cursor = 0 if wrapped else end
-                defer_entries = is_live_exchange()
                 for sym in chunk:
                     _scan_one(
                         pf,
@@ -335,7 +313,7 @@ def run_live(scan_limit: int = SCAN_SYMBOLS) -> None:
                         sym,
                         dominance,
                         force_entry=False,
-                        round_candidates=round_candidates if defer_entries else None,
+                        round_candidates=round_candidates,
                     )
                 if wrapped:
                     eq = pf.snapshot()["equity"]
@@ -346,18 +324,20 @@ def run_live(scan_limit: int = SCAN_SYMBOLS) -> None:
                         f"Tur tamam: {len(symbols)} coin | Aktif {len(pf.positions)} | "
                         f"Fon ${eq:.2f}{window}"
                     )
-                    if defer_entries:
-                        opened = flush_round_entries(
-                            pf,
-                            cache,
-                            dominance,
-                            round_candidates,
-                            try_entry_fn=_try_entry,
-                            entry_price_fn=_entry_price,
-                            log=pf.log,
-                        )
-                        if opened:
-                            pf.save(sync_github=False)
+                    live_exchange = is_live_exchange()
+                    changed = finalize_round_candidates(
+                        pf,
+                        cache,
+                        dominance,
+                        round_candidates,
+                        live_exchange=live_exchange,
+                        to_combo_signal_fn=_to_combo_signal,
+                        try_entry_fn=_try_entry if live_exchange else None,
+                        entry_price_fn=_entry_price if live_exchange else None,
+                        log=pf.log,
+                    )
+                    if changed or not live_exchange:
+                        pf.save(sync_github=False)
                     round_started_at = None
 
             if time.time() - last_heartbeat > 60:

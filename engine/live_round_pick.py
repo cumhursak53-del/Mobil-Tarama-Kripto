@@ -114,6 +114,99 @@ def _revalidate(
     return px, sig, ctx
 
 
+def rank_round_candidates(candidates: list[RoundCandidate]) -> list[RoundCandidate]:
+    return sorted(
+        candidates,
+        key=lambda c: (c.expected_profit_usd, c.strength),
+        reverse=True,
+    )
+
+
+def log_round_summary(
+    ranked: list[RoundCandidate],
+    log: Callable[[str], None] | None,
+    *,
+    top_n: int = 5,
+    scan_only: bool = False,
+) -> None:
+    if not log:
+        return
+    if not ranked:
+        log("Tur sinyal secimi: aday yok")
+        return
+    best = ranked[0]
+    log(
+        f"Tur sinyal secimi: {len(ranked)} aday | "
+        f"en iyi {best.symbol} ${best.expected_profit_usd:.2f} beklenen kar"
+    )
+    suffix = " | emir kapali" if scan_only else ""
+    for i, cand in enumerate(ranked[:top_n], start=1):
+        log(
+            f"Tur top #{i} {cand.symbol} | {cand.sig.side.value} | {cand.sig.strategy} | "
+            f"${cand.expected_profit_usd:.2f} beklenen kar | skor {cand.strength:.2f}{suffix}"
+        )
+
+
+def finalize_round_candidates(
+    pf,
+    cache,
+    dominance: dict,
+    candidates: list[RoundCandidate],
+    *,
+    live_exchange: bool,
+    to_combo_signal_fn: Callable,
+    try_entry_fn: Callable | None = None,
+    entry_price_fn: Callable | None = None,
+    log: Callable[[str], None] | None = None,
+    summary_top_n: int = 5,
+) -> int:
+    ranked = rank_round_candidates(candidates)
+    log_round_summary(ranked, log, top_n=summary_top_n, scan_only=not live_exchange)
+    if not ranked:
+        candidates.clear()
+        return 0
+
+    if live_exchange:
+        opened = 0
+        for cand in ranked:
+            try:
+                if not entry_price_fn or not try_entry_fn:
+                    break
+                refreshed = _revalidate(cache, dominance, cand, entry_price_fn=entry_price_fn)
+                if refreshed is None:
+                    if log:
+                        log(f"Tur secim atlandi {cand.symbol} | {cand.sig.strategy} (sinyal gecersiz)")
+                    continue
+                px, sig, ctx = refreshed
+                source = getattr(sig, "ledger", "") or cand.sig.ledger
+                if not pf.live_strategy_has_slot(source):
+                    if log:
+                        log(f"Tur secim atlandi {cand.symbol} | {sig.strategy} (strateji kotasi dolu)")
+                    continue
+                if try_entry_fn(pf, cand.strategy, ctx, cand.symbol, px, sig=sig):
+                    opened += 1
+                    if log:
+                        log(
+                            f"Tur GIRIS {cand.symbol} | {sig.strategy} | "
+                            f"beklenen kar ${cand.expected_profit_usd:.2f} | skor {cand.strength:.2f}"
+                        )
+                elif log:
+                    log(
+                        f"Tur secim red {cand.symbol} | {sig.strategy} | "
+                        f"beklenen kar ${cand.expected_profit_usd:.2f} (cap/kilit/marjin)"
+                    )
+            except Exception as exc:
+                if log:
+                    log(f"Tur secim hata {cand.symbol}: {exc}")
+        candidates.clear()
+        return opened
+
+    for cand in ranked:
+        pf.record_signal(cand.symbol, to_combo_signal_fn(cand.sig), entry_price=cand.entry)
+    candidates.clear()
+    return 0
+
+
 def flush_round_entries(
     pf,
     cache,
@@ -122,49 +215,17 @@ def flush_round_entries(
     *,
     try_entry_fn: Callable,
     entry_price_fn: Callable,
+    to_combo_signal_fn: Callable,
     log: Callable[[str], None] | None = None,
 ) -> int:
-    if not candidates:
-        return 0
-    ranked = sorted(
+    return finalize_round_candidates(
+        pf,
+        cache,
+        dominance,
         candidates,
-        key=lambda c: (c.expected_profit_usd, c.strength),
-        reverse=True,
+        live_exchange=True,
+        to_combo_signal_fn=to_combo_signal_fn,
+        try_entry_fn=try_entry_fn,
+        entry_price_fn=entry_price_fn,
+        log=log,
     )
-    if log:
-        best = ranked[0]
-        log(
-            f"Tur sinyal secimi: {len(ranked)} aday | "
-            f"en iyi {best.symbol} ${best.expected_profit_usd:.2f} beklenen kar"
-        )
-    opened = 0
-    for cand in ranked:
-        try:
-            refreshed = _revalidate(cache, dominance, cand, entry_price_fn=entry_price_fn)
-            if refreshed is None:
-                if log:
-                    log(f"Tur secim atlandi {cand.symbol} | {cand.sig.strategy} (sinyal gecersiz)")
-                continue
-            px, sig, ctx = refreshed
-            source = getattr(sig, "ledger", "") or cand.sig.ledger
-            if not pf.live_strategy_has_slot(source):
-                if log:
-                    log(f"Tur secim atlandi {cand.symbol} | {sig.strategy} (strateji kotasi dolu)")
-                continue
-            if try_entry_fn(pf, cand.strategy, ctx, cand.symbol, px, sig=sig):
-                opened += 1
-                if log:
-                    log(
-                        f"Tur GIRIS {cand.symbol} | {sig.strategy} | "
-                        f"beklenen kar ${cand.expected_profit_usd:.2f} | skor {cand.strength:.2f}"
-                    )
-            elif log:
-                log(
-                    f"Tur secim red {cand.symbol} | {sig.strategy} | "
-                    f"beklenen kar ${cand.expected_profit_usd:.2f} (cap/kilit/marjin)"
-                )
-        except Exception as exc:
-            if log:
-                log(f"Tur secim hata {cand.symbol}: {exc}")
-    candidates.clear()
-    return opened

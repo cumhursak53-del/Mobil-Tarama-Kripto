@@ -1,4 +1,11 @@
-from engine.live_round_pick import collect_round_candidate, expected_profit_usd, tp_r_multiple
+from engine.live_round_pick import (
+    collect_round_candidate,
+    expected_profit_usd,
+    log_round_summary,
+    rank_round_candidates,
+    tp_r_multiple,
+    RoundCandidate,
+)
 from engine.types import Side, Signal
 
 
@@ -49,3 +56,16 @@ def test_collect_round_candidate_filters_invalid():
     assert out is not None
     assert out.symbol == "BTCUSDT"
     assert out.expected_profit_usd > 0
+
+
+def test_log_round_summary_empty():
+    logs: list[str] = []
+    log_round_summary([], logs.append, scan_only=True)
+    assert logs == ["Tur sinyal secimi: aday yok"]
+
+
+def test_rank_round_candidates_orders_by_expected_profit():
+    low = RoundCandidate("AAAUSDT", object(), _sig(tp_price=110.0), 100.0, 1.0, 1.0)
+    high = RoundCandidate("BTCUSDT", object(), _sig(tp_price=120.0), 100.0, 1.0, 2.0)
+    ranked = rank_round_candidates([low, high])
+    assert ranked[0].symbol == "BTCUSDT"
