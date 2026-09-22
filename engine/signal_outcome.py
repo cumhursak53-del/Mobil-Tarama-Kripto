@@ -15,6 +15,17 @@ from engine.signal_analysis import analyze_completed_signal, make_signal_id
 from engine.types import Signal
 
 
+def _trim_list(items: list, max_n: int) -> None:
+    if max_n > 0 and len(items) > max_n:
+        items[:] = items[-max_n:]
+
+
+def _tail_list(items: list, max_n: int) -> list:
+    if max_n <= 0:
+        return items
+    return items[-max_n:]
+
+
 def parse_tr_ts(value: str) -> datetime | None:
     if not value:
         return None
@@ -70,8 +81,7 @@ def enqueue_signal_watch(
         "last_price": entry,
     }
     watchlist.append(watch)
-    if len(watchlist) > SIGNAL_WATCH_MAX:
-        watchlist[:] = watchlist[-SIGNAL_WATCH_MAX:]
+    _trim_list(watchlist, SIGNAL_WATCH_MAX)
     if log:
         log(f"Sinyal izleme: {symbol} | {sig.strategy} | {side} ({SIGNAL_WATCH_HOURS:.0f}s)")
 
@@ -125,8 +135,7 @@ def finalize_expired_signal_watches(
                     f"Sinyal analizi: {w.get('symbol')} | {analysis.get('verdict')} | {rec}"
                 )
     watchlist[:] = remain
-    if len(log_store) > SIGNAL_OUTCOME_LOG_MAX:
-        log_store[:] = log_store[-SIGNAL_OUTCOME_LOG_MAX:]
+    _trim_list(log_store, SIGNAL_OUTCOME_LOG_MAX)
     return changed
 
 
@@ -166,7 +175,7 @@ def merge_signal_outcome_log(*logs: list | None) -> list[dict]:
             seen.add(sid)
             out.append(item)
     out.sort(key=lambda x: str(x.get("signal_time") or ""))
-    return out[-SIGNAL_OUTCOME_LOG_MAX:]
+    return _tail_list(out, SIGNAL_OUTCOME_LOG_MAX)
 
 
 def merge_signal_watchlist(*lists: list | None) -> list[dict]:
@@ -186,4 +195,4 @@ def merge_signal_watchlist(*lists: list | None) -> list[dict]:
             merged["post_high"] = max(float(prev.get("post_high") or 0), float(w.get("post_high") or 0))
             merged["post_low"] = min(float(prev.get("post_low") or 0), float(w.get("post_low") or 0))
             by_id[sid] = merged
-    return list(by_id.values())[-SIGNAL_WATCH_MAX:]
+    return _tail_list(list(by_id.values()), SIGNAL_WATCH_MAX)

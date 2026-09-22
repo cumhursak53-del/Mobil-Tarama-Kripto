@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import os
 import sys
+import threading
 import tkinter as tk
 from tkinter import messagebox, ttk
 
@@ -43,6 +44,22 @@ from shared.ui_data import (  # noqa: E402
 
 
 REFRESH_MS = 30_000
+MAX_TREE_ROWS = 300
+SIG_LOG_MAX_SYMBOLS = 500
+
+
+def _trim_signal_log(sig_log: dict | None, limit: int = SIG_LOG_MAX_SYMBOLS) -> dict:
+    if not sig_log or limit <= 0:
+        return sig_log or {}
+    items = [
+        (k, v)
+        for k, v in sig_log.items()
+        if not str(k).startswith("_") and isinstance(v, dict)
+    ]
+    if len(items) <= limit:
+        return sig_log
+    items.sort(key=lambda x: int(x[1].get("count") or 0), reverse=True)
+    return dict(items[:limit])
 
 
 class LiveMonitorApp:
@@ -53,6 +70,7 @@ class LiveMonitorApp:
         self.root.minsize(900, 560)
         self._refresh_job: str | None = None
         self._auto = tk.BooleanVar(value=True)
+        self._loading = False
 
         self._build_toolbar()
         self._build_metrics()
@@ -157,7 +175,7 @@ class LiveMonitorApp:
         if self._auto.get():
             self._refresh_job = self.root.after(REFRESH_MS, self.refresh)
 
-    def _fill_tree(self, tree: ttk.Treeview, df) -> None:
+    def _fill_tree(self, tree: ttk.Treeview, df, *, max_rows: int | None = MAX_TREE_ROWS) -> None:
         tree.delete(*tree.get_children())
         if df is None or df.empty:
             tree["columns"] = ("mesaj",)
@@ -170,9 +188,15 @@ class LiveMonitorApp:
         for c in cols:
             tree.heading(c, text=c)
             tree.column(c, width=max(80, min(160, len(c) * 10)), stretch=True)
+        truncated = False
+        if max_rows is not None and len(df) > max_rows:
+            df = df.head(max_rows)
+            truncated = True
         for row in df.itertuples(index=False, name=None):
             vals = [self._fmt(v) for v in row]
             tree.insert("", tk.END, values=vals)
+        if truncated and max_rows is not None:
+            tree.insert("", tk.END, values=(f"(Ilk {max_rows} satir)",) + ("",) * (len(cols) - 1))
 
     @staticmethod
     def _fmt(v) -> str:
@@ -185,17 +209,40 @@ class LiveMonitorApp:
         return str(v)
 
     def refresh(self) -> None:
+        if self._loading:
+            return
         url = self.url_var.get().strip().rstrip("/")
+        self._loading = True
         self.status_var.set(f"VPS'ten veri cekiliyor: {url}...")
         self.root.update_idletasks()
+
+        def worker() -> None:
+            err: Exception | None = None
+            payload: dict | None = None
+            try:
+                data = load_remote_live_data(url)
+                from shared.price_format import warm_tick_cache
+
+                warm_tick_cache()
+                payload = self._build_render_payload(data)
+            except Exception as exc:
+                err = exc
+            self.root.after(0, lambda: self._on_refresh_done(payload, err, url))
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _on_refresh_done(self, payload: dict | None, err: Exception | None, url: str) -> None:
+        self._loading = False
         try:
-            data = load_remote_live_data(url)
-            self._render(data)
-            self.status_var.set(f"Bagli — {data.get('_source', url)}")
-        except Exception as exc:
-            self.status_var.set(f"VPS ulasilamadi: {exc}")
-            self._render_error(str(exc), url)
-        self._schedule_refresh()
+            if err is not None:
+                self.status_var.set(f"VPS ulasilamadi: {err}")
+                self._render_error(str(err), url)
+            else:
+                self._apply_render(payload or {})
+                source = (payload or {}).get("_source", url)
+                self.status_var.set(f"Bagli — {source}")
+        finally:
+            self._schedule_refresh()
 
     def _render_error(self, msg: str, url: str) -> None:
         for key in self.metric_vars:
@@ -217,7 +264,9 @@ class LiveMonitorApp:
             "  3) live.env icinde REMOTE_ENGINE_URL=http://76.13.150.125:10001\n",
         )
 
-    def _render(self, data: dict) -> None:
+    def _build_render_payload(self, data: dict) -> dict:
+        import pandas as pd
+
         live = bool(data.get("live_exchange"))
         active = data.get("active_positions") or {}
         if not live:
@@ -235,39 +284,55 @@ class LiveMonitorApp:
             closed = sum(float(h.get("pnl") or 0) for h in history if isinstance(h, dict))
 
         label, _kind, detail = engine_status(data)
-        self.metric_vars["status"].set(label)
         mode = str(data.get("trading_mode") or "-")
         exchange = "Bybit emir ACIK" if live else "Tarama only (emir yok)"
         kasa = data.get("live_combo_ledger") or "-"
-        self.metric_vars["mode"].set(f"{mode} | {exchange} | {kasa}")
-        self.metric_vars["equity"].set(f"${equity:,.2f}")
-        self.metric_vars["cash"].set(f"${cash:,.2f}")
-        self.metric_vars["open"].set("0" if not live else str(len(active)))
-        self.metric_vars["unreal"].set("$+0.00" if not live else f"${unreal:+,.2f}")
-        self.metric_vars["closed"].set(f"${closed:+,.2f}")
-        self.metric_vars["updated"].set(str(data.get("updated_at") or "-"))
-
-        self._fill_tree(self.pos_tree, pos_rows(active))
-        self._fill_tree(self.hist_tree, history_rows(history))
-        self._fill_tree(self.sig_tree, signal_log_rows(data.get("signal_log") or {}))
         flags = data.get("engine_flags") or {}
+        sig_log = _trim_signal_log(data.get("signal_log") or {})
         if not flags.get("signal_analysis") and "signal_watchlist" not in data:
-            import pandas as pd
-
-            self._fill_tree(
-                self.sig_analysis_tree,
-                pd.DataFrame(
-                    [{"mesaj": "VPS guncel degil — Hostinger terminalde git pull + deploy_vps.sh calistirin"}]
-                ),
+            sig_analysis_df = pd.DataFrame(
+                [{"mesaj": "VPS guncel degil — Hostinger terminalde git pull + deploy_vps.sh calistirin"}]
             )
-            self._fill_tree(self.sig_watch_tree, None)
+            sig_watch_df = None
         else:
-            self._fill_tree(
-                self.sig_analysis_tree, signal_outcome_rows(data.get("signal_outcome_log") or [])
-            )
-            self._fill_tree(self.sig_watch_tree, signal_watch_rows(data.get("signal_watchlist") or []))
+            sig_analysis_df = signal_outcome_rows(data.get("signal_outcome_log") or [])
+            sig_watch_df = signal_watch_rows(data.get("signal_watchlist") or [])
 
-        logs = data.get("engine_logs") or []
+        return {
+            "_source": data.get("_source"),
+            "metrics": {
+                "status": label,
+                "mode": f"{mode} | {exchange} | {kasa}",
+                "equity": f"${equity:,.2f}",
+                "cash": f"${cash:,.2f}",
+                "open": "0" if not live else str(len(active)),
+                "unreal": "$+0.00" if not live else f"${unreal:+,.2f}",
+                "closed": f"${closed:+,.2f}",
+                "updated": str(data.get("updated_at") or "-"),
+            },
+            "pos_df": pos_rows(active),
+            "hist_df": history_rows(history),
+            "sig_df": signal_log_rows(sig_log),
+            "sig_analysis_df": sig_analysis_df,
+            "sig_watch_df": sig_watch_df,
+            "logs": data.get("engine_logs") or [],
+            "detail": detail,
+        }
+
+    def _apply_render(self, payload: dict) -> None:
+        metrics = payload.get("metrics") or {}
+        for key, val in metrics.items():
+            if key in self.metric_vars:
+                self.metric_vars[key].set(str(val))
+
+        self._fill_tree(self.pos_tree, payload.get("pos_df"))
+        self._fill_tree(self.hist_tree, payload.get("hist_df"))
+        self._fill_tree(self.sig_tree, payload.get("sig_df"))
+        self._fill_tree(self.sig_analysis_tree, payload.get("sig_analysis_df"), max_rows=None)
+        self._fill_tree(self.sig_watch_tree, payload.get("sig_watch_df"), max_rows=None)
+
+        logs = payload.get("logs") or []
+        detail = payload.get("detail") or ""
         self.log_text.delete("1.0", tk.END)
         if logs:
             self.log_text.insert(tk.END, "\n".join(str(x) for x in logs))

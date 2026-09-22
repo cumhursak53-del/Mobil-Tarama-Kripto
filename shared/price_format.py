@@ -1,11 +1,15 @@
-"""Bybit uyumlu fiyat gosterimi (tickSize)."""
+"""Bybit uyumlu fiyat gosterimi (tickSize) — tek seferlik toplu cache."""
 from __future__ import annotations
 
 import math
+import threading
 import time
 
-_TICK_CACHE: dict[str, tuple[float, float]] = {}
+_TICK_CACHE: dict[str, float] = {}
+_BULK_LOADED = False
+_BULK_LOCK = threading.Lock()
 _CACHE_TTL = 3600.0
+_BULK_TS = 0.0
 
 
 def _decimals_from_tick(tick: float) -> int:
@@ -24,29 +28,67 @@ def _round_to_tick(price: float, tick: float) -> float:
     return round(steps * tick, 14)
 
 
-def _fetch_tick_size(symbol: str) -> float:
-    sym = symbol.upper()
+def _load_all_ticks() -> None:
+    """Tum linear tickSize — tek seferlik (UI donmasin diye sembol basi HTTP yok)."""
+    global _BULK_LOADED, _BULK_TS
     now = time.time()
-    cached = _TICK_CACHE.get(sym)
-    if cached and now - cached[1] < _CACHE_TTL:
-        return cached[0]
-    tick = 0.0
+    if _BULK_LOADED and now - _BULK_TS < _CACHE_TTL:
+        return
+    found: dict[str, float] = {}
     try:
         from engine.data import _get
 
-        raw = _get(
-            "https://api.bybit.com/v5/market/instruments-info",
-            {"category": "linear", "symbol": sym},
-            timeout=8,
-        )
-        rows = (raw.get("result") or {}).get("list") or []
-        if rows:
-            pf = rows[0].get("priceFilter") or {}
-            tick = float(pf.get("tickSize") or 0)
+        cursor = ""
+        pages = 0
+        while pages < 8:
+            params: dict = {"category": "linear", "limit": "1000"}
+            if cursor:
+                params["cursor"] = cursor
+            raw = _get(
+                "https://api.bybit.com/v5/market/instruments-info",
+                params,
+                timeout=8,
+            )
+            result = raw.get("result") or {}
+            for item in result.get("list") or []:
+                sym = str(item.get("symbol") or "")
+                pf = item.get("priceFilter") or {}
+                tick = float(pf.get("tickSize") or 0)
+                if sym and tick > 0:
+                    found[sym] = tick
+            cursor = str(result.get("nextPageCursor") or "")
+            pages += 1
+            if not cursor:
+                break
+        if found:
+            _TICK_CACHE.update(found)
     except Exception:
-        tick = 0.0
-    _TICK_CACHE[sym] = (tick, now)
-    return tick
+        pass
+    finally:
+        # Basarisiz olsa bile tekrar tekrar ag cagrisi yapma (monitor donmasin).
+        _BULK_LOADED = True
+        _BULK_TS = now
+
+
+def warm_tick_cache(_symbols: list[str] | None = None) -> None:
+    """UI oncesi tick cache doldur (bloklamadan once bir kez cagir)."""
+    del _symbols
+    if _BULK_LOADED:
+        return
+    with _BULK_LOCK:
+        if not _BULK_LOADED:
+            _load_all_ticks()
+
+
+def _tick_size(symbol: str | None) -> float:
+    if not symbol:
+        return 0.0
+    sym = str(symbol).upper()
+    if sym in _TICK_CACHE:
+        return _TICK_CACHE[sym]
+    if not _BULK_LOADED:
+        warm_tick_cache()
+    return _TICK_CACHE.get(sym, 0.0)
 
 
 def format_price(v: float | None) -> str:
@@ -75,7 +117,7 @@ def format_price(v: float | None) -> str:
 
 
 def format_price_symbol(symbol: str | None, price: float | None) -> str:
-    """Bybit tickSize ile yuvarla — borsadaki gosterimle ayni ondalik."""
+    """Bybit tickSize ile yuvarla — hot path'te ag cagrisi yok."""
     if price is None:
         return "-"
     try:
@@ -84,7 +126,7 @@ def format_price_symbol(symbol: str | None, price: float | None) -> str:
         return str(price)
     if val == 0:
         return "0"
-    tick = _fetch_tick_size(symbol) if symbol else 0.0
+    tick = _tick_size(symbol)
     if tick > 0:
         val = _round_to_tick(val, tick)
         dec = _decimals_from_tick(tick)
