@@ -23,7 +23,8 @@ def build() -> ft.Control:
                 "Sinyal analizi",
                 dataframe_table(
                     signal_outcome_rows(data.get("signal_outcome_log")),
-                    height=280,
+                    max_rows=None,
+                    height=480,
                     empty_title="Sinyal analizi yok",
                 ),
             ),

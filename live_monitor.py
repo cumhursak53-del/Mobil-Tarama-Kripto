@@ -9,7 +9,8 @@ import os
 import sys
 import threading
 import tkinter as tk
-from tkinter import messagebox, ttk
+from datetime import datetime
+from tkinter import filedialog, messagebox, ttk
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 if ROOT not in sys.path:
@@ -33,6 +34,7 @@ def _apply_env() -> str:
 DEFAULT_URL = _apply_env()
 
 from shared.ui_data import (  # noqa: E402
+    build_excel_bytes,
     engine_status,
     history_rows,
     load_remote_live_data,
@@ -71,6 +73,8 @@ class LiveMonitorApp:
         self._refresh_job: str | None = None
         self._auto = tk.BooleanVar(value=True)
         self._loading = False
+        self._exporting = False
+        self._last_export_data: dict | None = None
 
         self._build_toolbar()
         self._build_metrics()
@@ -87,6 +91,7 @@ class LiveMonitorApp:
         ttk.Entry(bar, textvariable=self.url_var, width=48).pack(side=tk.LEFT, padx=(4, 8))
         ttk.Button(bar, text="Baglan", command=self._on_connect).pack(side=tk.LEFT, padx=2)
         ttk.Button(bar, text="Yenile", command=self.refresh).pack(side=tk.LEFT, padx=2)
+        ttk.Button(bar, text="Excel rapor", command=self._export_excel).pack(side=tk.LEFT, padx=2)
         ttk.Checkbutton(bar, text="Otomatik (30 sn)", variable=self._auto, command=self._toggle_auto).pack(
             side=tk.LEFT, padx=12
         )
@@ -219,30 +224,82 @@ class LiveMonitorApp:
         def worker() -> None:
             err: Exception | None = None
             payload: dict | None = None
+            raw_data: dict | None = None
             try:
                 data = load_remote_live_data(url)
                 from shared.price_format import warm_tick_cache
 
                 warm_tick_cache()
+                raw_data = data
                 payload = self._build_render_payload(data)
             except Exception as exc:
                 err = exc
-            self.root.after(0, lambda: self._on_refresh_done(payload, err, url))
+            self.root.after(0, lambda: self._on_refresh_done(payload, err, url, raw_data))
 
         threading.Thread(target=worker, daemon=True).start()
 
-    def _on_refresh_done(self, payload: dict | None, err: Exception | None, url: str) -> None:
+    def _on_refresh_done(
+        self,
+        payload: dict | None,
+        err: Exception | None,
+        url: str,
+        raw_data: dict | None = None,
+    ) -> None:
         self._loading = False
         try:
             if err is not None:
+                self._last_export_data = None
                 self.status_var.set(f"VPS ulasilamadi: {err}")
                 self._render_error(str(err), url)
             else:
+                self._last_export_data = raw_data
                 self._apply_render(payload or {})
                 source = (payload or {}).get("_source", url)
-                self.status_var.set(f"Bagli — {source}")
+                n_an = (payload or {}).get("analysis_count", 0)
+                n_iz = (payload or {}).get("watch_count", 0)
+                self.status_var.set(f"Bagli — {source} | sinyal analizi {n_an} | aktif izleme {n_iz}")
         finally:
             self._schedule_refresh()
+
+    def _export_excel(self) -> None:
+        if self._exporting:
+            return
+        if not self._last_export_data:
+            messagebox.showwarning("Excel", "Once VPS'ten veri yukleyin (Baglan / Yenile).")
+            return
+        default_name = f"krpito_canli_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+        path = filedialog.asksaveasfilename(
+            title="Excel rapor kaydet",
+            defaultextension=".xlsx",
+            filetypes=[("Excel dosyasi", "*.xlsx")],
+            initialfile=default_name,
+        )
+        if not path:
+            return
+        export_data = self._last_export_data
+        self._exporting = True
+        self.status_var.set("Excel rapor hazirlaniyor...")
+
+        def worker() -> None:
+            err: Exception | None = None
+            try:
+                xlsx = build_excel_bytes(export_data)
+                with open(path, "wb") as f:
+                    f.write(xlsx)
+            except Exception as exc:
+                err = exc
+            self.root.after(0, lambda: self._on_export_done(path, err))
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _on_export_done(self, path: str, err: Exception | None) -> None:
+        self._exporting = False
+        if err is not None:
+            messagebox.showerror("Excel", f"Rapor olusturulamadi:\n{err}")
+            self.status_var.set(f"Excel hatasi: {err}")
+            return
+        messagebox.showinfo("Excel", f"Rapor kaydedildi:\n{path}")
+        self.status_var.set(f"Excel kaydedildi — {os.path.basename(path)}")
 
     def _render_error(self, msg: str, url: str) -> None:
         for key in self.metric_vars:
@@ -315,6 +372,8 @@ class LiveMonitorApp:
             "sig_df": signal_log_rows(sig_log),
             "sig_analysis_df": sig_analysis_df,
             "sig_watch_df": sig_watch_df,
+            "analysis_count": 0 if sig_analysis_df is None or sig_analysis_df.empty else len(sig_analysis_df),
+            "watch_count": 0 if sig_watch_df is None or getattr(sig_watch_df, "empty", True) else len(sig_watch_df),
             "logs": data.get("engine_logs") or [],
             "detail": detail,
         }

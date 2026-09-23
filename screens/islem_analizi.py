@@ -114,6 +114,7 @@ def _render_signal_analysis(data: dict) -> None:
         st.dataframe(summary, use_container_width=True, hide_index=True)
 
     st.subheader("Sinyal detay")
+    st.caption("Tum tamamlanan analizler — satir limiti yok")
     df = signal_outcome_rows(log)
     strats = ["Tumu"] + sorted(df["Strateji"].dropna().unique().tolist())
     verdicts = ["Tumu", "correct", "wrong", "neutral"]
@@ -131,11 +132,11 @@ def _render_signal_analysis(data: dict) -> None:
     if outcome_f != "Tumu":
         show = show[show["Sonuc"] == outcome_f]
 
+    st.caption(f"{len(show)} kayit gosteriliyor")
     st.dataframe(
         show,
         use_container_width=True,
         hide_index=True,
-        height=min(520, 35 * len(show) + 38),
         column_config={
             "Hipotetik_PnL": st.column_config.NumberColumn(format="$%+.2f"),
             "24s_hareket_pct": st.column_config.NumberColumn(format="%.2f%%"),
