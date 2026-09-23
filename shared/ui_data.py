@@ -720,9 +720,12 @@ def signal_watch_rows(watchlist: list | None) -> pd.DataFrame:
     warm_tick_cache()
     rows = []
     now = datetime.now(TR_TZ)
+    from engine.signal_analysis import signal_move_pct
+
     for w in watchlist:
         until = parse_tr_ts(str(w.get("watch_until") or ""))
         remain_h = max(0.0, (until - now).total_seconds() / 3600) if until else 0.0
+        pct = signal_move_pct(w.get("entry"), w.get("last_price"), w.get("side"))
         rows.append({
             "Sembol": w.get("symbol"),
             "Strateji": w.get("strategy"),
@@ -730,6 +733,7 @@ def signal_watch_rows(watchlist: list | None) -> pd.DataFrame:
             "Giris": format_price_symbol(w.get("symbol"), w.get("entry")),
             "SL": format_price_symbol(w.get("symbol"), w.get("sl_price")),
             "TP": format_price_symbol(w.get("symbol"), w.get("tp_price")),
+            "Anlik_KZ": f"{pct:+.2f}%",
             "Kalan_saat": round(remain_h, 1),
             "Yuksek": format_price_symbol(w.get("symbol"), w.get("post_high")),
             "Dusuk": format_price_symbol(w.get("symbol"), w.get("post_low")),
@@ -791,6 +795,7 @@ def build_excel_bytes(data: dict) -> bytes:
         "Islem_Analizi": post_exit_analysis_rows(analysis_log),
         "Kasa_Analiz_Ozeti": ledger_analysis_summary(analysis_log),
         "Sinyal_Analizi": signal_outcome_rows(signal_log_analysis),
+        "Aktif_Sinyal_Izleme": signal_watch_rows(data.get("signal_watchlist") or []),
         "Strateji_Sinyal_Ozeti": strategy_signal_summary(signal_log_analysis),
         "Acik_Pozisyonlar": _pos_rows(data.get("active_positions") or {}),
         "Islem_Gecmisi": _history_rows(data.get("history") or []),

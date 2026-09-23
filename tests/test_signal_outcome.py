@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from engine.signal_analysis import analyze_completed_signal, strategy_signal_summary
+from engine.signal_analysis import analyze_completed_signal, signal_move_pct, strategy_signal_summary
 from engine.signal_outcome import enqueue_signal_watch, finalize_expired_signal_watches
 from engine.types import Side, Signal
 
@@ -17,6 +17,12 @@ def _sig(side: Side = Side.BUY) -> Signal:
         tp_price=110.0,
         strength=2.0,
     )
+
+
+def test_signal_move_pct_buy_and_sell():
+    assert signal_move_pct(100.0, 101.5, "BUY") == 1.5
+    assert signal_move_pct(100.0, 98.0, "SELL") == 2.0
+    assert signal_move_pct(100.0, 99.0, "BUY") == -1.0
 
 
 def test_enqueue_dedupes_same_symbol_strategy_side():

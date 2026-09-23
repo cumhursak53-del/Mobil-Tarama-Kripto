@@ -13,6 +13,17 @@ def make_signal_id(symbol: str, strategy: str, side: str, signal_time: str) -> s
     return f"{symbol}|{strategy}|{side}|{signal_time}"
 
 
+def signal_move_pct(entry: float, last_price: float, side: str) -> float:
+    """Giris fiyatina gore anlik kar/zarar yuzdesi (+ kar, - zarar)."""
+    entry = float(entry or 0)
+    if entry <= 0:
+        return 0.0
+    move = (float(last_price or entry) - entry) / entry * 100.0
+    if str(side).upper() == Side.SELL.value:
+        move = -move
+    return round(move, 2)
+
+
 def _hit_tp(side: str, hi: float, lo: float, tp: float) -> bool:
     if tp <= 0:
         return False
@@ -64,9 +75,7 @@ def analyze_completed_signal(watch: dict, klines: pd.DataFrame | None = None) ->
     hit_tp = bool(tp and _hit_tp(side, post_high, post_low, tp))
     hit_sl = bool(sl and _hit_sl(side, post_high, post_low, sl))
 
-    move_pct = ((last_price - entry) / entry * 100) if entry > 0 else 0.0
-    if side == Side.SELL.value:
-        move_pct = -move_pct
+    move_pct = signal_move_pct(entry, last_price, side)
 
     recommendations: list[str] = []
     if hit_tp and not hit_sl:
