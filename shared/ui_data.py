@@ -699,6 +699,8 @@ def signal_outcome_rows(log: list | None) -> pd.DataFrame:
             "MAE_R": a.get("mae_r"),
             "24s_fiyat": format_price_symbol(a.get("symbol"), a.get("price_at_24h")),
             "24s_hareket_pct": a.get("move_pct"),
+            "Kaldirac": a.get("leverage"),
+            "ROE_pct": a.get("roe_pct"),
             "TP_vurdu": a.get("hit_tp"),
             "SL_vurdu": a.get("hit_sl"),
             "Hipotetik_PnL": a.get("pnl_hypo_usd"),

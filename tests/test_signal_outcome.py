@@ -59,6 +59,9 @@ def test_analyze_completed_signal_direction_ok():
     out = analyze_completed_signal(watch, None)
     assert out["verdict"] == "correct"
     assert out["move_pct"] >= 0.5
+    assert out["leverage"] == 10
+    assert out["pnl_hypo_usd"] == 10.0
+    assert out["roe_pct"] == 10.0
 
 
 def test_finalize_expired_writes_log():

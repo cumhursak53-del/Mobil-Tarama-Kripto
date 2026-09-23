@@ -123,3 +123,21 @@ def size_position(
     if qty <= 0:
         return None
     return SizedTrade(margin=margin, notional=notional, leverage=leverage, qty=qty, risk_usd=risk_usd)
+
+
+def exposure_notional(*, cash: float, entry: float, sl: float, risk_pct: float = RISK_PCT) -> tuple[float, float]:
+    """10x (MIN_LEVERAGE) dahil pozisyon buyuklugu. Donen notional kaldiracli tutardir."""
+    leverage = max(float(MIN_LEVERAGE), 1.0)
+    if cash <= 0 or entry <= 0:
+        return 0.0, leverage
+    sized = size_position(
+        ledger_balance=cash,
+        entry=entry,
+        sl=sl,
+        risk_pct=risk_pct,
+        min_leverage=leverage,
+        max_leverage=max(leverage, float(MAX_LEVERAGE)),
+    )
+    if sized is not None:
+        return float(sized.notional), float(sized.leverage)
+    return cash * leverage, leverage

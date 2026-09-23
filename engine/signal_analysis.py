@@ -44,7 +44,13 @@ def analyze_completed_signal(watch: dict, klines: pd.DataFrame | None = None) ->
     tp_raw = watch.get("tp_price")
     tp = float(tp_raw) if tp_raw not in (None, "") else None
     strength = float(watch.get("strength") or 1.0)
+    from engine.config import MIN_LEVERAGE
+
+    leverage = float(watch.get("leverage") or MIN_LEVERAGE or 10)
+    leverage = max(leverage, 1.0)
     notional = float(watch.get("notional") or 100.0)
+    if not watch.get("notional_levered"):
+        notional *= leverage
 
     post_high = float(watch.get("post_high") or entry)
     post_low = float(watch.get("post_low") or entry)
@@ -129,6 +135,8 @@ def analyze_completed_signal(watch: dict, klines: pd.DataFrame | None = None) ->
         "watch_until": watch.get("watch_until"),
         "price_at_24h": last_price,
         "move_pct": round(move_pct, 3),
+        "leverage": leverage,
+        "roe_pct": round(move_pct * leverage, 3),
         "hit_tp": hit_tp,
         "hit_sl": hit_sl,
         "outcome": outcome,

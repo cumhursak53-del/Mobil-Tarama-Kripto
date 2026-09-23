@@ -39,7 +39,7 @@ def tp_r_multiple(sig: Signal, entry: float) -> float:
 
 
 def expected_profit_usd(pf, entry: float, sig: Signal, *, ledger: str = LIVE_COMBO_LEDGER) -> float:
-    """TP'ye ulasilirsa beklenen USD kar — siralama icin (marjin taban esigi yok)."""
+    """TP'ye ulasilirsa beklenen USD kar (notional = marjin x 10x)."""
     cash = float(pf.ledgers.get(ledger, 0))
     sl = float(sig.sl_price or 0)
     if cash <= 0 or entry <= 0 or sl <= 0 or entry == sl:
@@ -47,8 +47,15 @@ def expected_profit_usd(pf, entry: float, sig: Signal, *, ledger: str = LIVE_COM
     sl_dist = abs(entry - sl) / entry
     if sl_dist < 0.001:
         return 0.0
-    risk_usd = cash * risk_pct_for_ledger(ledger)
-    return risk_usd * tp_r_multiple(sig, entry)
+    from risk.sizer import exposure_notional
+
+    notional, _lev = exposure_notional(
+        cash=cash,
+        entry=entry,
+        sl=sl,
+        risk_pct=risk_pct_for_ledger(ledger),
+    )
+    return notional * sl_dist * tp_r_multiple(sig, entry)
 
 
 def collect_round_candidate(

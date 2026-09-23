@@ -35,6 +35,25 @@ def parse_tr_ts(value: str) -> datetime | None:
         return None
 
 
+def _watch_leverage() -> float:
+    from engine.config import MIN_LEVERAGE
+
+    return max(float(MIN_LEVERAGE), 1.0)
+
+
+def _watch_notional(entry: float, sl: float) -> float:
+    from engine.config import LIVE_COMBO_LEDGER, LIVE_KASA_USD
+    from risk.sizer import exposure_notional, risk_pct_for_ledger
+
+    notional, _lev = exposure_notional(
+        cash=float(LIVE_KASA_USD),
+        entry=entry,
+        sl=sl,
+        risk_pct=risk_pct_for_ledger(LIVE_COMBO_LEDGER),
+    )
+    return notional
+
+
 def watch_until_str(signal_time: str, hours: float | None = None) -> str:
     h = float(hours if hours is not None else SIGNAL_WATCH_HOURS)
     base = parse_tr_ts(signal_time) or datetime.now(TR_TZ)
@@ -73,7 +92,9 @@ def enqueue_signal_watch(
         "sl_price": float(sig.sl_price),
         "tp_price": sig.tp_price,
         "strength": float(sig.strength or 1.0),
-        "notional": 100.0,
+        "notional": _watch_notional(entry, float(sig.sl_price)),
+        "leverage": _watch_leverage(),
+        "notional_levered": True,
         "signal_time": signal_time,
         "watch_until": watch_until_str(signal_time),
         "post_high": entry,
