@@ -226,10 +226,7 @@ class LiveMonitorApp:
             payload: dict | None = None
             raw_data: dict | None = None
             try:
-                data = load_remote_live_data(url)
-                from shared.price_format import warm_tick_cache
-
-                warm_tick_cache()
+                data = load_remote_live_data(url, timeout=30)
                 raw_data = data
                 payload = self._build_render_payload(data)
             except Exception as exc:
@@ -384,12 +381,6 @@ class LiveMonitorApp:
             if key in self.metric_vars:
                 self.metric_vars[key].set(str(val))
 
-        self._fill_tree(self.pos_tree, payload.get("pos_df"))
-        self._fill_tree(self.hist_tree, payload.get("hist_df"))
-        self._fill_tree(self.sig_tree, payload.get("sig_df"))
-        self._fill_tree(self.sig_analysis_tree, payload.get("sig_analysis_df"), max_rows=None)
-        self._fill_tree(self.sig_watch_tree, payload.get("sig_watch_df"), max_rows=None)
-
         logs = payload.get("logs") or []
         detail = payload.get("detail") or ""
         self.log_text.delete("1.0", tk.END)
@@ -398,6 +389,19 @@ class LiveMonitorApp:
             self.log_text.see(tk.END)
         else:
             self.log_text.insert(tk.END, f"Log yok. ({detail})")
+
+        for tree, df, limit in (
+            (self.pos_tree, payload.get("pos_df"), MAX_TREE_ROWS),
+            (self.hist_tree, payload.get("hist_df"), MAX_TREE_ROWS),
+            (self.sig_tree, payload.get("sig_df"), MAX_TREE_ROWS),
+            (self.sig_analysis_tree, payload.get("sig_analysis_df"), None),
+            (self.sig_watch_tree, payload.get("sig_watch_df"), None),
+        ):
+            try:
+                self._fill_tree(tree, df, max_rows=limit)
+            except Exception as exc:
+                self._fill_tree(tree, None)
+                self.log_text.insert(tk.END, f"\nTablo hatasi: {exc}\n")
 
 
 def main() -> None:

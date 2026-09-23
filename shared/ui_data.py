@@ -675,9 +675,6 @@ def post_exit_analysis_rows(log: list | None) -> pd.DataFrame:
 def signal_outcome_rows(log: list | None) -> pd.DataFrame:
     if not log:
         return pd.DataFrame()
-    from shared.price_format import warm_tick_cache
-
-    warm_tick_cache()
     rows = []
     for a in log:
         if not isinstance(a, dict):
@@ -717,9 +714,7 @@ def signal_watch_rows(watchlist: list | None) -> pd.DataFrame:
         return pd.DataFrame()
     from engine.config import TR_TZ
     from engine.signal_outcome import parse_tr_ts
-    from shared.price_format import warm_tick_cache
 
-    warm_tick_cache()
     rows = []
     now = datetime.now(TR_TZ)
     from engine.signal_analysis import signal_pnl_view

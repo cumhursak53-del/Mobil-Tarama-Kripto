@@ -86,9 +86,7 @@ def _tick_size(symbol: str | None) -> float:
     sym = str(symbol).upper()
     if sym in _TICK_CACHE:
         return _TICK_CACHE[sym]
-    if not _BULK_LOADED:
-        warm_tick_cache()
-    return _TICK_CACHE.get(sym, 0.0)
+    return 0.0
 
 
 def format_price(v: float | None) -> str:
