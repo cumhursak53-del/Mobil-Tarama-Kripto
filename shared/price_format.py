@@ -97,6 +97,8 @@ def format_price(v: float | None) -> str:
         val = float(v)
     except (TypeError, ValueError):
         return str(v)
+    if math.isnan(val) or math.isinf(val):
+        return "-"
     if val == 0:
         return "0"
     av = abs(val)

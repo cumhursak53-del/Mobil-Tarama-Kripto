@@ -205,8 +205,8 @@ class LiveMonitorApp:
 
     @staticmethod
     def _fmt(v) -> str:
-        if v is None:
-            return "-"
+        if v is None or isinstance(v, bool):
+            return "-" if v is None else ("Evet" if v else "Hayir")
         if isinstance(v, (int, float)):
             from shared.price_format import format_price
 
@@ -400,7 +400,6 @@ class LiveMonitorApp:
             try:
                 self._fill_tree(tree, df, max_rows=limit)
             except Exception as exc:
-                self._fill_tree(tree, None)
                 self.log_text.insert(tk.END, f"\nTablo hatasi: {exc}\n")
 
 
