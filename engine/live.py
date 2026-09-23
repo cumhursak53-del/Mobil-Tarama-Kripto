@@ -1,4 +1,4 @@
-"""Slim 7/24 live runner — Hacim + PiyasaEvresi tek kasada (Kasa_Canli)."""
+"""7/24 live runner — tum sabit kasalar (lab haric), sinyal testi / Kasa_Canli emir."""
 from __future__ import annotations
 
 import atexit
@@ -22,6 +22,8 @@ from engine.config import (
     LIVE_LONG_ONLY,
     PRICE_POLL_SEC,
     SCAN_SYMBOLS,
+    SMT_ENABLED,
+    SMT_REF_SYMBOL,
     TRADING_MODE,
     is_live_exchange,
 )
@@ -37,7 +39,7 @@ from engine.portfolio import Portfolio, now_tr
 from engine.post_exit import run_post_exit_tick
 from engine.signal_outcome import run_signal_outcome_tick
 from engine.signal_reset import maybe_reset_signal_log
-from strategies.registry import live_strategies
+from strategies.registry import live_strategies, live_strategy_ledgers
 
 _STRATS = live_strategies()
 _TF_TTL_SEC = {"15m": 45, "1h": 180, "4h": 900, "1d": 3600, "1w": 7200}
@@ -52,7 +54,8 @@ class _LiveHandler(BaseHTTPRequestHandler):
             body["trading_mode"] = TRADING_MODE
             body["live_ledgers"] = list(LIVE_LEDGERS)
             body["live_combo_ledger"] = LIVE_COMBO_LEDGER
-            body["live_strategies"] = ["Kasa_Hacim", "Kasa_PiyasaEvresi"]
+            body["live_strategies"] = live_strategy_ledgers()
+            body["live_strategy_count"] = len(body["live_strategies"])
             body["live_exchange"] = is_live_exchange()
             if not body["live_exchange"]:
                 body["active_positions"] = {}
@@ -147,13 +150,13 @@ def _scan_one(
     dominance: dict,
     force_entry: bool,
     round_candidates: list[RoundCandidate] | None = None,
-) -> None:
+) -> bool:
     try:
         strats = _STRATS
         scan_tfs = refresh_tfs_for_scan(strats)
         frames = cache.refresh(sym, scan_tfs)
         if "1h" not in frames or "1d" not in frames:
-            return
+            return False
 
         live_px: float | None = None
         if any(s.uses_live_entry() for s in strats):
@@ -164,7 +167,7 @@ def _scan_one(
 
         mark = _mark_price(pf, sym, frames, live_px)
         if mark <= 0:
-            return
+            return False
 
         if is_live_exchange():
             closed = pf.check_exits(sym, mark)
@@ -175,9 +178,12 @@ def _scan_one(
         if not force_entry and not any(bar_closed.values()) and not any(
             s.uses_live_entry() for s in strats
         ):
-            return
+            return False
 
-        ctx = build_context(sym, frames, dominance, indicated=False, ref_frames=None)
+        ref_frames = None
+        if SMT_ENABLED and sym != SMT_REF_SYMBOL:
+            ref_frames = cache.refresh(SMT_REF_SYMBOL, scan_tfs)
+        ctx = build_context(sym, frames, dominance, indicated=False, ref_frames=ref_frames)
         candidates: list[tuple[float, object, float, object]] = []
         for strat in strats:
             if not should_evaluate_entry(strat, force=force_entry, bar_closed=bar_closed):
@@ -196,9 +202,10 @@ def _scan_one(
             strength = strat.signal_strength(ctx, sig)
             candidates.append((strength, strat, px, sig))
         if not candidates:
-            return
+            return False
         candidates.sort(key=lambda x: x[0], reverse=True)
         if round_candidates is not None:
+            recorded = False
             for strength, strat, px, sig in candidates:
                 cand = collect_round_candidate(
                     pf,
@@ -212,23 +219,18 @@ def _scan_one(
                 if cand is not None:
                     round_candidates.append(cand)
             if not is_live_exchange():
-                picked = None
                 for strength, strat, px, sig in candidates:
-                    if not pf.live_strategy_has_slot(sig.ledger):
-                        continue
-                    picked = (strength, strat, px, sig)
-                    break
-                if picked is not None:
-                    best_strength, _best_strat, best_px, best_sig = picked
-                    pf.record_signal(sym, _to_combo_signal(best_sig), entry_price=best_px)
+                    pf.record_signal(sym, sig, entry_price=px)
                     pf.log(
-                        f"sinyal {sym} | {best_sig.strategy} | {best_sig.side.value} | "
-                        f"skor {best_strength:.2f} | emir kapali"
+                        f"sinyal {sym} | {sig.ledger} | {sig.strategy} | {sig.side.value} | "
+                        f"skor {strength:.2f} | emir kapali"
                     )
-                    pf.save(sync_github=False)
-            return
+                    recorded = True
+            return recorded
+        return False
     except Exception as e:
         pf.log(f"{sym} hata: {e}")
+        return False
 
 
 def _shutdown_save(pf: Portfolio) -> None:
@@ -267,7 +269,8 @@ def run_live(scan_limit: int = SCAN_SYMBOLS) -> None:
     _sync_exchange_on_start(pf)
     pf.log(
         f"Canli motor basladi | {TRADING_MODE} | kasa={LIVE_COMBO_LEDGER} ${LIVE_KASA_USD:.0f} | "
-        f"stratejiler=Hacim+PiyasaEvresi | long_only={LIVE_LONG_ONLY} | tarama ~{PRICE_POLL_SEC}sn"
+        f"strateji={len(_STRATS)} kasa (lab haric) | long_only={LIVE_LONG_ONLY} | "
+        f"tarama ~{PRICE_POLL_SEC}sn | emir={'acik' if is_live_exchange() else 'kapali'}"
     )
     cache = FrameCache()
     cursor = 0
@@ -321,15 +324,19 @@ def run_live(scan_limit: int = SCAN_SYMBOLS) -> None:
                     round_started_at = now_tr()
                     round_candidates.clear()
                 cursor = 0 if wrapped else end
+                chunk_dirty = False
                 for sym in chunk:
-                    _scan_one(
+                    if _scan_one(
                         pf,
                         cache,
                         sym,
                         dominance,
                         force_entry=False,
                         round_candidates=round_candidates,
-                    )
+                    ):
+                        chunk_dirty = True
+                if chunk_dirty:
+                    pf.save(sync_github=False)
                 if wrapped:
                     eq = pf.snapshot()["equity"]
                     window = ""

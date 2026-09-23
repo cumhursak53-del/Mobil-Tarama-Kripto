@@ -68,8 +68,12 @@ _CLASSES: list[type[Strategy]] = [
 
 
 def live_strategies() -> list[Strategy]:
-    """Canli Bybit motoru: yalnizca Hacim + PiyasaEvresi."""
-    return [Hacim(), PiyasaEvresi()]
+    """Hostinger canli/tarama: Streamlit'teki tum sabit kasalar (lab uretimi haric)."""
+    return all_strategies(None)
+
+
+def live_strategy_ledgers() -> list[str]:
+    return [s.ledger for s in live_strategies()]
 
 
 def all_strategies(lab_state: dict | None = None) -> list[Strategy]:

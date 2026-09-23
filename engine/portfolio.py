@@ -311,6 +311,8 @@ class Portfolio:
             if ledger and ledger not in (LIVE_COMBO_LEDGER, *LIVE_LEGACY_LEDGERS):
                 return ledger
             strat = p.strategy or ""
+        if ledger and ledger.startswith("Kasa_") and ledger != LIVE_COMBO_LEDGER:
+            return ledger
         if "Hacim" in strat:
             return "Kasa_Hacim"
         if "Evre_" in strat or "Wyckoff" in strat:
