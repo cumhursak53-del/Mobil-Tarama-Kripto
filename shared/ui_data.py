@@ -722,12 +722,12 @@ def signal_watch_rows(watchlist: list | None) -> pd.DataFrame:
     warm_tick_cache()
     rows = []
     now = datetime.now(TR_TZ)
-    from engine.signal_analysis import signal_move_pct
+    from engine.signal_analysis import signal_pnl_view
 
     for w in watchlist:
         until = parse_tr_ts(str(w.get("watch_until") or ""))
         remain_h = max(0.0, (until - now).total_seconds() / 3600) if until else 0.0
-        pct = signal_move_pct(w.get("entry"), w.get("last_price"), w.get("side"))
+        pnl = signal_pnl_view(w)
         rows.append({
             "Sembol": w.get("symbol"),
             "Strateji": w.get("strategy"),
@@ -735,7 +735,10 @@ def signal_watch_rows(watchlist: list | None) -> pd.DataFrame:
             "Giris": format_price_symbol(w.get("symbol"), w.get("entry")),
             "SL": format_price_symbol(w.get("symbol"), w.get("sl_price")),
             "TP": format_price_symbol(w.get("symbol"), w.get("tp_price")),
-            "Anlik_KZ": f"{pct:+.2f}%",
+            "Fiyat_pct": f"{pnl['move_pct']:+.2f}%",
+            "Anlik_KZ": f"{pnl['roe_pct']:+.2f}%",
+            "Anlik_PnL": pnl["pnl_usd"],
+            "Kaldirac": pnl["leverage"],
             "Kalan_saat": round(remain_h, 1),
             "Yuksek": format_price_symbol(w.get("symbol"), w.get("post_high")),
             "Dusuk": format_price_symbol(w.get("symbol"), w.get("post_low")),

@@ -13,6 +13,26 @@ def make_signal_id(symbol: str, strategy: str, side: str, signal_time: str) -> s
     return f"{symbol}|{strategy}|{side}|{signal_time}"
 
 
+def signal_pnl_view(watch: dict, price: float | None = None) -> dict:
+    """Aktif izleme: fiyat yuzdesi, 10x ROE ve USD kar/zarar."""
+    from engine.config import MIN_LEVERAGE
+
+    entry = float(watch.get("entry") or 0)
+    side = str(watch.get("side") or Side.BUY.value)
+    last = float(price if price is not None else watch.get("last_price") or entry)
+    move = signal_move_pct(entry, last, side)
+    leverage = max(float(watch.get("leverage") or MIN_LEVERAGE or 10), 1.0)
+    notional = float(watch.get("notional") or 100.0)
+    if not watch.get("notional_levered"):
+        notional *= leverage
+    return {
+        "move_pct": move,
+        "leverage": leverage,
+        "roe_pct": round(move * leverage, 2),
+        "pnl_usd": round(notional * (move / 100.0), 2),
+    }
+
+
 def signal_move_pct(entry: float, last_price: float, side: str) -> float:
     """Giris fiyatina gore anlik kar/zarar yuzdesi (+ kar, - zarar)."""
     entry = float(entry or 0)
