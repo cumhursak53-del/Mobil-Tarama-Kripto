@@ -42,6 +42,7 @@ from shared.ui_data import (  # noqa: E402
     signal_log_rows,
     signal_outcome_rows,
     signal_watch_rows,
+    strategy_result_tables,
 )
 
 
@@ -130,6 +131,7 @@ class LiveMonitorApp:
         self.sig_tree = self._make_tree(nb, "Sinyal gunlugu")
         self.sig_analysis_tree = self._make_tree(nb, "Sinyal analizi (24s)")
         self.sig_watch_tree = self._make_tree(nb, "Aktif sinyal izleme")
+        self._build_strategy_tab(nb)
 
         log_frame = ttk.Frame(nb)
         nb.add(log_frame, text="Motor log")
@@ -138,6 +140,66 @@ class LiveMonitorApp:
         self.log_text.configure(yscrollcommand=scroll.set)
         self.log_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scroll.pack(side=tk.RIGHT, fill=tk.Y)
+
+    def _build_strategy_tab(self, nb: ttk.Notebook) -> None:
+        frame = ttk.Frame(nb)
+        nb.add(frame, text="Strateji sonuclari")
+        bar = ttk.Frame(frame, padding=(4, 4))
+        bar.pack(fill=tk.X)
+        ttk.Label(bar, text="Strateji:").pack(side=tk.LEFT)
+        self._strategy_filter = tk.StringVar(value="Tumu")
+        self._strategy_combo = ttk.Combobox(
+            bar, textvariable=self._strategy_filter, state="readonly", width=42
+        )
+        self._strategy_combo.pack(side=tk.LEFT, padx=(4, 12))
+        self._strategy_combo.bind("<<ComboboxSelected>>", lambda _e: self._apply_strategy_detail())
+        self._strategy_caption = tk.StringVar(value="Ozet yuklenmedi")
+        ttk.Label(bar, textvariable=self._strategy_caption).pack(side=tk.LEFT)
+        paned = ttk.Panedwindow(frame, orient=tk.VERTICAL)
+        paned.pack(fill=tk.BOTH, expand=True)
+        top = ttk.LabelFrame(paned, text="Strateji ozeti — satira tiklayinca detay filtrelenir")
+        bottom = ttk.LabelFrame(paned, text="Sinyal detayi (biten + devam)")
+        paned.add(top, weight=1)
+        paned.add(bottom, weight=2)
+        self.strategy_sum_tree = self._tree_in(top)
+        self.strategy_detail_tree = self._tree_in(bottom)
+        self.strategy_sum_tree.bind("<<TreeviewSelect>>", self._on_strategy_summary_select)
+        self._strategy_detail_df = None
+
+    def _tree_in(self, parent: ttk.Frame) -> ttk.Treeview:
+        holder = ttk.Frame(parent)
+        holder.pack(fill=tk.BOTH, expand=True)
+        tree = ttk.Treeview(holder, show="headings")
+        vsb = ttk.Scrollbar(holder, orient=tk.VERTICAL, command=tree.yview)
+        hsb = ttk.Scrollbar(holder, orient=tk.HORIZONTAL, command=tree.xview)
+        tree.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
+        tree.grid(row=0, column=0, sticky="nsew")
+        vsb.grid(row=0, column=1, sticky="ns")
+        hsb.grid(row=1, column=0, sticky="ew")
+        holder.rowconfigure(0, weight=1)
+        holder.columnconfigure(0, weight=1)
+        return tree
+
+    def _on_strategy_summary_select(self, _event=None) -> None:
+        sel = self.strategy_sum_tree.selection()
+        if not sel:
+            return
+        values = self.strategy_sum_tree.item(sel[0], "values")
+        if not values:
+            return
+        name = str(values[0])
+        if name and name != "Kayit yok":
+            self._strategy_filter.set(name)
+            self._apply_strategy_detail()
+
+    def _apply_strategy_detail(self) -> None:
+        df = self._strategy_detail_df
+        chosen = self._strategy_filter.get().strip() or "Tumu"
+        if df is None or getattr(df, "empty", True):
+            self._fill_tree(self.strategy_detail_tree, None, max_rows=None)
+            return
+        view = df if chosen == "Tumu" else df[df["Strateji"] == chosen]
+        self._fill_tree(self.strategy_detail_tree, view, max_rows=None)
 
     def _make_tree(self, parent: ttk.Notebook, title: str) -> ttk.Treeview:
         frame = ttk.Frame(parent)
@@ -308,6 +370,9 @@ class LiveMonitorApp:
         self._fill_tree(self.sig_tree, None)
         self._fill_tree(self.sig_analysis_tree, None)
         self._fill_tree(self.sig_watch_tree, None)
+        self._strategy_detail_df = None
+        self._fill_tree(self.strategy_sum_tree, None, max_rows=None)
+        self._fill_tree(self.strategy_detail_tree, None, max_rows=None)
         self.log_text.delete("1.0", tk.END)
         self.log_text.insert(
             tk.END,
@@ -343,6 +408,8 @@ class LiveMonitorApp:
         kasa = data.get("live_combo_ledger") or "-"
         flags = data.get("engine_flags") or {}
         sig_log = _trim_signal_log(data.get("signal_log") or {})
+        strategy_sum_df = None
+        strategy_detail_df = None
         if not flags.get("signal_analysis") and "signal_watchlist" not in data:
             sig_analysis_df = pd.DataFrame(
                 [{"mesaj": "VPS guncel degil — Hostinger terminalde git pull + deploy_vps.sh calistirin"}]
@@ -351,6 +418,10 @@ class LiveMonitorApp:
         else:
             sig_analysis_df = signal_outcome_rows(data.get("signal_outcome_log") or [])
             sig_watch_df = signal_watch_rows(data.get("signal_watchlist") or [])
+            strategy_sum_df, strategy_detail_df = strategy_result_tables(
+                data.get("signal_outcome_log") or [],
+                data.get("signal_watchlist") or [],
+            )
 
         return {
             "_source": data.get("_source"),
@@ -369,6 +440,8 @@ class LiveMonitorApp:
             "sig_df": signal_log_rows(sig_log),
             "sig_analysis_df": sig_analysis_df,
             "sig_watch_df": sig_watch_df,
+            "strategy_sum_df": strategy_sum_df,
+            "strategy_detail_df": strategy_detail_df,
             "analysis_count": 0 if sig_analysis_df is None or sig_analysis_df.empty else len(sig_analysis_df),
             "watch_count": 0 if sig_watch_df is None or getattr(sig_watch_df, "empty", True) else len(sig_watch_df),
             "logs": data.get("engine_logs") or [],
@@ -401,6 +474,27 @@ class LiveMonitorApp:
                 self._fill_tree(tree, df, max_rows=limit)
             except Exception as exc:
                 self.log_text.insert(tk.END, f"\nTablo hatasi: {exc}\n")
+        self._show_strategy_results(payload.get("strategy_sum_df"), payload.get("strategy_detail_df"))
+
+    def _show_strategy_results(self, summary, detail) -> None:
+        self._strategy_detail_df = detail
+        try:
+            self._fill_tree(self.strategy_sum_tree, summary, max_rows=None)
+        except Exception as exc:
+            self.log_text.insert(tk.END, f"\nStrateji ozet hatasi: {exc}\n")
+        names = ["Tumu"]
+        if summary is not None and not getattr(summary, "empty", True) and "Strateji" in summary.columns:
+            names.extend(str(x) for x in summary["Strateji"].tolist())
+        current = self._strategy_filter.get()
+        self._strategy_combo["values"] = names
+        if current not in names:
+            self._strategy_filter.set("Tumu")
+        biten = devam = 0
+        if detail is not None and not getattr(detail, "empty", True):
+            biten = int((detail["Durum"] == "Biten").sum())
+            devam = int((detail["Durum"] == "Devam").sum())
+        self._strategy_caption.set(f"{len(names) - 1} strateji | biten {biten} | devam {devam}")
+        self._apply_strategy_detail()
 
 
 def main() -> None:

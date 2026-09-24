@@ -91,6 +91,42 @@ def test_finalize_expired_writes_log():
     assert len(log_store) == 1
 
 
+def test_strategy_result_tables_groups_done_and_live():
+    from shared.ui_data import strategy_result_tables
+
+    done = [{
+        "strategy": "[STRAT: A]",
+        "ledger": "Kasa_Hacim",
+        "symbol": "BTCUSDT",
+        "side": "BUY",
+        "entry": 100.0,
+        "price_at_24h": 101.0,
+        "signal_time": "2026-09-21 10:00:00",
+        "verdict": "correct",
+        "outcome": "direction_ok",
+        "hit_tp": False,
+        "hit_sl": False,
+        "mfe_r": 1.2,
+        "notional": 100.0,
+    }]
+    live = [{
+        "strategy": "[STRAT: A]",
+        "ledger": "Kasa_Hacim",
+        "symbol": "ETHUSDT",
+        "side": "BUY",
+        "entry": 100.0,
+        "last_price": 99.0,
+        "signal_time": "2026-09-23 10:00:00",
+        "watch_until": "2026-09-24 10:00:00",
+        "notional": 100.0,
+    }]
+    summary, detail = strategy_result_tables(done, live)
+    assert len(summary) == 1
+    assert int(summary.iloc[0]["Biten"]) == 1
+    assert int(summary.iloc[0]["Devam"]) == 1
+    assert set(detail["Durum"]) == {"Biten", "Devam"}
+
+
 def test_strategy_signal_summary():
     analyses = [
         {"strategy": "A", "verdict": "correct", "outcome": "tp_hit", "mfe_r": 2.0},

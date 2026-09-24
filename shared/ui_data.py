@@ -709,6 +709,112 @@ def signal_outcome_rows(log: list | None) -> pd.DataFrame:
     return df
 
 
+def strategy_result_tables(
+    outcome_log: list | None,
+    watchlist: list | None,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Strateji ozeti + biten/devam eden sinyal detayi."""
+    from engine.signal_analysis import signal_pnl_view
+
+    from engine.config import TR_TZ
+    from engine.signal_outcome import parse_tr_ts
+
+    now = datetime.now(TR_TZ)
+    details: list[dict] = []
+    for item in outcome_log or []:
+        if not isinstance(item, dict):
+            continue
+        view = signal_pnl_view(item, item.get("price_at_24h") or item.get("last_price"))
+        details.append({
+            "Durum": "Biten",
+            "Strateji": item.get("strategy") or "-",
+            "Kasa": item.get("source_ledger") or item.get("ledger") or "-",
+            "Sembol": item.get("symbol") or "-",
+            "Yon": item.get("side") or "-",
+            "Sinyal": item.get("signal_time") or "-",
+            "Giris": format_price_symbol(item.get("symbol"), item.get("entry")),
+            "Son_fiyat": format_price_symbol(item.get("symbol"), item.get("price_at_24h")),
+            "Fiyat_pct": view["move_pct"],
+            "ROE_pct": view["roe_pct"],
+            "PnL": view["pnl_usd"],
+            "Karar": item.get("verdict") or "-",
+            "Sonuc": item.get("outcome") or "-",
+            "TP": "Evet" if item.get("hit_tp") else "Hayir",
+            "SL": "Evet" if item.get("hit_sl") else "Hayir",
+            "MFE_R": item.get("mfe_r"),
+            "MAE_R": item.get("mae_r"),
+            "Kalan_saat": 0,
+        })
+    for item in watchlist or []:
+        if not isinstance(item, dict):
+            continue
+        view = signal_pnl_view(item)
+        until = parse_tr_ts(str(item.get("watch_until") or ""))
+        remain_h = max(0.0, (until - now).total_seconds() / 3600) if until else 0.0
+        details.append({
+            "Durum": "Devam",
+            "Strateji": item.get("strategy") or "-",
+            "Kasa": item.get("source_ledger") or item.get("ledger") or "-",
+            "Sembol": item.get("symbol") or "-",
+            "Yon": item.get("side") or "-",
+            "Sinyal": item.get("signal_time") or "-",
+            "Giris": format_price_symbol(item.get("symbol"), item.get("entry")),
+            "Son_fiyat": format_price_symbol(item.get("symbol"), item.get("last_price")),
+            "Fiyat_pct": view["move_pct"],
+            "ROE_pct": view["roe_pct"],
+            "PnL": view["pnl_usd"],
+            "Karar": "izleniyor",
+            "Sonuc": "devam",
+            "TP": "-",
+            "SL": "-",
+            "MFE_R": None,
+            "MAE_R": None,
+            "Kalan_saat": round(remain_h, 1),
+        })
+    detail = pd.DataFrame(details)
+    if detail.empty:
+        return pd.DataFrame(), detail
+    detail = detail.sort_values(["Strateji", "Durum", "Sinyal"], ascending=[True, True, False])
+
+    summary_rows = []
+    for strategy, group in detail.groupby("Strateji", sort=False):
+        done = group[group["Durum"] == "Biten"]
+        live = group[group["Durum"] == "Devam"]
+        n_done = len(done)
+        correct = int((done["Karar"] == "correct").sum()) if n_done else 0
+        wrong = int((done["Karar"] == "wrong").sum()) if n_done else 0
+        neutral = int((done["Karar"] == "neutral").sum()) if n_done else 0
+        tp = int((done["TP"] == "Evet").sum()) if n_done else 0
+        sl = int((done["SL"] == "Evet").sum()) if n_done else 0
+        kasalar = ", ".join(sorted({str(x) for x in group["Kasa"] if str(x) not in ("", "-")}))
+        best = group.loc[group["PnL"].idxmax()] if not group.empty else None
+        worst = group.loc[group["PnL"].idxmin()] if not group.empty else None
+        summary_rows.append({
+            "Strateji": strategy,
+            "Kasa": kasalar or "-",
+            "Biten": n_done,
+            "Devam": len(live),
+            "Toplam": len(group),
+            "Dogru": correct,
+            "Yanlis": wrong,
+            "Notr": neutral,
+            "Basari_pct": round(100 * correct / n_done, 1) if n_done else None,
+            "TP": tp,
+            "SL": sl,
+            "Ort_MFE_R": round(float(done["MFE_R"].dropna().mean()), 2) if n_done and done["MFE_R"].notna().any() else None,
+            "Biten_PnL": round(float(done["PnL"].sum()), 2) if n_done else 0.0,
+            "Biten_ort_ROE": round(float(done["ROE_pct"].mean()), 2) if n_done else None,
+            "Devam_PnL": round(float(live["PnL"].sum()), 2) if len(live) else 0.0,
+            "Devam_ort_ROE": round(float(live["ROE_pct"].mean()), 2) if len(live) else None,
+            "En_iyi": f"{best['Sembol']} ${best['PnL']:+.2f}" if best is not None else "-",
+            "En_kotu": f"{worst['Sembol']} ${worst['PnL']:+.2f}" if worst is not None else "-",
+        })
+    summary = pd.DataFrame(summary_rows)
+    if not summary.empty:
+        summary = summary.sort_values(["Biten", "Basari_pct"], ascending=[False, False])
+    return summary, detail.reset_index(drop=True)
+
+
 def signal_watch_rows(watchlist: list | None) -> pd.DataFrame:
     if not watchlist:
         return pd.DataFrame()
@@ -787,6 +893,9 @@ def build_excel_bytes(data: dict) -> bytes:
 
     analysis_log = data.get("post_exit_log") or []
     signal_log_analysis = data.get("signal_outcome_log") or []
+    strategy_sum, strategy_detail = strategy_result_tables(
+        signal_log_analysis, data.get("signal_watchlist") or []
+    )
     sheets = {
         "Ozet": ozet,
         "Kasalar": _ledger_rows(data),
@@ -796,6 +905,8 @@ def build_excel_bytes(data: dict) -> bytes:
         "Kasa_Analiz_Ozeti": ledger_analysis_summary(analysis_log),
         "Sinyal_Analizi": signal_outcome_rows(signal_log_analysis),
         "Aktif_Sinyal_Izleme": signal_watch_rows(data.get("signal_watchlist") or []),
+        "Strateji_Sonuc": strategy_sum,
+        "Strateji_Detay": strategy_detail,
         "Strateji_Sinyal_Ozeti": strategy_signal_summary(signal_log_analysis),
         "Acik_Pozisyonlar": _pos_rows(data.get("active_positions") or {}),
         "Islem_Gecmisi": _history_rows(data.get("history") or []),
