@@ -881,6 +881,35 @@ def post_exit_watch_rows(watchlist: list | None) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def market_commentary_rows(log: list | None) -> pd.DataFrame:
+    rows = []
+    for note in reversed(log or []):
+        if not isinstance(note, dict):
+            continue
+        rows.append({
+            "Tur_bitis": note.get("round_end") or note.get("updated_at") or "-",
+            "Tur_baslangic": note.get("round_start") or "-",
+            "Rejim": note.get("regime") or "-",
+            "BTC_evre": note.get("btc_stage") or "-",
+            "BTC_24s_pct": note.get("btc_chg"),
+            "BTC_D": note.get("btc_d"),
+            "BTC_D_degisim": note.get("btc_d_chg"),
+            "USDT_D": note.get("usdt_d"),
+            "Alt_yukselis": note.get("alt_advancing"),
+            "Alt_dusus": note.get("alt_declining"),
+            "Yorum": note.get("text") or "",
+        })
+    if not rows:
+        return pd.DataFrame({"Bilgi": ["Henuz yorum yok. Bir tarama turu bitince burada gorunur."]})
+    return pd.DataFrame(rows)
+
+
+def _commentary_rows(note: dict) -> pd.DataFrame:
+    if note:
+        return market_commentary_rows([note])
+    return market_commentary_rows([])
+
+
 def build_excel_bytes(data: dict) -> bytes:
     buf = io.BytesIO()
     ozet = pd.DataFrame([{
@@ -914,6 +943,8 @@ def build_excel_bytes(data: dict) -> bytes:
         "Aktif_Sinyal_Izleme": signal_watch_rows(data.get("signal_watchlist") or []),
         "Strateji_Sonuc": strategy_sum,
         "Strateji_Detay": strategy_detail,
+        "Piyasa_Yorumu": market_commentary_rows(data.get("market_commentary_log") or []),
+        "Piyasa_Yorumu_Son": _commentary_rows(data.get("market_commentary") or {}),
         "Strateji_Sinyal_Ozeti": strategy_signal_summary(signal_log_analysis),
         "Acik_Pozisyonlar": _pos_rows(data.get("active_positions") or {}),
         "Islem_Gecmisi": _history_rows(data.get("history") or []),

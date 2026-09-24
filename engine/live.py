@@ -18,6 +18,7 @@ from engine.config import (
     LIVE_HTTP_PORT,
     LIVE_KASA_BALANCES,
     LIVE_KASA_USD,
+    MARKET_COMMENTARY_LOG_MAX,
     LIVE_LEDGERS,
     LIVE_LONG_ONLY,
     PRICE_POLL_SEC,
@@ -34,6 +35,7 @@ from engine.entry_timing import collect_bar_closes, refresh_tfs_for_scan, should
 from engine.exchange.bybit_client import BybitClient
 from engine.exchange.executor import get_executor
 from engine.live_round_pick import RoundCandidate, collect_round_candidate, finalize_round_candidates
+from engine.market_commentary import build_market_commentary, empty_stage_note, note_symbol_stage
 from engine.paper import FrameCache, _entry_price, _mark_price, _update_dominance, run_price_pass
 from engine.portfolio import Portfolio, now_tr
 from engine.post_exit import run_post_exit_tick
@@ -150,6 +152,7 @@ def _scan_one(
     dominance: dict,
     force_entry: bool,
     round_candidates: list[RoundCandidate] | None = None,
+    stage_note: dict | None = None,
 ) -> bool:
     try:
         strats = _STRATS
@@ -184,6 +187,8 @@ def _scan_one(
         if SMT_ENABLED and sym != SMT_REF_SYMBOL:
             ref_frames = cache.refresh(SMT_REF_SYMBOL, scan_tfs)
         ctx = build_context(sym, frames, dominance, indicated=False, ref_frames=ref_frames)
+        if stage_note is not None:
+            note_symbol_stage(sym, ctx.stage.value, stage_note)
         candidates: list[tuple[float, object, float, object]] = []
         for strat in strats:
             if not should_evaluate_entry(strat, force=force_entry, bar_closed=bar_closed):
@@ -280,6 +285,7 @@ def run_live(scan_limit: int = SCAN_SYMBOLS) -> None:
     dominance: dict = {}
     round_candidates: list[RoundCandidate] = []
     round_started_at: str | None = None
+    stage_note = empty_stage_note()
 
     while True:
         loop_start = time.time()
@@ -323,6 +329,7 @@ def run_live(scan_limit: int = SCAN_SYMBOLS) -> None:
                 if cursor == 0 and chunk:
                     round_started_at = now_tr()
                     round_candidates.clear()
+                    stage_note = empty_stage_note()
                 cursor = 0 if wrapped else end
                 chunk_dirty = False
                 for sym in chunk:
@@ -333,6 +340,7 @@ def run_live(scan_limit: int = SCAN_SYMBOLS) -> None:
                         dominance,
                         force_entry=False,
                         round_candidates=round_candidates,
+                        stage_note=stage_note,
                     ):
                         chunk_dirty = True
                 if chunk_dirty:
@@ -358,6 +366,22 @@ def run_live(scan_limit: int = SCAN_SYMBOLS) -> None:
                         entry_price_fn=_entry_price if live_exchange else None,
                         log=pf.log,
                     )
+                    try:
+                        note = build_market_commentary(
+                            btc_stage=stage_note.get("btc_stage"),
+                            dominance=dominance,
+                            stage_counts=stage_note.get("counts") or {},
+                        )
+                        note["round_start"] = round_started_at or ""
+                        note["round_end"] = now_tr()
+                        pf.market_commentary = note
+                        pf.market_commentary_log.append(note)
+                        if MARKET_COMMENTARY_LOG_MAX > 0 and len(pf.market_commentary_log) > MARKET_COMMENTARY_LOG_MAX:
+                            pf.market_commentary_log = pf.market_commentary_log[-MARKET_COMMENTARY_LOG_MAX:]
+                        pf.log(f"Piyasa yorumu [{note.get('regime', '-')}] {note['text']}")
+                        changed = True
+                    except Exception as exc:
+                        pf.log(f"Piyasa yorumu yazilamadi: {exc}")
                     if changed:
                         pf.save(sync_github=False)
                     round_started_at = None

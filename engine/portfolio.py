@@ -84,6 +84,8 @@ class Portfolio:
         self.post_exit_log: list[dict] = []
         self.signal_watchlist: list[dict] = []
         self.signal_outcome_log: list[dict] = []
+        self.market_commentary: dict = {}
+        self.market_commentary_log: list[dict] = []
         self.state_source: str = "fresh"
         if self.live_mode:
             self.load()
@@ -186,6 +188,8 @@ class Portfolio:
         self.post_exit_log = raw.get("post_exit_log") or []
         self.signal_watchlist = raw.get("signal_watchlist") or []
         self.signal_outcome_log = raw.get("signal_outcome_log") or []
+        self.market_commentary = raw.get("market_commentary") or {}
+        self.market_commentary_log = raw.get("market_commentary_log") or []
         self.positions = {}
         for key, p in (raw.get("active_positions") or {}).items():
             try:
@@ -880,6 +884,8 @@ class Portfolio:
             "post_exit_watchlist": self.post_exit_watchlist[-200:],
             "post_exit_log": self.post_exit_log[-500:],
             "engine_logs": self.logs[-100:],
+            "market_commentary": dict(self.market_commentary or {}),
+            "market_commentary_log": list(self.market_commentary_log or []),
             "equity_curve": self._equity_curve[-300:],
             "kasa_count": len(self.ledgers),
             "engine_flags": {

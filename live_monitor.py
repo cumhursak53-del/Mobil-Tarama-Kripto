@@ -42,6 +42,7 @@ from shared.ui_data import (  # noqa: E402
     signal_log_rows,
     signal_outcome_rows,
     signal_watch_rows,
+    market_commentary_rows,
     strategy_result_tables,
 )
 
@@ -131,6 +132,7 @@ class LiveMonitorApp:
         self.sig_tree = self._make_tree(nb, "Sinyal gunlugu")
         self.sig_analysis_tree = self._make_tree(nb, "Sinyal analizi (24s)")
         self.sig_watch_tree = self._make_tree(nb, "Aktif sinyal izleme")
+        self._build_commentary_tab(nb)
         self._build_strategy_tab(nb)
 
         log_frame = ttk.Frame(nb)
@@ -140,6 +142,47 @@ class LiveMonitorApp:
         self.log_text.configure(yscrollcommand=scroll.set)
         self.log_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scroll.pack(side=tk.RIGHT, fill=tk.Y)
+
+    def _build_commentary_tab(self, nb: ttk.Notebook) -> None:
+        frame = ttk.Frame(nb)
+        nb.add(frame, text="Piyasa yorumu")
+        bar = ttk.Frame(frame, padding=(4, 4))
+        bar.pack(fill=tk.X)
+        self._commentary_caption = tk.StringVar(value="Yorum gecmisi yuklenmedi")
+        ttk.Label(bar, textvariable=self._commentary_caption).pack(side=tk.LEFT)
+        paned = ttk.Panedwindow(frame, orient=tk.VERTICAL)
+        paned.pack(fill=tk.BOTH, expand=True)
+        top = ttk.LabelFrame(paned, text="Tur yorumlari — satira tiklayinca tam metin")
+        bottom = ttk.LabelFrame(paned, text="Secili yorum")
+        paned.add(top, weight=1)
+        paned.add(bottom, weight=2)
+        self.commentary_tree = self._tree_in(top)
+        self.commentary_tree.bind("<<TreeviewSelect>>", self._on_commentary_select)
+        self._commentary_text = tk.Text(bottom, wrap=tk.WORD, font=("", 10))
+        scroll = ttk.Scrollbar(bottom, command=self._commentary_text.yview)
+        self._commentary_text.configure(yscrollcommand=scroll.set)
+        self._commentary_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        self._commentary_text.insert(
+            tk.END,
+            "Her tarama turu bitince Bitcoin, hakimiyet ve altcoin evrelerine gore yorum burada listelenir.\n"
+            "VPS guncel degilse bu liste bos kalir — Hostinger'da git pull + deploy_vps.sh calistirin.",
+        )
+        self._commentary_text.configure(state=tk.DISABLED)
+        self._commentary_entries: list[dict] = []
+
+    def _on_commentary_select(self, _event=None) -> None:
+        sel = self.commentary_tree.selection()
+        if not sel:
+            return
+        idx = self.commentary_tree.index(sel[0])
+        if idx < 0 or idx >= len(self._commentary_entries):
+            return
+        text = str(self._commentary_entries[idx].get("Yorum") or "")
+        self._commentary_text.configure(state=tk.NORMAL)
+        self._commentary_text.delete("1.0", tk.END)
+        self._commentary_text.insert(tk.END, text)
+        self._commentary_text.configure(state=tk.DISABLED)
 
     def _build_strategy_tab(self, nb: ttk.Notebook) -> None:
         frame = ttk.Frame(nb)
@@ -373,6 +416,13 @@ class LiveMonitorApp:
         self._strategy_detail_df = None
         self._fill_tree(self.strategy_sum_tree, None, max_rows=None)
         self._fill_tree(self.strategy_detail_tree, None, max_rows=None)
+        self._fill_tree(self.commentary_tree, None, max_rows=None)
+        self._commentary_entries = []
+        self._commentary_caption.set("Yorum alinamadi")
+        self._commentary_text.configure(state=tk.NORMAL)
+        self._commentary_text.delete("1.0", tk.END)
+        self._commentary_text.insert(tk.END, "VPS baglantisi yok.")
+        self._commentary_text.configure(state=tk.DISABLED)
         self.log_text.delete("1.0", tk.END)
         self.log_text.insert(
             tk.END,
@@ -422,6 +472,12 @@ class LiveMonitorApp:
                 data.get("signal_outcome_log") or [],
                 data.get("signal_watchlist") or [],
             )
+        if data.get("market_commentary_log") is None and "signal_watchlist" in data:
+            commentary_df = pd.DataFrame([{
+                "Bilgi": "VPS guncel degil — piyasa yorumu yok. Hostinger'da git pull + deploy_vps.sh calistirin.",
+            }])
+        else:
+            commentary_df = market_commentary_rows(data.get("market_commentary_log") or [])
 
         return {
             "_source": data.get("_source"),
@@ -442,6 +498,7 @@ class LiveMonitorApp:
             "sig_watch_df": sig_watch_df,
             "strategy_sum_df": strategy_sum_df,
             "strategy_detail_df": strategy_detail_df,
+            "commentary_df": commentary_df,
             "analysis_count": 0 if sig_analysis_df is None or sig_analysis_df.empty else len(sig_analysis_df),
             "watch_count": 0 if sig_watch_df is None or getattr(sig_watch_df, "empty", True) else len(sig_watch_df),
             "logs": data.get("engine_logs") or [],
@@ -469,12 +526,33 @@ class LiveMonitorApp:
             (self.sig_tree, payload.get("sig_df"), MAX_TREE_ROWS),
             (self.sig_analysis_tree, payload.get("sig_analysis_df"), None),
             (self.sig_watch_tree, payload.get("sig_watch_df"), None),
+            (self.commentary_tree, payload.get("commentary_df"), None),
         ):
             try:
                 self._fill_tree(tree, df, max_rows=limit)
             except Exception as exc:
                 self.log_text.insert(tk.END, f"\nTablo hatasi: {exc}\n")
         self._show_strategy_results(payload.get("strategy_sum_df"), payload.get("strategy_detail_df"))
+        self._show_commentary(payload.get("commentary_df"))
+
+    def _show_commentary(self, df) -> None:
+        entries: list[dict] = []
+        if df is not None and not getattr(df, "empty", True):
+            if "Bilgi" in df.columns:
+                self._commentary_caption.set(str(df.iloc[0].get("Bilgi") or "Yorum yok"))
+                self._commentary_entries = []
+                self._commentary_text.configure(state=tk.NORMAL)
+                self._commentary_text.delete("1.0", tk.END)
+                self._commentary_text.insert(tk.END, str(df.iloc[0].get("Bilgi") or ""))
+                self._commentary_text.configure(state=tk.DISABLED)
+                return
+            entries = df.to_dict("records")
+        self._commentary_entries = entries
+        n = len(entries)
+        self._commentary_caption.set(f"{n} tur yorumu" if n else "Henuz tur yorumu yok")
+        if n:
+            self.commentary_tree.selection_set(self.commentary_tree.get_children()[0])
+            self._on_commentary_select()
 
     def _show_strategy_results(self, summary, detail) -> None:
         self._strategy_detail_df = detail
