@@ -125,6 +125,11 @@ def test_strategy_result_tables_groups_done_and_live():
     assert int(summary.iloc[0]["Biten"]) == 1
     assert int(summary.iloc[0]["Devam"]) == 1
     assert set(detail["Durum"]) == {"Biten", "Devam"}
+    live_row = detail[detail["Durum"] == "Devam"].iloc[0]
+    assert live_row["Karar"] == "yanlis"
+    assert live_row["Sonuc"] == "zarar"
+    assert int(summary.iloc[0]["Dogru"]) == 1
+    assert int(summary.iloc[0]["Yanlis"]) == 1
 
 
 def test_strategy_signal_summary():

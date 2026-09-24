@@ -751,6 +751,12 @@ def strategy_result_tables(
         view = signal_pnl_view(item)
         until = parse_tr_ts(str(item.get("watch_until") or ""))
         remain_h = max(0.0, (until - now).total_seconds() / 3600) if until else 0.0
+        if view["pnl_usd"] > 0:
+            karar, sonuc = "dogru", "kar"
+        elif view["pnl_usd"] < 0:
+            karar, sonuc = "yanlis", "zarar"
+        else:
+            karar, sonuc = "notr", "basabas"
         details.append({
             "Durum": "Devam",
             "Strateji": item.get("strategy") or "-",
@@ -763,8 +769,8 @@ def strategy_result_tables(
             "Fiyat_pct": view["move_pct"],
             "ROE_pct": view["roe_pct"],
             "PnL": view["pnl_usd"],
-            "Karar": "izleniyor",
-            "Sonuc": "devam",
+            "Karar": karar,
+            "Sonuc": sonuc,
             "TP": "-",
             "SL": "-",
             "MFE_R": None,
@@ -781,9 +787,10 @@ def strategy_result_tables(
         done = group[group["Durum"] == "Biten"]
         live = group[group["Durum"] == "Devam"]
         n_done = len(done)
-        correct = int((done["Karar"] == "correct").sum()) if n_done else 0
-        wrong = int((done["Karar"] == "wrong").sum()) if n_done else 0
-        neutral = int((done["Karar"] == "neutral").sum()) if n_done else 0
+        n_all = len(group)
+        correct = int(group["Karar"].isin(("correct", "dogru")).sum())
+        wrong = int(group["Karar"].isin(("wrong", "yanlis")).sum())
+        neutral = n_all - correct - wrong
         tp = int((done["TP"] == "Evet").sum()) if n_done else 0
         sl = int((done["SL"] == "Evet").sum()) if n_done else 0
         kasalar = ", ".join(sorted({str(x) for x in group["Kasa"] if str(x) not in ("", "-")}))
@@ -798,7 +805,7 @@ def strategy_result_tables(
             "Dogru": correct,
             "Yanlis": wrong,
             "Notr": neutral,
-            "Basari_pct": round(100 * correct / n_done, 1) if n_done else None,
+            "Basari_pct": round(100 * correct / n_all, 1) if n_all else None,
             "TP": tp,
             "SL": sl,
             "Ort_MFE_R": round(float(done["MFE_R"].dropna().mean()), 2) if n_done and done["MFE_R"].notna().any() else None,
