@@ -28,6 +28,7 @@ from engine.config import (
     TRADING_MODE,
     is_live_exchange,
 )
+from engine.btc_relative import btc_relative_change, format_btc_relative_log, get_24h_changes
 from engine.context import build_context
 from engine.data import fetch_dominance, fetch_klines, fetch_symbols, last_prices
 from engine.df_utils import pick_frame
@@ -153,6 +154,7 @@ def _scan_one(
     force_entry: bool,
     round_candidates: list[RoundCandidate] | None = None,
     stage_note: dict | None = None,
+    chg_24h: dict[str, float] | None = None,
 ) -> bool:
     try:
         strats = _STRATS
@@ -224,11 +226,14 @@ def _scan_one(
                 if cand is not None:
                     round_candidates.append(cand)
             if not is_live_exchange():
+                rel = btc_relative_change(sym, chg_24h) if chg_24h else {}
+                rel_txt = format_btc_relative_log(rel)
                 for strength, strat, px, sig in candidates:
-                    pf.record_signal(sym, sig, entry_price=px)
+                    pf.record_signal(sym, sig, entry_price=px, btc_relative=rel)
+                    extra = f" | {rel_txt}" if rel_txt else ""
                     pf.log(
                         f"sinyal {sym} | {sig.ledger} | {sig.strategy} | {sig.side.value} | "
-                        f"skor {strength:.2f} | emir kapali"
+                        f"skor {strength:.2f} | emir kapali{extra}"
                     )
                     recorded = True
             return recorded
@@ -283,6 +288,7 @@ def run_live(scan_limit: int = SCAN_SYMBOLS) -> None:
     last_heartbeat = 0.0
     symbols: list[str] = []
     dominance: dict = {}
+    chg_24h: dict[str, float] = {}
     round_candidates: list[RoundCandidate] = []
     round_started_at: str | None = None
     stage_note = empty_stage_note()
@@ -296,6 +302,7 @@ def run_live(scan_limit: int = SCAN_SYMBOLS) -> None:
             if time.time() - last_universe_refresh > 900 or not symbols:
                 symbols = fetch_symbols(scan_limit)
                 dominance = _update_dominance(pf, fetch_dominance())
+                chg_24h = get_24h_changes(refresh=True)
                 last_universe_refresh = time.time()
                 pf.log(f"Piyasa listesi: {len(symbols)} sembol (kripto USDT perpetual)")
 
@@ -330,6 +337,8 @@ def run_live(scan_limit: int = SCAN_SYMBOLS) -> None:
                     round_started_at = now_tr()
                     round_candidates.clear()
                     stage_note = empty_stage_note()
+                    if not chg_24h:
+                        chg_24h = get_24h_changes(refresh=True)
                 cursor = 0 if wrapped else end
                 chunk_dirty = False
                 for sym in chunk:
@@ -341,6 +350,7 @@ def run_live(scan_limit: int = SCAN_SYMBOLS) -> None:
                         force_entry=False,
                         round_candidates=round_candidates,
                         stage_note=stage_note,
+                        chg_24h=chg_24h,
                     ):
                         chunk_dirty = True
                 if chunk_dirty:

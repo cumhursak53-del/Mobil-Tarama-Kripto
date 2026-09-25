@@ -571,6 +571,9 @@ def signal_log_rows(sig_log: dict, *, strategies_tail: int | None = 6) -> pd.Dat
             "Sinyal": s.get("count", 0),
             "Son yon": s.get("last_side", "-"),
             "Kasa": s.get("last_ledger", "-"),
+            "Coin_24s_pct": s.get("last_coin_chg_24h"),
+            "BTC_24s_pct": s.get("last_btc_chg_24h"),
+            "BTC_oran": s.get("last_btc_rel_ratio"),
             "Ilk sinyal": s.get("first_time") or "-",
             "Son sinyal": s.get("last_time") or "-",
             "Stratejiler": strats,
@@ -696,6 +699,9 @@ def signal_outcome_rows(log: list | None) -> pd.DataFrame:
             "MAE_R": a.get("mae_r"),
             "24s_fiyat": format_price_symbol(a.get("symbol"), a.get("price_at_24h")),
             "24s_hareket_pct": a.get("move_pct"),
+            "Coin_24s_pct": a.get("coin_chg_24h"),
+            "BTC_24s_pct": a.get("btc_chg_24h"),
+            "BTC_oran": a.get("btc_rel_ratio"),
             "Kaldirac": a.get("leverage"),
             "ROE_pct": a.get("roe_pct"),
             "TP_vurdu": a.get("hit_tp"),
@@ -743,6 +749,9 @@ def strategy_result_tables(
             "SL": "Evet" if item.get("hit_sl") else "Hayir",
             "MFE_R": item.get("mfe_r"),
             "MAE_R": item.get("mae_r"),
+            "Coin_24s_pct": item.get("coin_chg_24h"),
+            "BTC_24s_pct": item.get("btc_chg_24h"),
+            "BTC_oran": item.get("btc_rel_ratio"),
             "Kalan_saat": 0,
         })
     for item in watchlist or []:
@@ -775,6 +784,9 @@ def strategy_result_tables(
             "SL": "-",
             "MFE_R": None,
             "MAE_R": None,
+            "Coin_24s_pct": item.get("coin_chg_24h"),
+            "BTC_24s_pct": item.get("btc_chg_24h"),
+            "BTC_oran": item.get("btc_rel_ratio"),
             "Kalan_saat": round(remain_h, 1),
         })
     detail = pd.DataFrame(details)
@@ -848,6 +860,9 @@ def signal_watch_rows(watchlist: list | None) -> pd.DataFrame:
             "Anlik_PnL": pnl["pnl_usd"],
             "Kaldirac": pnl["leverage"],
             "Kalan_saat": round(remain_h, 1),
+            "Coin_24s_pct": w.get("coin_chg_24h"),
+            "BTC_24s_pct": w.get("btc_chg_24h"),
+            "BTC_oran": w.get("btc_rel_ratio"),
             "Yuksek": format_price_symbol(w.get("symbol"), w.get("post_high")),
             "Dusuk": format_price_symbol(w.get("symbol"), w.get("post_low")),
             "Son_fiyat": format_price_symbol(w.get("symbol"), w.get("last_price")),
@@ -879,6 +894,24 @@ def post_exit_watch_rows(watchlist: list | None) -> pd.DataFrame:
             "Son_fiyat": format_price_symbol(w.get("symbol"), w.get("last_price")),
         })
     return pd.DataFrame(rows)
+
+
+def live_transition_tables(outcome_log: list | None) -> tuple[pd.DataFrame, pd.DataFrame, str]:
+    """Canli gecis aday raporu — long / short ayri tablolar."""
+    from engine.live_transition_report import build_live_transition_report
+
+    report = build_live_transition_report(outcome_log)
+    cols = [
+        "Durum", "Strateji", "Kasa", "Biten", "Gun", "Dogru", "Yanlis", "Basari_pct",
+        "Biten_PnL", "SL_orani_pct", "TP", "SL", "Ort_MFE_R", "Not",
+    ]
+    long_df = pd.DataFrame(report["long_rows"])
+    short_df = pd.DataFrame(report["short_rows"])
+    if not long_df.empty:
+        long_df = long_df[[c for c in cols if c in long_df.columns]]
+    if not short_df.empty:
+        short_df = short_df[[c for c in cols if c in short_df.columns]]
+    return long_df, short_df, report["caption"]
 
 
 def market_commentary_rows(log: list | None) -> pd.DataFrame:
@@ -932,6 +965,7 @@ def build_excel_bytes(data: dict) -> bytes:
     strategy_sum, strategy_detail = strategy_result_tables(
         signal_log_analysis, data.get("signal_watchlist") or []
     )
+    live_long, live_short, _live_cap = live_transition_tables(signal_log_analysis)
     sheets = {
         "Ozet": ozet,
         "Kasalar": _ledger_rows(data),
@@ -945,6 +979,8 @@ def build_excel_bytes(data: dict) -> bytes:
         "Strateji_Detay": strategy_detail,
         "Piyasa_Yorumu": market_commentary_rows(data.get("market_commentary_log") or []),
         "Piyasa_Yorumu_Son": _commentary_rows(data.get("market_commentary") or {}),
+        "Canli_Gecis_Long": live_long,
+        "Canli_Gecis_Short": live_short,
         "Strateji_Sinyal_Ozeti": strategy_signal_summary(signal_log_analysis),
         "Acik_Pozisyonlar": _pos_rows(data.get("active_positions") or {}),
         "Islem_Gecmisi": _history_rows(data.get("history") or []),

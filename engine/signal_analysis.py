@@ -167,6 +167,9 @@ def analyze_completed_signal(watch: dict, klines: pd.DataFrame | None = None) ->
         "risk_usd": round(risk_usd, 2),
         "recommendations": recommendations,
         "analyzed_at": watch.get("analyzed_at"),
+        "coin_chg_24h": watch.get("coin_chg_24h"),
+        "btc_chg_24h": watch.get("btc_chg_24h"),
+        "btc_rel_ratio": watch.get("btc_rel_ratio"),
     }
 
 

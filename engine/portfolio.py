@@ -751,7 +751,14 @@ class Portfolio:
             )
             self.smc_scan = dict(ranked[:500])
 
-    def record_signal(self, symbol: str, sig: Signal, *, entry_price: float = 0) -> None:
+    def record_signal(
+        self,
+        symbol: str,
+        sig: Signal,
+        *,
+        entry_price: float = 0,
+        btc_relative: dict | None = None,
+    ) -> None:
         rec = self.signal_log.setdefault(
             symbol,
             {"count": 0, "strategies": [], "last_side": "", "last_time": "", "first_time": ""},
@@ -765,6 +772,10 @@ class Portfolio:
         rec["last_ledger"] = sig.ledger
         if sig.strategy not in rec["strategies"]:
             rec["strategies"].append(sig.strategy)
+        if btc_relative:
+            for key in ("coin_chg_24h", "btc_chg_24h", "btc_rel_ratio"):
+                if btc_relative.get(key) is not None:
+                    rec[f"last_{key}"] = btc_relative[key]
         if entry_price > 0 and sig.sl_price > 0:
             from engine.signal_outcome import enqueue_signal_watch
 
@@ -774,6 +785,7 @@ class Portfolio:
                 sig=sig,
                 entry_price=entry_price,
                 signal_time=ts,
+                btc_relative=btc_relative,
                 log=self.log,
             )
 
