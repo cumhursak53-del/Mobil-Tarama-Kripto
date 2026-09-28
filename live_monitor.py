@@ -42,6 +42,7 @@ from shared.ui_data import (  # noqa: E402
     signal_log_rows,
     signal_outcome_rows,
     signal_watch_rows,
+    live_transition_tables,
     market_commentary_rows,
     strategy_result_tables,
 )
@@ -133,6 +134,7 @@ class LiveMonitorApp:
         self.sig_analysis_tree = self._make_tree(nb, "Sinyal analizi (24s)")
         self.sig_watch_tree = self._make_tree(nb, "Aktif sinyal izleme")
         self._build_commentary_tab(nb)
+        self._build_live_transition_tab(nb)
         self._build_strategy_tab(nb)
 
         log_frame = ttk.Frame(nb)
@@ -165,7 +167,8 @@ class LiveMonitorApp:
         scroll.pack(side=tk.RIGHT, fill=tk.Y)
         self._commentary_text.insert(
             tk.END,
-            "Her tarama turu bitince Bitcoin, hakimiyet ve altcoin evrelerine gore yorum burada listelenir.\n"
+            "Her tarama turu bitince 15 dakika, 1 saat, 4 saat ve 1 gun evrelerine gore yorum burada listelenir.\n"
+            "Islem yonu (4s) gelecekte long/short filtresinin bakacagi degerdir; sinyaller kesilmez.\n"
             "VPS guncel degilse bu liste bos kalir — Hostinger'da git pull + deploy_vps.sh calistirin.",
         )
         self._commentary_text.configure(state=tk.DISABLED)
@@ -183,6 +186,35 @@ class LiveMonitorApp:
         self._commentary_text.delete("1.0", tk.END)
         self._commentary_text.insert(tk.END, text)
         self._commentary_text.configure(state=tk.DISABLED)
+
+    def _build_live_transition_tab(self, nb: ttk.Notebook) -> None:
+        frame = ttk.Frame(nb)
+        nb.add(frame, text="Canli gecis")
+        bar = ttk.Frame(frame, padding=(4, 4))
+        bar.pack(fill=tk.X)
+        self._live_transition_caption = tk.StringVar(
+            value="Biten sinyal analizine gore canli aday raporu (emir kapali)."
+        )
+        ttk.Label(bar, textvariable=self._live_transition_caption, wraplength=980).pack(
+            anchor=tk.W, fill=tk.X
+        )
+        ttk.Label(
+            frame,
+            text=(
+                "Canli aday: en az 30 biten, 2+ gun, basari %55+, pozitif PnL, SL orani %50 alti. "
+                "Devam eden sinyaller ve emirler bu rapora dahil degildir."
+            ),
+            wraplength=980,
+            justify=tk.LEFT,
+        ).pack(fill=tk.X, padx=8, pady=(0, 4))
+        paned = ttk.Panedwindow(frame, orient=tk.HORIZONTAL)
+        paned.pack(fill=tk.BOTH, expand=True, padx=4, pady=4)
+        left = ttk.LabelFrame(paned, text="Long stratejiler")
+        right = ttk.LabelFrame(paned, text="Short stratejiler")
+        paned.add(left, weight=1)
+        paned.add(right, weight=1)
+        self.live_long_tree = self._tree_in(left)
+        self.live_short_tree = self._tree_in(right)
 
     def _build_strategy_tab(self, nb: ttk.Notebook) -> None:
         frame = ttk.Frame(nb)
@@ -417,6 +449,9 @@ class LiveMonitorApp:
         self._fill_tree(self.strategy_sum_tree, None, max_rows=None)
         self._fill_tree(self.strategy_detail_tree, None, max_rows=None)
         self._fill_tree(self.commentary_tree, None, max_rows=None)
+        self._fill_tree(self.live_long_tree, None, max_rows=None)
+        self._fill_tree(self.live_short_tree, None, max_rows=None)
+        self._live_transition_caption.set("Yorum alinamadi")
         self._commentary_entries = []
         self._commentary_caption.set("Yorum alinamadi")
         self._commentary_text.configure(state=tk.NORMAL)
@@ -478,6 +513,9 @@ class LiveMonitorApp:
             }])
         else:
             commentary_df = market_commentary_rows(data.get("market_commentary_log") or [])
+        live_long_df, live_short_df, live_transition_caption = live_transition_tables(
+            data.get("signal_outcome_log") or []
+        )
 
         return {
             "_source": data.get("_source"),
@@ -499,6 +537,9 @@ class LiveMonitorApp:
             "strategy_sum_df": strategy_sum_df,
             "strategy_detail_df": strategy_detail_df,
             "commentary_df": commentary_df,
+            "live_long_df": live_long_df,
+            "live_short_df": live_short_df,
+            "live_transition_caption": live_transition_caption,
             "analysis_count": 0 if sig_analysis_df is None or sig_analysis_df.empty else len(sig_analysis_df),
             "watch_count": 0 if sig_watch_df is None or getattr(sig_watch_df, "empty", True) else len(sig_watch_df),
             "logs": data.get("engine_logs") or [],
@@ -527,6 +568,8 @@ class LiveMonitorApp:
             (self.sig_analysis_tree, payload.get("sig_analysis_df"), None),
             (self.sig_watch_tree, payload.get("sig_watch_df"), None),
             (self.commentary_tree, payload.get("commentary_df"), None),
+            (self.live_long_tree, payload.get("live_long_df"), None),
+            (self.live_short_tree, payload.get("live_short_df"), None),
         ):
             try:
                 self._fill_tree(tree, df, max_rows=limit)
@@ -534,6 +577,9 @@ class LiveMonitorApp:
                 self.log_text.insert(tk.END, f"\nTablo hatasi: {exc}\n")
         self._show_strategy_results(payload.get("strategy_sum_df"), payload.get("strategy_detail_df"))
         self._show_commentary(payload.get("commentary_df"))
+        cap = str(payload.get("live_transition_caption") or "").strip()
+        if cap:
+            self._live_transition_caption.set(cap)
 
     def _show_commentary(self, df) -> None:
         entries: list[dict] = []
@@ -549,7 +595,19 @@ class LiveMonitorApp:
             entries = df.to_dict("records")
         self._commentary_entries = entries
         n = len(entries)
-        self._commentary_caption.set(f"{n} tur yorumu" if n else "Henuz tur yorumu yok")
+        from engine.market_commentary import TF_SHORT
+
+        bias = "-"
+        trade_tf = "4h"
+        if df is not None:
+            attrs = getattr(df, "attrs", {}) or {}
+            bias = str(attrs.get("trade_bias") or "-")
+            trade_tf = str(attrs.get("trade_tf") or "4h")
+        tf_lbl = TF_SHORT.get(trade_tf, trade_tf)
+        if n:
+            self._commentary_caption.set(f"Islem yonu ({tf_lbl}): {bias} | {n} TF yorumu")
+        else:
+            self._commentary_caption.set("Henuz tur yorumu yok")
         if n:
             self.commentary_tree.selection_set(self.commentary_tree.get_children()[0])
             self._on_commentary_select()

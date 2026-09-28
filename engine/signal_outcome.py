@@ -68,6 +68,7 @@ def enqueue_signal_watch(
     entry_price: float,
     signal_time: str,
     btc_relative: dict | None = None,
+    market_align: dict | None = None,
     log: Callable[[str], None] | None = None,
 ) -> None:
     """Sembol+strateji+yon basina tek aktif 24s izleme."""
@@ -106,6 +107,10 @@ def enqueue_signal_watch(
         for key in ("coin_chg_24h", "btc_chg_24h", "btc_rel_ratio"):
             if btc_relative.get(key) is not None:
                 watch[key] = btc_relative[key]
+    if market_align:
+        for key in ("piyasa_bias", "piyasa_uyum", "piyasa_uyum_ozet", "piyasa_trade_tf"):
+            if market_align.get(key) is not None:
+                watch[key] = market_align[key]
     watchlist.append(watch)
     _trim_list(watchlist, SIGNAL_WATCH_MAX)
     if log:

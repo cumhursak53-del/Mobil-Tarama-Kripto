@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 from engine.config import LIVE_COMBO_LEDGER, LIVE_LONG_ONLY
+from engine.market_commentary import commentary_allows_side
 from engine.context import build_context
 from engine.data import last_prices
 from engine.entry_timing import refresh_tfs_for_scan
@@ -72,6 +73,8 @@ def collect_round_candidate(
         return None
     if LIVE_LONG_ONLY and sig.side == Side.SELL:
         return None
+    if not commentary_allows_side(sig.side, getattr(pf, "market_commentary", None)):
+        return None
     if not ctx.aligned(sig.side):
         return None
     exp = expected_profit_usd(pf, entry, sig)
@@ -91,6 +94,7 @@ def _revalidate(
     cand: RoundCandidate,
     *,
     entry_price_fn: Callable,
+    commentary: dict | None = None,
 ) -> tuple[float, Signal, object] | None:
     from strategies.registry import live_strategies
 
@@ -112,6 +116,8 @@ def _revalidate(
     if sig is None or not ctx.aligned(sig.side):
         return None
     if LIVE_LONG_ONLY and sig.side == Side.SELL:
+        return None
+    if not commentary_allows_side(sig.side, commentary):
         return None
     px = entry_price_fn(cand.strategy, cand.symbol, frames, live_px)
     if px <= 0:
@@ -177,7 +183,13 @@ def finalize_round_candidates(
             try:
                 if not entry_price_fn or not try_entry_fn:
                     break
-                refreshed = _revalidate(cache, dominance, cand, entry_price_fn=entry_price_fn)
+                refreshed = _revalidate(
+                    cache,
+                    dominance,
+                    cand,
+                    entry_price_fn=entry_price_fn,
+                    commentary=getattr(pf, "market_commentary", None),
+                )
                 if refreshed is None:
                     if log:
                         log(f"Tur secim atlandi {cand.symbol} | {cand.sig.strategy} (sinyal gecersiz)")

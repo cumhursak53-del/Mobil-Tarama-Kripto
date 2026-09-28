@@ -574,6 +574,9 @@ def signal_log_rows(sig_log: dict, *, strategies_tail: int | None = 6) -> pd.Dat
             "Coin_24s_pct": s.get("last_coin_chg_24h"),
             "BTC_24s_pct": s.get("last_btc_chg_24h"),
             "BTC_oran": s.get("last_btc_rel_ratio"),
+            "Piyasa_bias": s.get("last_piyasa_bias") or "-",
+            "Piyasa_uyum": s.get("last_piyasa_uyum") or "-",
+            "Piyasa_uyum_ozet": s.get("last_piyasa_uyum_ozet") or "-",
             "Ilk sinyal": s.get("first_time") or "-",
             "Son sinyal": s.get("last_time") or "-",
             "Stratejiler": strats,
@@ -702,6 +705,9 @@ def signal_outcome_rows(log: list | None) -> pd.DataFrame:
             "Coin_24s_pct": a.get("coin_chg_24h"),
             "BTC_24s_pct": a.get("btc_chg_24h"),
             "BTC_oran": a.get("btc_rel_ratio"),
+            "Piyasa_bias": a.get("piyasa_bias") or "-",
+            "Piyasa_uyum": a.get("piyasa_uyum") or "-",
+            "Piyasa_uyum_ozet": a.get("piyasa_uyum_ozet") or "-",
             "Kaldirac": a.get("leverage"),
             "ROE_pct": a.get("roe_pct"),
             "TP_vurdu": a.get("hit_tp"),
@@ -752,6 +758,9 @@ def strategy_result_tables(
             "Coin_24s_pct": item.get("coin_chg_24h"),
             "BTC_24s_pct": item.get("btc_chg_24h"),
             "BTC_oran": item.get("btc_rel_ratio"),
+            "Piyasa_bias": item.get("piyasa_bias") or "-",
+            "Piyasa_uyum": item.get("piyasa_uyum") or "-",
+            "Piyasa_uyum_ozet": item.get("piyasa_uyum_ozet") or "-",
             "Kalan_saat": 0,
         })
     for item in watchlist or []:
@@ -787,6 +796,9 @@ def strategy_result_tables(
             "Coin_24s_pct": item.get("coin_chg_24h"),
             "BTC_24s_pct": item.get("btc_chg_24h"),
             "BTC_oran": item.get("btc_rel_ratio"),
+            "Piyasa_bias": item.get("piyasa_bias") or "-",
+            "Piyasa_uyum": item.get("piyasa_uyum") or "-",
+            "Piyasa_uyum_ozet": item.get("piyasa_uyum_ozet") or "-",
             "Kalan_saat": round(remain_h, 1),
         })
     detail = pd.DataFrame(details)
@@ -863,6 +875,9 @@ def signal_watch_rows(watchlist: list | None) -> pd.DataFrame:
             "Coin_24s_pct": w.get("coin_chg_24h"),
             "BTC_24s_pct": w.get("btc_chg_24h"),
             "BTC_oran": w.get("btc_rel_ratio"),
+            "Piyasa_bias": w.get("piyasa_bias") or "-",
+            "Piyasa_uyum": w.get("piyasa_uyum") or "-",
+            "Piyasa_uyum_ozet": w.get("piyasa_uyum_ozet") or "-",
             "Yuksek": format_price_symbol(w.get("symbol"), w.get("post_high")),
             "Dusuk": format_price_symbol(w.get("symbol"), w.get("post_low")),
             "Son_fiyat": format_price_symbol(w.get("symbol"), w.get("last_price")),
@@ -915,26 +930,54 @@ def live_transition_tables(outcome_log: list | None) -> tuple[pd.DataFrame, pd.D
 
 
 def market_commentary_rows(log: list | None) -> pd.DataFrame:
+    from engine.market_commentary import COMMENTARY_TFS, TF_SHORT
+
+    def _join(items) -> str:
+        if not items:
+            return "-"
+        if isinstance(items, str):
+            return items
+        return ", ".join(str(x) for x in items) or "-"
+
+    def _row(sub: dict, *, parent: dict, tf: str) -> dict:
+        return {
+            "TF": TF_SHORT.get(tf, tf),
+            "Yon": sub.get("bias") or parent.get("trade_bias") or "-",
+            "Rejim": sub.get("regime") or "-",
+            "BTC_evre": sub.get("btc_stage") or "-",
+            "BTC_degisim_pct": sub.get("btc_chg"),
+            "Alt_yukselis": sub.get("alt_advancing"),
+            "Alt_dusus": sub.get("alt_declining"),
+            "Uygun": _join(sub.get("uygun")),
+            "Zayif": _join(sub.get("zayif")),
+            "Tur_bitis": parent.get("round_end") or sub.get("updated_at") or parent.get("updated_at") or "-",
+            "Tur_baslangic": parent.get("round_start") or "-",
+            "Yorum": sub.get("text") or parent.get("text") or "",
+        }
+
     rows = []
+    latest_bias = None
+    latest_tf = None
     for note in reversed(log or []):
         if not isinstance(note, dict):
             continue
-        rows.append({
-            "Tur_bitis": note.get("round_end") or note.get("updated_at") or "-",
-            "Tur_baslangic": note.get("round_start") or "-",
-            "Rejim": note.get("regime") or "-",
-            "BTC_evre": note.get("btc_stage") or "-",
-            "BTC_24s_pct": note.get("btc_chg"),
-            "BTC_D": note.get("btc_d"),
-            "BTC_D_degisim": note.get("btc_d_chg"),
-            "USDT_D": note.get("usdt_d"),
-            "Alt_yukselis": note.get("alt_advancing"),
-            "Alt_dusus": note.get("alt_declining"),
-            "Yorum": note.get("text") or "",
-        })
+        if latest_bias is None:
+            latest_bias = note.get("trade_bias") or note.get("bias")
+            latest_tf = note.get("trade_tf") or note.get("tf") or "4h"
+        by_tf = note.get("by_tf")
+        if isinstance(by_tf, dict) and by_tf:
+            for tf in COMMENTARY_TFS:
+                sub = by_tf.get(tf)
+                if isinstance(sub, dict):
+                    rows.append(_row(sub, parent=note, tf=tf))
+            continue
+        rows.append(_row(note, parent=note, tf=str(note.get("tf") or "1d")))
     if not rows:
         return pd.DataFrame({"Bilgi": ["Henuz yorum yok. Bir tarama turu bitince burada gorunur."]})
-    return pd.DataFrame(rows)
+    df = pd.DataFrame(rows)
+    df.attrs["trade_bias"] = latest_bias or "-"
+    df.attrs["trade_tf"] = latest_tf or "4h"
+    return df
 
 
 def _commentary_rows(note: dict) -> pd.DataFrame:

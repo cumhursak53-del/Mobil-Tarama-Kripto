@@ -36,7 +36,12 @@ from engine.entry_timing import collect_bar_closes, refresh_tfs_for_scan, should
 from engine.exchange.bybit_client import BybitClient
 from engine.exchange.executor import get_executor
 from engine.live_round_pick import RoundCandidate, collect_round_candidate, finalize_round_candidates
-from engine.market_commentary import build_market_commentary, empty_stage_note, note_symbol_stage
+from engine.market_commentary import (
+    build_round_commentary,
+    commentary_allows_side,
+    empty_stage_note,
+    note_symbol_stages,
+)
 from engine.paper import FrameCache, _entry_price, _mark_price, _update_dominance, run_price_pass
 from engine.portfolio import Portfolio, now_tr
 from engine.post_exit import run_post_exit_tick
@@ -132,6 +137,8 @@ def _try_entry(pf: Portfolio, strat, ctx, sym: str, last: float, sig=None) -> bo
         return False
     if LIVE_LONG_ONLY and sig.side.value == "SELL":
         return False
+    if not commentary_allows_side(sig.side, pf.market_commentary):
+        return False
     pf.record_signal(sym, sig, entry_price=last)
     if not ctx.aligned(sig.side):
         return False
@@ -190,7 +197,7 @@ def _scan_one(
             ref_frames = cache.refresh(SMT_REF_SYMBOL, scan_tfs)
         ctx = build_context(sym, frames, dominance, indicated=False, ref_frames=ref_frames)
         if stage_note is not None:
-            note_symbol_stage(sym, ctx.stage.value, stage_note)
+            note_symbol_stages(sym, ctx.frames, stage_note)
         candidates: list[tuple[float, object, float, object]] = []
         for strat in strats:
             if not should_evaluate_entry(strat, force=force_entry, bar_closed=bar_closed):
@@ -205,6 +212,8 @@ def _scan_one(
             if sig is None or not ctx.aligned(sig.side):
                 continue
             if LIVE_LONG_ONLY and sig.side.value == "SELL":
+                continue
+            if not commentary_allows_side(sig.side, pf.market_commentary):
                 continue
             strength = strat.signal_strength(ctx, sig)
             candidates.append((strength, strat, px, sig))
@@ -390,10 +399,9 @@ def run_live(scan_limit: int = SCAN_SYMBOLS) -> None:
                         log=pf.log,
                     )
                     try:
-                        note = build_market_commentary(
-                            btc_stage=stage_note.get("btc_stage"),
+                        note = build_round_commentary(
+                            stage_note=stage_note,
                             dominance=dominance,
-                            stage_counts=stage_note.get("counts") or {},
                         )
                         note["round_start"] = round_started_at or ""
                         note["round_end"] = now_tr()
@@ -401,7 +409,10 @@ def run_live(scan_limit: int = SCAN_SYMBOLS) -> None:
                         pf.market_commentary_log.append(note)
                         if MARKET_COMMENTARY_LOG_MAX > 0 and len(pf.market_commentary_log) > MARKET_COMMENTARY_LOG_MAX:
                             pf.market_commentary_log = pf.market_commentary_log[-MARKET_COMMENTARY_LOG_MAX:]
-                        pf.log(f"Piyasa yorumu [{note.get('regime', '-')}] {note['text']}")
+                        pf.log(
+                            f"Piyasa yorumu [islem {note.get('trade_tf')} {note.get('trade_bias')}] "
+                            f"{note.get('summary') or note.get('text') or ''}"
+                        )
                         changed = True
                     except Exception as exc:
                         pf.log(f"Piyasa yorumu yazilamadi: {exc}")

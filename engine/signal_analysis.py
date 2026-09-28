@@ -170,6 +170,10 @@ def analyze_completed_signal(watch: dict, klines: pd.DataFrame | None = None) ->
         "coin_chg_24h": watch.get("coin_chg_24h"),
         "btc_chg_24h": watch.get("btc_chg_24h"),
         "btc_rel_ratio": watch.get("btc_rel_ratio"),
+        "piyasa_bias": watch.get("piyasa_bias"),
+        "piyasa_uyum": watch.get("piyasa_uyum"),
+        "piyasa_uyum_ozet": watch.get("piyasa_uyum_ozet"),
+        "piyasa_trade_tf": watch.get("piyasa_trade_tf"),
     }
 
 

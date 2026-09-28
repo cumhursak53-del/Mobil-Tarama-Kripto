@@ -18,6 +18,10 @@ SIGNAL_WATCH_KLINE_TF = os.environ.get("SIGNAL_WATCH_KLINE_TF", "15m")
 SIGNAL_WATCH_MAX = int(os.environ.get("SIGNAL_WATCH_MAX", "0"))
 SIGNAL_OUTCOME_LOG_MAX = int(os.environ.get("SIGNAL_OUTCOME_LOG_MAX", "0"))
 MARKET_COMMENTARY_LOG_MAX = int(os.environ.get("MARKET_COMMENTARY_LOG_MAX", "200"))
+# 1 = trade_bias long ise yalniz BUY, short ise yalniz SELL (notr her iki yon). Varsayilan kapali.
+MARKET_SIDE_FILTER = os.environ.get("MARKET_SIDE_FILTER", "0") == "1"
+_TRADE_BIAS_TF = os.environ.get("MARKET_TRADE_BIAS_TF", os.environ.get("SETUP_TF", "4h")).strip()
+MARKET_TRADE_BIAS_TF = _TRADE_BIAS_TF if _TRADE_BIAS_TF in ("15m", "1h", "4h", "1d") else "4h"
 
 TIMEFRAMES = ("15m", "1h", "4h", "1d", "1w")
 KLINE_LIMITS = {"15m": 1000, "1h": 1000, "4h": 400, "1d": 400, "1w": 200}

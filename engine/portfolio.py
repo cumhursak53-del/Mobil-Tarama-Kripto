@@ -791,6 +791,13 @@ class Portfolio:
             for key in ("coin_chg_24h", "btc_chg_24h", "btc_rel_ratio"):
                 if btc_relative.get(key) is not None:
                     rec[f"last_{key}"] = btc_relative[key]
+        from engine.market_commentary import stamp_side_alignment
+
+        align = stamp_side_alignment(sig.side, getattr(self, "market_commentary", None))
+        rec["last_piyasa_bias"] = align["piyasa_bias"]
+        rec["last_piyasa_uyum"] = align["piyasa_uyum"]
+        rec["last_piyasa_uyum_ozet"] = align["piyasa_uyum_ozet"]
+        rec["last_piyasa_trade_tf"] = align["piyasa_trade_tf"]
         if entry_price > 0 and sig.sl_price > 0:
             from engine.signal_outcome import enqueue_signal_watch
 
@@ -801,6 +808,7 @@ class Portfolio:
                 entry_price=entry_price,
                 signal_time=ts,
                 btc_relative=btc_relative,
+                market_align=align,
                 log=self.log,
             )
 
