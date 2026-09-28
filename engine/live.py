@@ -243,12 +243,25 @@ def _scan_one(
         return False
 
 
+_shutdown_done = False
+
+
 def _shutdown_save(pf: Portfolio) -> None:
+    global _shutdown_done
+    if _shutdown_done:
+        return
+    _shutdown_done = True
     try:
         pf.log("Canli motor kapaniyor — state kaydediliyor...")
         pf.save(sync_github=False)
     except Exception as e:
         print(f"Kapanis kayit hatasi: {e}", flush=True)
+
+
+def _on_sigterm(pf: Portfolio) -> None:
+    """SIGTERM sonrasi kaydedip cik; yoksa systemd 90sn bekleyip SIGKILL atiyor."""
+    _shutdown_save(pf)
+    os._exit(0)
 
 
 def _clear_simulated_positions(pf: Portfolio) -> None:
@@ -272,7 +285,7 @@ def run_live(scan_limit: int = SCAN_SYMBOLS) -> None:
     _clear_simulated_positions(pf)
     atexit.register(_shutdown_save, pf)
     try:
-        signal.signal(signal.SIGTERM, lambda *_: _shutdown_save(pf))
+        signal.signal(signal.SIGTERM, lambda *_: _on_sigterm(pf))
     except Exception:
         pass
     start_http(pf)

@@ -11,6 +11,8 @@ EnvironmentFile=/opt/krpito/live.env
 ExecStart=/opt/krpito/.venv/bin/python /opt/krpito/start_live.py
 Restart=always
 RestartSec=10
+TimeoutStopSec=30
+KillMode=mixed
 StandardOutput=journal
 StandardError=journal
 
