@@ -153,14 +153,19 @@ class Portfolio:
         ]
 
     def load(self) -> None:
-        if not os.path.exists(self.path):
+        for path in (self.path, f"{self.path}.bak"):
+            if not os.path.exists(path):
+                continue
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    raw = json.load(f)
+            except Exception as exc:
+                self.log(f"State okunamadi ({os.path.basename(path)}): {exc}")
+                continue
+            if path != self.path:
+                self.log("Ana state bozuk — yedekten (.bak) yuklendi")
+            self._apply_raw(raw)
             return
-        try:
-            with open(self.path, "r", encoding="utf-8") as f:
-                raw = json.load(f)
-        except Exception:
-            return
-        self._apply_raw(raw)
 
     def _apply_raw(self, raw: dict) -> None:
         ledger_keys = LIVE_LEDGERS if self.live_mode else LEDGER_NAMES
@@ -256,8 +261,18 @@ class Portfolio:
 
     def save(self, sync_github: bool = False) -> None:
         payload = self.snapshot()
-        with open(self.path, "w", encoding="utf-8") as f:
+        # Atomik yazim: surec yazma sirasinda oldurulurse state bozulmasin
+        tmp = f"{self.path}.tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
             json.dump(payload, f, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+        if os.path.exists(self.path):
+            try:
+                os.replace(self.path, f"{self.path}.bak")
+            except OSError:
+                pass
+        os.replace(tmp, self.path)
         if sync_github:
             ok = push_state(payload)
             sync_lab_state(self.lab_state)
