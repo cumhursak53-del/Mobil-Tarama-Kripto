@@ -297,6 +297,12 @@ LIVE_LEDGERS = (LIVE_COMBO_LEDGER,)
 LIVE_LONG_ONLY = os.environ.get("LIVE_LONG_ONLY", "0") == "1"
 LIVE_MAX_NOTIONAL_USD = float(os.environ.get("LIVE_MAX_NOTIONAL_USD", "500"))
 LIVE_HTTP_PORT = int(os.environ.get("LIVE_HTTP_PORT", "10001"))
+# SL emirle birlikte yazilamazsa kac kez tekrar denenecek; sonra reduce-only kapatilir.
+SL_ATTACH_MAX_ATTEMPTS = int(os.environ.get("SL_ATTACH_MAX_ATTEMPTS", "3"))
+SL_ATTACH_RETRY_DELAY_SEC = float(os.environ.get("SL_ATTACH_RETRY_DELAY_SEC", "0.4"))
+# Kapanis ancak emir Filled veya pozisyon boyutu 0 gorulunce yerel olarak islenir.
+CLOSE_CONFIRM_TIMEOUT_SEC = float(os.environ.get("CLOSE_CONFIRM_TIMEOUT_SEC", "8"))
+CLOSE_CONFIRM_POLL_SEC = float(os.environ.get("CLOSE_CONFIRM_POLL_SEC", "0.5"))
 # Canli motor: strateji basina max pozisyon (toplam MAX_TOTAL_POSITIONS ile birlikte)
 LIVE_STRATEGY_MAX_POSITIONS = _parse_ledger_int_map(
     os.environ.get("LIVE_STRATEGY_MAX_POSITIONS", "Kasa_Hacim:2,Kasa_PiyasaEvresi:1")

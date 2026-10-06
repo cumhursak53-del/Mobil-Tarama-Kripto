@@ -70,6 +70,10 @@ class Position:
     remaining_qty: float = 0.0
     exchange_order_id: str = ""
     source_ledger: str = ""
+    # Borsada kapanis dogrulanmadan pozisyon acik kalir.
+    kapanis_dogrulanmadi: bool = False
+    close_order_id: str = ""
+    pending_close_reason: str = ""
 
 
 @dataclass

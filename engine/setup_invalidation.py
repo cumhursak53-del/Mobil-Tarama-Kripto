@@ -85,5 +85,6 @@ def check_setup_invalidations(
         if setup_still_valid(strat, ctx, pos.side):
             continue
         trade = pf._close(key, price, "INVALIDATED")
-        closed.append(trade)
+        if trade is not None:
+            closed.append(trade)
     return closed

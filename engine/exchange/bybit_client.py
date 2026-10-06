@@ -183,8 +183,10 @@ class BybitClient:
         qty: float,
         *,
         reduce_only: bool = False,
+        stop_loss: float | None = None,
+        take_profit: float | None = None,
     ) -> dict[str, Any]:
-        body = {
+        body: dict[str, Any] = {
             "category": "linear",
             "symbol": symbol.upper(),
             "side": "Buy" if side.upper() in ("BUY", "LONG") else "Sell",
@@ -194,6 +196,14 @@ class BybitClient:
         }
         if reduce_only:
             body["reduceOnly"] = True
+        if stop_loss is not None and float(stop_loss) > 0:
+            body["stopLoss"] = self.format_price(symbol, float(stop_loss))
+            body["slTriggerBy"] = "MarkPrice"
+        if take_profit is not None and float(take_profit) > 0:
+            body["takeProfit"] = self.format_price(symbol, float(take_profit))
+            body["tpTriggerBy"] = "MarkPrice"
+        if body.get("stopLoss") or body.get("takeProfit"):
+            body["tpslMode"] = "Full"
         return self._request("POST", "/v5/order/create", body=body)
 
     def set_trading_stop(
@@ -217,30 +227,106 @@ class BybitClient:
             return {}
         return self._request("POST", "/v5/position/trading-stop", body=body)
 
-    def get_positions(self, symbol: str | None = None) -> list[dict[str, Any]]:
-        params: dict[str, Any] = {"category": "linear", "settleCoin": "USDT"}
-        if symbol:
-            params["symbol"] = symbol.upper()
-        result = self._request("GET", "/v5/position/list", params=params)
-        rows = result.get("list") or []
-        out: list[dict[str, Any]] = []
-        for row in rows:
-            size = float(row.get("size") or 0)
-            if size <= 0:
+    @staticmethod
+    def _parse_position_row(row: dict) -> dict[str, Any]:
+        size = float(row.get("size") or 0)
+        side_raw = (row.get("side") or "").lower()
+        if side_raw == "buy":
+            side = "BUY"
+        elif side_raw == "sell":
+            side = "SELL"
+        else:
+            side = ""
+        return {
+            "symbol": row.get("symbol"),
+            "side": side,
+            "size": size,
+            "entry_price": float(row.get("avgPrice") or 0),
+            "unrealised_pnl": float(row.get("unrealisedPnl") or 0),
+            "leverage": float(row.get("leverage") or 1),
+            "stop_loss": float(row.get("stopLoss") or 0) or None,
+            "take_profit": float(row.get("takeProfit") or 0) or None,
+        }
+
+    @staticmethod
+    def _pick_position_row(rows: list[dict]) -> dict | None:
+        if not rows:
+            return None
+        def _idx(row: dict) -> int:
+            try:
+                return int(row.get("positionIdx") or 0)
+            except (TypeError, ValueError):
+                return 0
+
+        indexed = [r for r in rows if _idx(r) == 0]
+        pool = indexed or rows
+        active = [r for r in pool if float(r.get("size") or 0) > 0]
+        return (active or pool)[0]
+
+    def get_position_row(self, symbol: str) -> dict[str, Any]:
+        """Tek sembol. Boyut 0 ise pozisyon kapali demektir (API hatasi degil)."""
+        result = self._request(
+            "GET",
+            "/v5/position/list",
+            params={"category": "linear", "symbol": symbol.upper()},
+        )
+        row = self._pick_position_row(result.get("list") or [])
+        if row is None:
+            return {
+                "symbol": symbol.upper(),
+                "side": "",
+                "size": 0.0,
+                "entry_price": 0.0,
+                "unrealised_pnl": 0.0,
+                "leverage": 1.0,
+                "stop_loss": None,
+                "take_profit": None,
+            }
+        parsed = self._parse_position_row(row)
+        parsed["symbol"] = parsed.get("symbol") or symbol.upper()
+        return parsed
+
+    def get_order(self, symbol: str, order_id: str) -> dict[str, Any]:
+        params = {
+            "category": "linear",
+            "symbol": symbol.upper(),
+            "orderId": order_id,
+        }
+        for path in ("/v5/order/realtime", "/v5/order/history"):
+            result = self._request("GET", path, params=params)
+            rows = result.get("list") or []
+            if not rows:
                 continue
-            side_raw = (row.get("side") or "").lower()
-            out.append(
-                {
-                    "symbol": row.get("symbol"),
-                    "side": "BUY" if side_raw == "buy" else "SELL",
-                    "size": size,
-                    "entry_price": float(row.get("avgPrice") or 0),
-                    "unrealised_pnl": float(row.get("unrealisedPnl") or 0),
-                    "leverage": float(row.get("leverage") or 1),
-                    "stop_loss": float(row.get("stopLoss") or 0) or None,
-                    "take_profit": float(row.get("takeProfit") or 0) or None,
-                }
-            )
+            row = rows[0]
+            return {
+                "order_id": str(row.get("orderId") or order_id),
+                "status": str(row.get("orderStatus") or ""),
+                "avg_price": float(row.get("avgPrice") or 0),
+                "cum_qty": float(row.get("cumExecQty") or 0),
+            }
+        return {"order_id": order_id, "status": "", "avg_price": 0.0, "cum_qty": 0.0}
+
+    def get_positions(self, symbol: str | None = None) -> list[dict[str, Any]]:
+        params_base: dict[str, Any] = {"category": "linear", "settleCoin": "USDT", "limit": 200}
+        if symbol:
+            params_base["symbol"] = symbol.upper()
+        out: list[dict[str, Any]] = []
+        cursor = ""
+        seen: set[str] = set()
+        for _ in range(10):
+            params = dict(params_base)
+            if cursor:
+                params["cursor"] = cursor
+            result = self._request("GET", "/v5/position/list", params=params)
+            for row in result.get("list") or []:
+                parsed = self._parse_position_row(row)
+                if parsed["size"] <= 0:
+                    continue
+                out.append(parsed)
+            cursor = str(result.get("nextPageCursor") or "")
+            if not cursor or cursor in seen:
+                break
+            seen.add(cursor)
         return out
 
     def close_position_market(self, symbol: str, side: str, qty: float) -> dict[str, Any]:
