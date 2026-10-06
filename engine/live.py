@@ -111,11 +111,16 @@ def _sync_exchange_on_start(pf: Portfolio) -> None:
         bal = client.get_wallet_balance()
         pf.log(f"Bybit baglantisi OK ({BYBIT_BASE_URL}) | USDT ${bal:.2f}")
         remote = get_executor().sync_positions()
-        if remote:
-            syms = ", ".join(f"{r['symbol']}({r['side']})" for r in remote[:8])
-            pf.log(f"Borsada acik pozisyon: {len(remote)} | {syms}")
+        if remote is None:
+            pf.log("UYARI: borsa pozisyonlari alinamadi — yerel durum degistirilmedi")
         else:
-            pf.log("Borsada acik pozisyon yok")
+            pf.reconcile_exchange(remote)
+            pf.protect_open_positions()
+            if remote:
+                syms = ", ".join(f"{r['symbol']}({r['side']})" for r in remote[:8])
+                pf.log(f"Borsada acik pozisyon: {len(remote)} | {syms}")
+            else:
+                pf.log("Borsada acik pozisyon yok")
     except Exception as e:
         pf.log(f"Bybit startup sync hatasi: {e}")
 
@@ -319,6 +324,9 @@ def run_live(scan_limit: int = SCAN_SYMBOLS) -> None:
         loop_start = time.time()
         try:
             if maybe_reset_signal_log(pf.signal_log, log=pf.log):
+                pf.save(sync_github=False)
+
+            if is_live_exchange() and pf.reconcile_pending_closes():
                 pf.save(sync_github=False)
 
             if time.time() - last_universe_refresh > 900 or not symbols:

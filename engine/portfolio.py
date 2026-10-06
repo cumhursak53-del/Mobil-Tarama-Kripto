@@ -224,6 +224,9 @@ class Portfolio:
                     remaining_qty=float(p.get("remaining_qty") or p.get("qty") or 0),
                     exchange_order_id=str(p.get("exchange_order_id") or ""),
                     source_ledger=str(p.get("source_ledger") or ""),
+                    kapanis_dogrulanmadi=bool(p.get("kapanis_dogrulanmadi")),
+                    close_order_id=str(p.get("close_order_id") or ""),
+                    pending_close_reason=str(p.get("pending_close_reason") or ""),
                 )
             except Exception:
                 continue
@@ -313,6 +316,9 @@ class Portfolio:
             "remaining_qty": p.remaining_qty or p.qty,
             "exchange_order_id": p.exchange_order_id,
             "source_ledger": p.source_ledger or self._infer_source_ledger(p),
+            "kapanis_dogrulanmadi": bool(p.kapanis_dogrulanmadi),
+            "close_order_id": p.close_order_id,
+            "pending_close_reason": p.pending_close_reason,
         }
 
     @staticmethod
@@ -460,16 +466,24 @@ class Portfolio:
         fill_price = price
         fill_qty = sized.qty
         order_id = ""
+        close_order_id = ""
+        emergency_exit: float | None = None
+        unprotected = False
         if is_live_exchange():
             from engine.exchange.executor import get_executor
 
             fill = get_executor().open_position(symbol, sig, sized, price)
-            if not fill.ok:
+            if not fill.filled:
                 self.log(f"Bybit acilis basarisiz {symbol} | {sig.ledger} | {fill.message}")
                 return False
-            fill_price = fill.fill_price or price
+            fill_price = fill.entry_price or fill.fill_price or price
             fill_qty = fill.fill_qty or sized.qty
             order_id = fill.order_id
+            close_order_id = fill.close_order_id
+            if fill.flattened and fill.confirmed:
+                emergency_exit = fill.fill_price or fill_price
+            elif fill.kapanis_dogrulanmadi or not fill.sl_protected:
+                unprotected = True
             self.log(f"Bybit acildi {symbol} | {sig.ledger} | order={order_id or '-'}")
         self.ledgers[sig.ledger] -= sized.margin
         self.positions[key] = Position(
@@ -502,6 +516,24 @@ class Portfolio:
             f"| kaynak {source_ledger or '-'} "
             f"| {sized.leverage:.0f}x | marjin ${sized.margin:.2f} | notional ${sized.notional:.2f}"
         )
+        if emergency_exit is not None:
+            from engine.exchange.alerts import raise_alert
+
+            self._book_close(key, emergency_exit, "SL_TAKILAMADI")
+            msg = f"ALARM SL takilamadi, reduce-only kapatildi {symbol}"
+            self.log(msg)
+            raise_alert(msg)
+            return False
+        if unprotected:
+            from engine.exchange.alerts import raise_alert
+
+            pos = self.positions[key]
+            pos.kapanis_dogrulanmadi = True
+            pos.pending_close_reason = "SL_TAKILAMADI"
+            pos.close_order_id = close_order_id
+            msg = f"ALARM SL takilamadi, kapanis dogrulanamadi {symbol}"
+            self.log(msg)
+            raise_alert(msg)
         return True
 
     def mark(self, symbol: str, price: float) -> None:
@@ -538,10 +570,11 @@ class Portfolio:
             from engine.exchange.executor import get_executor
 
             fill = get_executor().reduce_position(p, partial_qty, price)
-            if not fill.ok:
-                self.log(f"Bybit kismi kapanis basarisiz {p.symbol} | {fill.message}")
+            if not fill.ok or not getattr(fill, "confirmed", False):
+                self.log(f"Bybit kismi kapanis dogrulanamadi {p.symbol} | {fill.message}")
                 return False
-            price = fill.fill_price or price
+            if fill.fill_price > 0:
+                price = fill.fill_price
         ratio = (price - p.entry_price) / p.entry_price if p.side == Side.BUY else (p.entry_price - price) / p.entry_price
         gross = close_notional * ratio
         fee = close_notional * TAKER_FEE * 2
@@ -618,11 +651,22 @@ class Portfolio:
             p = self.positions[key]
             if p.symbol != symbol:
                 continue
+            if p.kapanis_dogrulanmadi:
+                if is_live_exchange():
+                    trade = self._resolve_flagged_close(key, p, retry=False)
+                    if trade is not None:
+                        closed.append(trade)
+                continue
             self._maybe_partial(key, p, price)
+            if key not in self.positions:
+                continue
+            p = self.positions[key]
             reason = self._exit_reason(p, price)
             if not reason:
                 continue
-            closed.append(self._close(key, price, reason))
+            trade = self._close(key, price, reason)
+            if trade is not None:
+                closed.append(trade)
         return closed
 
     def _pending_expired(self, po: dict) -> bool:
@@ -672,24 +716,235 @@ class Portfolio:
         self.pending_orders = remain
         return opened
 
-    def _close(self, key: str, price: float, reason: str) -> ClosedTrade:
-        p = self.positions[key]
+    def _mark_close_unconfirmed(self, p: Position, fill, reason: str) -> None:
+        from engine.exchange.alerts import raise_alert
+
+        first = not p.kapanis_dogrulanmadi
+        p.kapanis_dogrulanmadi = True
+        if not p.pending_close_reason:
+            p.pending_close_reason = reason
+        oid = getattr(fill, "close_order_id", "") or getattr(fill, "order_id", "")
+        if oid:
+            p.close_order_id = str(oid)
+        msg = f"ALARM kapanis dogrulanamadi {p.symbol} | {reason} | {getattr(fill, 'message', '')}"
+        self.log(msg)
+        if first:
+            raise_alert(msg)
+
+    def _resolve_flagged_close(self, key: str, p: Position, *, retry: bool) -> Optional[ClosedTrade]:
+        from engine.exchange.executor import WORKING_ORDER_STATUSES, get_executor
+
+        if key not in self.positions:
+            return None
+        ex = get_executor()
+        confirm = getattr(ex, "confirm_close", None)
+        snap = confirm(p.symbol, p.close_order_id) if confirm else None
+        if snap is not None and getattr(snap, "confirmed", False):
+            price = snap.fill_price if snap.fill_price > 0 else (p.current_price or p.entry_price)
+            return self._book_close(key, price, p.pending_close_reason or "RECONCILE")
+        if not retry:
+            return None
+        status = str(getattr(snap, "order_status", "") or "")
+        if status in WORKING_ORDER_STATUSES or status == "unknown":
+            return None
+        fill = ex.close_position(p, p.current_price or p.entry_price, p.pending_close_reason or "RETRY")
+        if getattr(fill, "confirmed", False):
+            price = fill.fill_price if fill.fill_price > 0 else (p.current_price or p.entry_price)
+            return self._book_close(key, price, p.pending_close_reason or "RETRY")
+        self._mark_close_unconfirmed(p, fill, p.pending_close_reason or "RETRY")
+        return None
+
+    def reconcile_pending_closes(self) -> list[ClosedTrade]:
+        """Dogrulanmamis kapanislari borsadan kontrol et; gerekirse reduce-only tekrarla."""
+        closed: list[ClosedTrade] = []
+        if not is_live_exchange():
+            return closed
+        for key, p in list(self.positions.items()):
+            if not p.kapanis_dogrulanmadi:
+                continue
+            trade = self._resolve_flagged_close(key, p, retry=True)
+            if trade is not None:
+                closed.append(trade)
+        return closed
+
+    def protect_open_positions(self) -> None:
+        """Yerelde SL'si olan ama borsada korumasiz pozisyonu tekrar dene, olmazsa kapat."""
+        if not is_live_exchange():
+            return
+        from engine.exchange.alerts import raise_alert
+        from engine.exchange.executor import get_executor
+
+        ex = get_executor()
+        ensure = getattr(ex, "ensure_stop", None)
+        if ensure is None:
+            return
+        for key, p in list(self.positions.items()):
+            if key not in self.positions or p.kapanis_dogrulanmadi:
+                continue
+            if not p.sl_price or p.sl_price <= 0:
+                msg = f"ALARM SL'siz pozisyon {p.symbol} — manuel kontrol"
+                self.log(msg)
+                raise_alert(msg)
+                continue
+            try:
+                ok = bool(ensure(p))
+            except Exception as exc:
+                self.log(f"ALARM SL kontrol hatasi {p.symbol}: {exc}")
+                ok = False
+            if ok or key not in self.positions:
+                continue
+            msg = f"ALARM acik pozisyonda SL yok {p.symbol} — kapatiliyor"
+            self.log(msg)
+            raise_alert(msg)
+            self._close(key, p.current_price or p.entry_price, "SL_TAKILAMADI")
+
+    def reconcile_exchange(self, remote: list[dict], *, ledger: str | None = None) -> list[str]:
+        """Basarili borsa pozisyon listesiyle yerel durumu hizala.
+
+        Bos liste, cagri basarisiz demek degildir: borsada acik pozisyon yoktur.
+        """
+        from engine.exchange.alerts import raise_alert
+
+        notes: list[str] = []
+        adopt_ledger = ledger or LIVE_COMBO_LEDGER
+        remote_by_symbol: dict[str, dict] = {}
+        for row in remote or []:
+            sym = str(row.get("symbol") or "")
+            if not sym:
+                continue
+            size = float(row.get("size") or 0)
+            if size <= 0:
+                continue
+            prev = remote_by_symbol.get(sym)
+            if prev is None:
+                remote_by_symbol[sym] = dict(row)
+            else:
+                prev["size"] = float(prev.get("size") or 0) + size
+
+        for key, p in list(self.positions.items()):
+            row = remote_by_symbol.get(p.symbol)
+            if row is None:
+                price = p.current_price or p.entry_price
+                if is_live_exchange() and p.close_order_id:
+                    try:
+                        from engine.exchange.executor import get_executor
+
+                        snap = get_executor().confirm_close(p.symbol, p.close_order_id)
+                        if getattr(snap, "confirmed", False) and snap.fill_price > 0:
+                            price = snap.fill_price
+                        elif snap is not None and "boyutu > 0" in (getattr(snap, "message", "") or ""):
+                            note = f"Reconcile atlandi {p.symbol}: pozisyon sorgusu hala acik"
+                            self.log(note)
+                            notes.append(note)
+                            continue
+                    except Exception:
+                        pass
+                reason = p.pending_close_reason or "RECONCILE"
+                self._book_close(key, price, reason)
+                note = f"Reconcile kapandi {p.symbol} | borsa boyutu 0 | {reason} @ {price}"
+                self.log(note)
+                notes.append(note)
+                continue
+            size = float(row.get("size") or 0)
+            if abs(size - (p.remaining_qty or p.qty)) > 1e-8:
+                p.remaining_qty = size
+                note = f"Reconcile miktar {p.symbol} → {size}"
+                self.log(note)
+                notes.append(note)
+
+        local_symbols = {p.symbol for p in self.positions.values()}
+        for sym, row in remote_by_symbol.items():
+            if sym in local_symbols:
+                continue
+            self._adopt_exchange_position(row, adopt_ledger)
+            note = f"Reconcile eklendi {sym}"
+            notes.append(note)
+        if not remote_by_symbol and not notes:
+            self.log("Reconcile: borsada acik pozisyon yok")
+        return notes
+
+    def _adopt_exchange_position(self, row: dict, ledger: str) -> None:
+        from engine.exchange.alerts import raise_alert
+
+        symbol = str(row.get("symbol") or "")
+        if not symbol:
+            return
+        side_raw = str(row.get("side") or "BUY").upper()
+        side = Side.BUY if side_raw in ("BUY", "LONG") else Side.SELL
+        size = float(row.get("size") or 0)
+        if size <= 0:
+            return
+        entry = float(row.get("entry_price") or 0)
+        sl_raw = row.get("stop_loss")
+        sl_price = float(sl_raw) if sl_raw else 0.0
+        tp_raw = row.get("take_profit")
+        lev = float(row.get("leverage") or 1) or 1.0
+        notional = size * entry
+        margin = notional / lev if lev else 0.0
+        key = self.pos_key(ledger, symbol)
+        if key in self.positions:
+            return
+        self.ledgers.setdefault(ledger, 0.0)
+        if margin > 0:
+            self.ledgers[ledger] = max(self.ledgers.get(ledger, 0.0) - margin, 0.0)
+        self.positions[key] = Position(
+            symbol=symbol,
+            side=side,
+            ledger=ledger,
+            strategy="reconcile",
+            entry_price=entry,
+            sl_price=sl_price,
+            tp_price=float(tp_raw) if tp_raw else None,
+            margin=margin,
+            notional=notional,
+            leverage=lev,
+            qty=size,
+            entry_time=now_tr(),
+            peak_price=entry,
+            current_price=entry,
+            initial_sl=sl_price,
+            remaining_notional=notional,
+            remaining_qty=size,
+            source_ledger=ledger,
+        )
+        self.log(f"Reconcile: borsada olup yerelde olmayan pozisyon eklendi {symbol} {side.value} qty={size}")
+        if sl_price <= 0:
+            msg = f"ALARM reconcile SL'siz pozisyon {symbol}"
+            self.log(msg)
+            raise_alert(msg)
+
+    def _close(self, key: str, price: float, reason: str) -> Optional[ClosedTrade]:
+        p = self.positions.get(key)
+        if p is None:
+            return None
+        if p.kapanis_dogrulanmadi and is_live_exchange():
+            return self._resolve_flagged_close(key, p, retry=False)
         if is_live_exchange():
             from engine.exchange.executor import get_executor
 
             fill = get_executor().close_position(p, price, reason)
-            if not fill.ok:
-                self.log(f"Bybit kapanis basarisiz {p.symbol} | {fill.message}")
-            else:
-                price = fill.fill_price or price
+            if not getattr(fill, "confirmed", False):
+                self._mark_close_unconfirmed(p, fill, reason)
+                return None
+            if fill.fill_price > 0:
+                price = fill.fill_price
+        return self._book_close(key, price, reason)
+
+    def _book_close(self, key: str, price: float, reason: str) -> Optional[ClosedTrade]:
+        p = self.positions.get(key)
+        if p is None:
+            return None
         p = self.positions.pop(key)
         notional = p.remaining_notional or p.notional
-        ratio = (price - p.entry_price) / p.entry_price if p.side == Side.BUY else (p.entry_price - price) / p.entry_price
+        if p.entry_price:
+            ratio = (price - p.entry_price) / p.entry_price if p.side == Side.BUY else (p.entry_price - price) / p.entry_price
+        else:
+            ratio = 0.0
         gross = notional * ratio
         fee = notional * TAKER_FEE * 2
         net = gross - fee
         self.ledgers[p.ledger] = max(self.ledgers.get(p.ledger, 0) + p.margin + net, 0.0)
-        risk = abs(p.entry_price - p.sl_price) / p.entry_price * p.notional
+        risk = (abs(p.entry_price - p.sl_price) / p.entry_price * p.notional) if p.entry_price else 0.0
         r_mult = net / risk if risk else 0.0
         trade = ClosedTrade(
             symbol=p.symbol,
@@ -733,7 +988,7 @@ class Portfolio:
         self._equity_curve.append({"time": trade.exit_time, "equity": eq})
         self._equity_curve = self._equity_curve[-300:]
         self.log(f"KAPANDI {p.symbol} {reason} | {p.ledger} | PnL ${net:+.2f}")
-        if reason == "SL" and SYMBOL_COOLDOWN_AFTER_SL_SEC > 0:
+        if reason in ("SL", "SL_TAKILAMADI") and SYMBOL_COOLDOWN_AFTER_SL_SEC > 0:
             import time
 
             self._symbol_sl_until[p.symbol] = time.time() + SYMBOL_COOLDOWN_AFTER_SL_SEC
